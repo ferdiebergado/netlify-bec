@@ -16,7 +16,7 @@ if (excelForm && fileInput) {
       formData.append("excelFile", selectedFile);
 
       try {
-        const res = await fetch("/convert", {
+        const res = await fetch("/.netlify/functions/convert", {
           method: "POST",
           body: formData,
         });

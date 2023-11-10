@@ -7,7 +7,12 @@
   </head>
   <body>
     <main>
-      <form>
+      <form
+        action="/convert"
+        method="post"
+        enctype="multipart/form-data"
+        name="excelForm"
+      >
         <input
           type="file"
           id="excelFile"
@@ -15,8 +20,9 @@
           accept=".xlsx"
           required
         />
-        <button id="convert">Convert</button>
+        <button type="submit">Convert</button>
       </form>
     </main>
+    <script src="app.js"></script>
   </body>
 </html>

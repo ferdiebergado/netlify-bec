@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "esbuild src/app.ts --bundle --sourcemap --minify --outfile=public/app.js"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,22 @@
+{
+  "name": "netlify-bec",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "esbuild": "^0.19.5",
+    "netlify-cli": "^17.2.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@netlify/functions": "^2.3.0",
+    "exceljs": "^4.4.0"
+  }
+}

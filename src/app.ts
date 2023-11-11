@@ -87,6 +87,10 @@ excelForm.addEventListener("submit", async (event) => {
       throw new Error(err);
     }
 
+    showAlert("Conversion successful. Download will start automatically.");
+    isLoading = false;
+    toggleSpinner(btnConvert, "Convert");
+
     // Get the blob data from the response
     const blob = await res.blob();
 
@@ -109,10 +113,6 @@ excelForm.addEventListener("submit", async (event) => {
 
     // // Clean up: remove the link from the body
     document.body.removeChild(downloadLink);
-
-    showAlert("Conversion successful. Download will start automatically.");
-    isLoading = false;
-    toggleSpinner(btnConvert, "Convert");
   } catch (error) {
     const msg = `ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and the layout was not changed.`;
     console.error(msg, error);

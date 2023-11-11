@@ -70,6 +70,9 @@
         showAlert(err, "error");
         throw new Error(err);
       }
+      showAlert("Conversion successful. Download will start automatically.");
+      isLoading = false;
+      toggleSpinner(btnConvert, "Convert");
       const blob = await res.blob();
       const contentDisposition = res.headers.get("Content-Disposition");
       const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+?)"/);
@@ -80,9 +83,6 @@
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
-      showAlert("Conversion successful. Download will start automatically.");
-      isLoading = false;
-      toggleSpinner(btnConvert, "Convert");
     } catch (error) {
       const msg = `ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and the layout was not changed.`;
       console.error(msg, error);

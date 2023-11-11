@@ -1,4 +1,4 @@
-import Worksheet from "./worksheet";
+import Worksheet from './worksheet';
 import {
   BudgetEstimateCell,
   BudgetEstimateRow,
@@ -10,8 +10,8 @@ import {
   ExpenseItem,
   YesNo,
   ActivityInfo,
-} from "./types";
-import { extractResult } from "./utils";
+} from './types';
+import { extractResult } from './utils';
 
 class BudgetEstimate extends Worksheet {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -82,14 +82,14 @@ class BudgetEstimate extends Worksheet {
       col,
       BudgetEstimateRow.BOARD_LODGING_START,
       BudgetEstimateRow.BOARD_LODGING_END,
-      prefix
+      prefix,
     );
 
     const boardLodgingOther = this._parseExpenses(
       col,
       BudgetEstimateRow.BOARD_LODGING_OTHER,
       BudgetEstimateRow.BOARD_LODGING_OTHER,
-      prefix
+      prefix,
     );
 
     return [...boardLodgingPax, ...boardLodgingOther];
@@ -102,21 +102,21 @@ class BudgetEstimate extends Worksheet {
       BudgetEstimateCol.TRAVEL_REGION,
       BudgetEstimateRow.TRAVEL_REGION_START,
       BudgetEstimateRow.TRAVEL_REGION_END,
-      prefix
+      prefix,
     );
 
     const travelCO = this._parseExpenses(
       BudgetEstimateCol.TRAVEL_CO,
       BudgetEstimateRow.TRAVEL_CO_START,
       BudgetEstimateRow.TRAVEL_CO_END,
-      prefix
+      prefix,
     );
 
     const travelOther = this._parseExpenses(
       BudgetEstimateCol.TRAVEL_OTHER,
       BudgetEstimateRow.TRAVEL_OTHER,
       BudgetEstimateRow.TRAVEL_OTHER,
-      prefix
+      prefix,
     );
 
     return [...travelRegion, ...travelCO, ...travelOther];
@@ -127,7 +127,7 @@ class BudgetEstimate extends Worksheet {
       BudgetEstimateCol.HONORARIUM,
       BudgetEstimateRow.HONORARIUM_START,
       BudgetEstimateRow.HONORARIUM_END,
-      ExpensePrefix.HONORARIUM
+      ExpensePrefix.HONORARIUM,
     );
   }
 
@@ -136,7 +136,7 @@ class BudgetEstimate extends Worksheet {
       BudgetEstimateCol.SUPPLIES_CONTINGENCY,
       BudgetEstimateRow.SUPPLIES_CONTINGENCY_START,
       BudgetEstimateRow.SUPPLIES_CONTINGENCY_END,
-      ""
+      '',
     );
   }
 
@@ -144,7 +144,7 @@ class BudgetEstimate extends Worksheet {
     col: string,
     startRow: number,
     endRow: number,
-    itemPrefix: string
+    itemPrefix: string,
   ) {
     const expenseItems = [];
 
@@ -159,22 +159,22 @@ class BudgetEstimate extends Worksheet {
   _parseBudgetEstimateRow(
     itemCol: string,
     row: string | number,
-    itemPrefix: string
+    itemPrefix: string,
   ) {
-    const unitCost = extractResult(this.ws?.getCell("K" + row).value);
+    const unitCost = extractResult(this.ws?.getCell('K' + row).value);
 
     if (!unitCost || unitCost == 0) return;
 
     const expenseItem =
       itemPrefix + this.ws?.getCell(itemCol + row).text.trim();
-    const quantity = extractResult(this.ws?.getCell("H" + row).value);
-    const freq = extractResult(this.ws?.getCell("J" + row).value) || 1;
+    const quantity = extractResult(this.ws?.getCell('H' + row).value);
+    const freq = extractResult(this.ws?.getCell('J' + row).value) || 1;
 
     let expenseGroup = ExpenseGroup.TRAINING_SCHOLARSHIPS_EXPENSES;
     let gaaObject = GAAObject.TRAINING_EXPENSES;
-    let ppmp: YesNo = "N";
-    let appSupplies: YesNo = "N";
-    let appTicket: YesNo = "N";
+    let ppmp: YesNo = 'N';
+    let appSupplies: YesNo = 'N';
+    let appTicket: YesNo = 'N';
     let mannerOfRelease = MannerOfRelease.DIRECT_PAYMENT;
 
     if (expenseItem.includes(ExpensePrefix.BOARD_LODGING)) {
@@ -182,21 +182,21 @@ class BudgetEstimate extends Worksheet {
     }
 
     if (expenseItem.includes(ExpensePrefix.TRAVEL)) {
-      const keywords = ["Resource", "Technical", "Bureau", "Other"];
+      const keywords = ['Resource', 'Technical', 'Bureau', 'Other'];
 
-      if (!keywords.some((s) => expenseItem.includes(s))) {
+      if (!keywords.some(s => expenseItem.includes(s))) {
         mannerOfRelease = MannerOfRelease.FOR_DOWNLOAD_PSF;
       }
     }
 
-    if (expenseItem.toLowerCase().includes("supplies")) {
+    if (expenseItem.toLowerCase().includes('supplies')) {
       expenseGroup = ExpenseGroup.SUPPLIES_EXPENSES;
       gaaObject = GAAObject.OTHER_SUPPLIES;
-      appSupplies = "Y";
+      appSupplies = 'Y';
       mannerOfRelease = MannerOfRelease.CASH_ADVANCE;
     }
 
-    if (expenseItem === "Contingency") {
+    if (expenseItem === 'Contingency') {
       mannerOfRelease = MannerOfRelease.CASH_ADVANCE;
     }
 

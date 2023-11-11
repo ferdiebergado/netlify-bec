@@ -1,5 +1,5 @@
-import Worksheet from "./worksheet";
-import BudgetEstimate from "./budget_estimate";
+import Worksheet from './worksheet';
+import BudgetEstimate from './budget_estimate';
 import {
   ActivityInfo,
   ExpenditureMatrixCell,
@@ -7,7 +7,7 @@ import {
   ExpenditureMatrixCol,
   ExpenseItem,
   CellData,
-} from "./types";
+} from './types';
 
 class ExpenditureMatrix extends Worksheet {
   beMonth?: number;
@@ -75,11 +75,11 @@ class ExpenditureMatrix extends Worksheet {
       let currentRow = startRow;
 
       const expenseGrpValidation = this.ws.getCell(
-        ExpenditureMatrixCol.EXPENSE_GROUP + startRow
+        ExpenditureMatrixCol.EXPENSE_GROUP + startRow,
       ).dataValidation;
 
       const gaaObjValidation = this.ws.getCell(
-        ExpenditureMatrixCol.GAA_OBJECT + startRow
+        ExpenditureMatrixCol.GAA_OBJECT + startRow,
       ).dataValidation;
 
       this.ws.duplicateRow(startRow, nRows, true);
@@ -103,7 +103,7 @@ class ExpenditureMatrix extends Worksheet {
             .getRow(startRow - 1)
             .getCell(
               ExpenditureMatrixCol.PHYSICAL_TARGET_MONTH_START_INDEX +
-                this.beMonth
+                this.beMonth,
             ).value = 1;
 
         const totalCost = {
@@ -213,12 +213,9 @@ class ExpenditureMatrix extends Worksheet {
   }
 
   async save() {
-    // const filename = `expenditure-${timestamp()}.xlsx`;
-    // const outputFile = path.join(this.workDir, filename);
+    const buffer = await this.wb.xlsx.writeBuffer();
 
-    // await this.wb.xlsx.writeFile(outputFile);
-
-    return await this.wb.xlsx.writeBuffer();
+    return buffer;
   }
 }
 

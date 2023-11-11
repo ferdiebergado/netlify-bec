@@ -1,4 +1,4 @@
-import Excel from "exceljs";
+import Excel from 'exceljs';
 
 class Worksheet {
   xls: ArrayBuffer;

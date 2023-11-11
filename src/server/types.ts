@@ -1,7 +1,7 @@
 import { CellValue, DataValidation } from 'exceljs';
 
 enum Defaults {
-  BE_SHEET_NAME = 'BAE-BE-001',
+  BE_SHEET_NAME = 'BE-001',
   EM_SHEET_NAME = 'Expenditure Form',
 }
 

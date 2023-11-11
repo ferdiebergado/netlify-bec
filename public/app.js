@@ -1,2 +1,46 @@
-"use strict";(()=>{var l=document.forms.namedItem("excelForm"),s=document.getElementById("excelFile");l&&s?l.addEventListener("submit",async i=>{i.preventDefault();let t=new FormData,n=s.files?.[0];if(n){t.append("excelFile",n);try{let e=await fetch("/.netlify/functions/convert",{method:"POST",body:t});if(e.ok){let a=await e.blob(),r=e.headers.get("Content-Disposition"),c=r&&r.match(/filename="(.+?)"/),d=c?c[1]:`em-${new Date().getTime()}.xlsx`,o=document.createElement("a");o.href=URL.createObjectURL(a),o.download=d,document.body.appendChild(o),o.click(),document.body.removeChild(o)}else console.error("Failed to convert. Server returned:",e.status,e.statusText)}catch(e){console.error("An error occurred during conversion:",e)}}else console.error("No file selected for conversion.")}):console.error("Form or file input not found.");})();
-//# sourceMappingURL=app.js.map
+"use strict";
+(() => {
+  // src/app.ts
+  var excelForm = document.forms.namedItem(
+    "excelForm"
+  );
+  var fileInput = document.getElementById(
+    "excelFile"
+  );
+  if (excelForm && fileInput) {
+    excelForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const formData = new FormData();
+      const selectedFile = fileInput.files?.[0];
+      if (!selectedFile) {
+        throw new Error("No file selected for conversion.");
+      }
+      formData.append("excelFile", selectedFile);
+      try {
+        const res = await fetch("/.netlify/functions/convert", {
+          method: "POST",
+          body: formData
+        });
+        if (!res.ok) {
+          const err = "Failed to convert. Server returned:";
+          console.error(err, res.status, res.statusText);
+          throw new Error(err);
+        }
+        const blob = await res.blob();
+        const contentDisposition = res.headers.get("Content-Disposition");
+        const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+?)"/);
+        const filename = filenameMatch ? filenameMatch[1] : `em-${(/* @__PURE__ */ new Date()).getTime()}.xlsx`;
+        const downloadLink = document.createElement("a");
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      } catch (error) {
+        console.error("An error occurred during conversion:", error);
+      }
+    });
+  } else {
+    console.error("Form or file input not found.");
+  }
+})();

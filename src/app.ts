@@ -12,64 +12,60 @@ if (excelForm && fileInput) {
     const formData = new FormData();
     const selectedFile = fileInput.files?.[0];
 
-    if (selectedFile) {
-      formData.append("excelFile", selectedFile);
+    if (!selectedFile) {
+      throw new Error("No file selected for conversion.");
+    }
 
-      try {
-        const res = await fetch("/.netlify/functions/convert", {
-          method: "POST",
-          body: formData,
-        });
+    formData.append("excelFile", selectedFile);
 
-        if (res.ok) {
-          // const blob = await res.blob();
-          // const url = URL.createObjectURL(blob);
-          // window.location.href = url;
-          // console.log(await res.text());
+    try {
+      const res = await fetch("/.netlify/functions/convert", {
+        method: "POST",
+        body: formData,
+      });
 
-          // Convert the response body to ArrayBuffer
-          // const arrayBuffer = await res.arrayBuffer();
-
-          // // Convert the ArrayBuffer to a buffer (Uint8Array)
-          // const buffer = new Uint8Array(arrayBuffer);
-
-          // Get the blob data from the response
-          const blob = await res.blob();
-
-          // Get the filename from the Content-Disposition header
-          const contentDisposition = res.headers.get("Content-Disposition");
-          const filenameMatch =
-            contentDisposition && contentDisposition.match(/filename="(.+?)"/);
-          const filename = filenameMatch
-            ? filenameMatch[1]
-            : `em-${new Date().getTime()}.xlsx`;
-
-          // Create a download link
-          const downloadLink = document.createElement("a");
-          downloadLink.href = URL.createObjectURL(blob);
-          downloadLink.download = filename;
-
-          // Append the link to the body and trigger the click event
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-
-          // // Clean up: remove the link from the body
-          document.body.removeChild(downloadLink);
-        } else {
-          console.error(
-            "Failed to convert. Server returned:",
-            res.status,
-            res.statusText
-          );
-          // Handle error as needed
-        }
-      } catch (error) {
-        console.error("An error occurred during conversion:", error);
-        // Handle error as needed
+      if (!res.ok) {
+        const err = "Failed to convert. Server returned:";
+        console.error(err, res.status, res.statusText);
+        throw new Error(err);
       }
-    } else {
-      console.error("No file selected for conversion.");
-      // Handle case where no file is selected
+
+      // const blob = await res.blob();
+      // const url = URL.createObjectURL(blob);
+      // window.location.href = url;
+      // console.log(await res.text());
+
+      // Convert the response body to ArrayBuffer
+      // const arrayBuffer = await res.arrayBuffer();
+
+      // // Convert the ArrayBuffer to a buffer (Uint8Array)
+      // const buffer = new Uint8Array(arrayBuffer);
+
+      // Get the blob data from the response
+      const blob = await res.blob();
+
+      // Get the filename from the Content-Disposition header
+      const contentDisposition = res.headers.get("Content-Disposition");
+      const filenameMatch =
+        contentDisposition && contentDisposition.match(/filename="(.+?)"/);
+      const filename = filenameMatch
+        ? filenameMatch[1]
+        : `em-${new Date().getTime()}.xlsx`;
+
+      // Create a download link
+      const downloadLink = document.createElement("a");
+      downloadLink.href = URL.createObjectURL(blob);
+      downloadLink.download = filename;
+
+      // Append the link to the body and trigger the click event
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+
+      // // Clean up: remove the link from the body
+      document.body.removeChild(downloadLink);
+    } catch (error) {
+      console.error("An error occurred during conversion:", error);
+      // Handle error as needed
     }
   });
 } else {

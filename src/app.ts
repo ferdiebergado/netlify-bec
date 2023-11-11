@@ -28,15 +28,13 @@ if (excelForm && fileInput) {
           // console.log(await res.text());
 
           // Convert the response body to ArrayBuffer
-          const arrayBuffer = await res.arrayBuffer();
+          // const arrayBuffer = await res.arrayBuffer();
 
-          // Convert the ArrayBuffer to a buffer (Uint8Array)
-          const buffer = new Uint8Array(arrayBuffer);
+          // // Convert the ArrayBuffer to a buffer (Uint8Array)
+          // const buffer = new Uint8Array(arrayBuffer);
 
-          // Create a Blob from the buffer
-          const blob = new Blob([buffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          });
+          // Get the blob data from the response
+          const blob = await res.blob();
 
           // Get the filename from the Content-Disposition header
           const contentDisposition = res.headers.get("Content-Disposition");
@@ -55,7 +53,7 @@ if (excelForm && fileInput) {
           document.body.appendChild(downloadLink);
           downloadLink.click();
 
-          // Clean up: remove the link from the body
+          // // Clean up: remove the link from the body
           document.body.removeChild(downloadLink);
         } else {
           console.error(

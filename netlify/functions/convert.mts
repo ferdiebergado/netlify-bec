@@ -26,7 +26,11 @@ export default async (req: Request, context: Context) => {
   }
 
   const buf2 = await wb.xlsx.writeBuffer();
-  const res = new Response(buf2);
+
+  // Create a Blob from the buffer
+  const blob = new Blob([buf2]);
+
+  const res = new Response(blob);
   const filename = `em-${new Date().getTime()}.xlsx`;
 
   // res.headers.set("Content-Length", fs.statSync(xlsx).size.toString());

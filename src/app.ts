@@ -15,10 +15,22 @@ const hideAlert = () => {
   }
 };
 
-const showAlert = (msg: string) => {
+const showAlert = (msg: string, type: string = "success") => {
   if (divAlert) {
     divAlert.innerHTML = msg;
     divAlert.style.display = "block";
+    const clsSuccess = "alert-success";
+    const clsError = "alert-error";
+    let cls = clsSuccess;
+
+    if (type === "error") {
+      divAlert.classList.remove(clsSuccess);
+      cls = "alert-error";
+    } else {
+      divAlert.classList.remove(clsError);
+    }
+
+    divAlert.classList.add(cls);
   }
 };
 
@@ -70,7 +82,7 @@ excelForm.addEventListener("submit", async (event) => {
       const err = "Failed to convert. Server returned:";
       console.error(err, res.status, res.statusText);
 
-      showAlert(err);
+      showAlert(err, "error");
 
       throw new Error(err);
     }
@@ -98,14 +110,14 @@ excelForm.addEventListener("submit", async (event) => {
     // // Clean up: remove the link from the body
     document.body.removeChild(downloadLink);
 
-    hideAlert();
+    showAlert("Conversion successful. Download will start automatically.");
     isLoading = false;
     toggleSpinner(btnConvert, "Convert");
   } catch (error) {
     const msg = `ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and the layout was not changed.`;
     console.error(msg, error);
     // Handle error as needed
-    showAlert(msg);
+    showAlert(msg, "error");
     isLoading = false;
     toggleSpinner(btnConvert, "Convert");
   }

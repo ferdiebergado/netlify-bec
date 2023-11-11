@@ -2,12 +2,21 @@
 
 .alert-error {
   width: 100%;
-  background-color: crimson;
+  background-color: mediumvioletred;
+  color: white;
+  padding: 20px;
+  margin-bottom: 50px;
+}
+
+.alert-success {
+  width: 100%;
+  background-color: darkturquoise;
   color: white;
   padding: 20px;
   margin-bottom: 50px;
 }
 
 footer {
+  font-size: smaller;
   text-align: center;
 }

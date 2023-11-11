@@ -11,6 +11,7 @@
   var btnConvert = document.getElementById(
     "convert"
   );
+  var isLoading = false;
   var hideAlert = () => {
     if (divAlert) {
       divAlert.style.display = "none";
@@ -46,7 +47,6 @@
     throw new Error("Form or file input not found.");
   }
   hideAlert();
-  var isLoading = false;
   toggleSpinner(btnConvert, "Convert");
   excelForm.addEventListener("submit", async (event) => {
     event.preventDefault();

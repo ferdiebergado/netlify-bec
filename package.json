@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild src/app.ts --bundle --sourcemap --minify --outfile=public/app.js"
+    "build": "esbuild src/app.ts --bundle --sourcemap --minify --outfile=public/app.js",
+    "netlify:build": "netlify build",
+    "dev": "npm run build && netlify dev"
   },
   "keywords": [],
   "author": "",

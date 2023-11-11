@@ -7,3 +7,4 @@
 - add eslint and prettier
 - try node-xlsx
 - use express
+- try bun

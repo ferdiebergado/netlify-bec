@@ -1,0 +1,13 @@
+@import url("@picocss/pico/css/pico.css");
+
+.alert-error {
+  width: 100%;
+  background-color: crimson;
+  color: white;
+  padding: 20px;
+  margin-bottom: 50px;
+}
+
+footer {
+  text-align: center;
+}

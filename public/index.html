@@ -4,20 +4,41 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BEC</title>
+    <link rel="stylesheet" href="app.css" />
+    <script src="app.js" defer></script>
   </head>
   <body>
-    <main>
-      <form enctype="multipart/form-data" name="excelForm">
-        <input
-          type="file"
-          id="excelFile"
-          name="excelFile"
-          accept=".xlsx"
-          required
-        />
-        <button type="submit">Convert</button>
-      </form>
+    <main class="container">
+      <header>
+        <hgroup>
+          <h1>Budget Estimate Converter</h1>
+          <h2>Converts a Budget Estimate into an Expenditure Matrix</h2>
+        </hgroup>
+      </header>
+      <article>
+        <div id="alert" class="alert-error">Error occurred.</div>
+        <form enctype="multipart/form-data" name="excelForm">
+          <label for="excelFile"
+            >Select the Budget Estimate (Download template
+            <a href="BLD-BE-001 Budget Estimate template.xlsx">here</a>)
+            <input
+              type="file"
+              id="excelFile"
+              name="excelFile"
+              accept=".xlsx"
+              required
+            />
+          </label>
+          <button id="convert" type="submit">Convert</button>
+        </form>
+      </article>
+      <footer>
+        <small>
+          &copy; 2023 Budget Estimate Converter created by ferdie bergado &lt;
+          <a href="mailto:ferdiebergado@gmail.com">ferdiebergado@gmail.com</a
+          >&gt;
+        </small>
+      </footer>
     </main>
-    <script src="app.js"></script>
   </body>
 </html>

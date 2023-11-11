@@ -9,48 +9,46 @@ const btnConvert = document.getElementById(
   'convert',
 ) as HTMLButtonElement | null;
 
+if (!excelForm || !fileInput || !divAlert || !btnConvert) {
+  throw new Error('One or more required elements not found.');
+}
+
 let isLoading = false;
 
 const hideAlert = () => {
-  if (divAlert) {
-    divAlert.style.display = 'none';
-  }
+  divAlert.style.display = 'none';
 };
 
 const showAlert = (msg: string, type: string = 'success') => {
-  if (divAlert) {
-    divAlert.innerHTML = msg;
-    divAlert.style.display = 'block';
-    const clsSuccess = 'alert-success';
-    const clsError = 'alert-error';
-    let cls = clsSuccess;
+  const ALERT_SUCCESS_CLASS = 'alert-success';
+  const ALERT_ERROR_CLASS = 'alert-error';
 
-    if (type === 'error') {
-      divAlert.classList.remove(clsSuccess);
-      cls = 'alert-error';
-    } else {
-      divAlert.classList.remove(clsError);
-    }
+  let cls = ALERT_SUCCESS_CLASS;
 
-    divAlert.classList.add(cls);
+  divAlert.innerHTML = msg;
+  divAlert.style.display = 'block';
+
+  if (type === 'error') {
+    divAlert.classList.remove(ALERT_SUCCESS_CLASS);
+    cls = 'alert-error';
+  } else {
+    divAlert.classList.remove(ALERT_ERROR_CLASS);
   }
+
+  divAlert.classList.add(cls);
 };
 
-const toggleSpinner = (el: HTMLElement | null, val: string) => {
-  if (el) {
-    if (isLoading) {
-      el.setAttribute('aria-busy', 'true');
-    } else {
-      el.removeAttribute('aria-busy');
-    }
-    el.textContent = val;
-  }
-};
+const toggleSpinner = (el: HTMLElement, val: string) => {
+  const LOADING_CLASS = 'aria-busy';
 
-if (!excelForm || !fileInput) {
-  throw new Error('Form or file input not found.');
-  // Handle case where form or file input is not found
-}
+  if (isLoading) {
+    el.setAttribute(LOADING_CLASS, 'true');
+  } else {
+    el.removeAttribute(LOADING_CLASS);
+  }
+
+  el.textContent = val;
+};
 
 hideAlert();
 
@@ -63,17 +61,18 @@ excelForm.addEventListener('submit', async event => {
   isLoading = true;
   toggleSpinner(btnConvert, 'Converting...');
 
-  const formData = new FormData();
   const selectedFile = fileInput.files?.[0];
 
   if (!selectedFile) {
     throw new Error('No file selected for conversion.');
   }
 
+  const formData = new FormData();
   formData.append('excelFile', selectedFile);
 
   try {
-    const res = await fetch('/.netlify/functions/convert', {
+    const CONVERT_URL = '/.netlify/functions/convert';
+    const res = await fetch(CONVERT_URL, {
       method: 'POST',
       body: formData,
     });
@@ -114,7 +113,8 @@ excelForm.addEventListener('submit', async event => {
     // // Clean up: remove the link from the body
     document.body.removeChild(downloadLink);
   } catch (error) {
-    const msg = `ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and the layout was not changed.`;
+    const msg =
+      'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
     console.error(msg, error);
     // Handle error as needed
     showAlert(msg, 'error');

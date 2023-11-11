@@ -2514,19 +2514,17 @@ textarea,
 }
 
 /* src/app.css */
-.alert-error {
-  width: 100%;
-  background-color: mediumvioletred;
+.alert {
   color: white;
+  width: 100%;
   padding: 20px;
   margin-bottom: 50px;
 }
 .alert-success {
-  width: 100%;
   background-color: darkturquoise;
-  color: white;
-  padding: 20px;
-  margin-bottom: 50px;
+}
+.alert-error {
+  background-color: mediumvioletred;
 }
 footer {
   font-size: smaller;

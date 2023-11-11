@@ -2,9 +2,9 @@
 
 - Delegate the conversion of buffer to blob on the server side. (OK)
 - Refactor to use early returns. (OK)
-- extract handler to src
-- add pico css
-- add favicon
+- extract handler to src (OK)
+- add pico css (OK)
+- add favicon (OK)
 - add eslint and prettier
 - try node-xlsx
 - use express

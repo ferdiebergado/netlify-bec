@@ -131,3 +131,6 @@ dist
 
 # Local Netlify folder
 .netlify
+
+# static assets
+public/app.*

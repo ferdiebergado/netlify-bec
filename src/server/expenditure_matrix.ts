@@ -1,13 +1,7 @@
 import Worksheet from './worksheet';
 import BudgetEstimate from './budget_estimate';
-import {
-  ActivityInfo,
-  ExpenditureMatrixCell,
-  ExpenditureMatrixRow,
-  ExpenditureMatrixCol,
-  ExpenseItem,
-  CellData,
-} from './types';
+import { ActivityInfo, ExpenseItem, CellData } from './types';
+import { EXPENDITURE_MATRIX } from './constants';
 
 class ExpenditureMatrix extends Worksheet {
   beMonth?: number;
@@ -23,20 +17,20 @@ class ExpenditureMatrix extends Worksheet {
         info;
       const data: CellData[] = [
         {
-          cell: ExpenditureMatrixCell.PROGRAM,
+          cell: EXPENDITURE_MATRIX.CELL_PROGRAM,
           value: program,
         },
         {
-          cell: ExpenditureMatrixCell.OUTPUT,
+          cell: EXPENDITURE_MATRIX.CELL_OUTPUT,
           value: output,
         },
         {
-          cell: ExpenditureMatrixCell.OUTPUT_INDICATOR,
+          cell: EXPENDITURE_MATRIX.CELL_OUTPUT_INDICATOR,
           value: outputIndicator,
         },
-        { cell: ExpenditureMatrixCell.ACTIVITY, value: activity },
+        { cell: EXPENDITURE_MATRIX.CELL_ACTIVITY, value: activity },
         {
-          cell: ExpenditureMatrixCell.ACTIVITY_INDICATOR,
+          cell: EXPENDITURE_MATRIX.CELL_ACTIVITY_INDICATOR,
           value: activityIndicator,
         },
       ];
@@ -54,9 +48,9 @@ class ExpenditureMatrix extends Worksheet {
   addExpenseItems(expenseItems: ExpenseItem[]) {
     const updateGrandTotals = (startRow: number, endRow: number) => {
       const grandCols = [
-        ExpenditureMatrixCol.TOTAL_COST as string,
-        ExpenditureMatrixCol.TOTAL_OBLIGATION as string,
-        ExpenditureMatrixCol.TOTAL_DISBURSEMENT as string,
+        EXPENDITURE_MATRIX.COL_TOTAL_COST as string,
+        EXPENDITURE_MATRIX.COL_TOTAL_OBLIGATION as string,
+        EXPENDITURE_MATRIX.COL_TOTAL_DISBURSEMENT as string,
       ];
 
       for (const col of grandCols) {
@@ -69,17 +63,17 @@ class ExpenditureMatrix extends Worksheet {
     };
 
     if (this.ws) {
-      const startRow = ExpenditureMatrixRow.EXPENSE_ITEM_START_ROW;
+      const startRow = EXPENDITURE_MATRIX.ROW_EXPENSE_ITEM_START_ROW;
       const nRows =
-        expenseItems.length - ExpenditureMatrixRow.EXISTING_EXPENSE_ITEM_ROWS;
+        expenseItems.length - EXPENDITURE_MATRIX.ROW_EXISTING_EXPENSE_ITEM_ROWS;
       let currentRow = startRow;
 
       const expenseGrpValidation = this.ws.getCell(
-        ExpenditureMatrixCol.EXPENSE_GROUP + startRow,
+        EXPENDITURE_MATRIX.COL_EXPENSE_GROUP + startRow,
       ).dataValidation;
 
       const gaaObjValidation = this.ws.getCell(
-        ExpenditureMatrixCol.GAA_OBJECT + startRow,
+        EXPENDITURE_MATRIX.COL_GAA_OBJECT + startRow,
       ).dataValidation;
 
       this.ws.duplicateRow(startRow, nRows, true);
@@ -102,7 +96,7 @@ class ExpenditureMatrix extends Worksheet {
           this.ws
             .getRow(startRow - 1)
             .getCell(
-              ExpenditureMatrixCol.PHYSICAL_TARGET_MONTH_START_INDEX +
+              EXPENDITURE_MATRIX.COL_PHYSICAL_TARGET_MONTH_START_INDEX +
                 this.beMonth,
             ).value = 1;
 
@@ -118,57 +112,57 @@ class ExpenditureMatrix extends Worksheet {
 
         const data: CellData[] = [
           {
-            cell: ExpenditureMatrixCol.EXPENSE_GROUP as string,
+            cell: EXPENDITURE_MATRIX.COL_EXPENSE_GROUP as string,
             value: expenseGroup,
             dataValidation: expenseGrpValidation,
           },
           {
-            cell: ExpenditureMatrixCol.GAA_OBJECT as string,
+            cell: EXPENDITURE_MATRIX.COL_GAA_OBJECT as string,
             value: gaaObject,
             dataValidation: gaaObjValidation,
           },
           {
-            cell: ExpenditureMatrixCol.EXPENSE_ITEM as string,
+            cell: EXPENDITURE_MATRIX.COL_EXPENSE_ITEM as string,
             value: expenseItem,
           },
           {
-            cell: ExpenditureMatrixCol.QUANTITY as string,
+            cell: EXPENDITURE_MATRIX.COL_QUANTITY as string,
             value: quantity,
           },
           {
-            cell: ExpenditureMatrixCol.FREQUENCY as string,
+            cell: EXPENDITURE_MATRIX.COL_FREQUENCY as string,
             value: freq,
           },
           {
-            cell: ExpenditureMatrixCol.UNIT_COST as string,
+            cell: EXPENDITURE_MATRIX.COL_UNIT_COST as string,
             value: unitCost,
           },
           {
-            cell: ExpenditureMatrixCol.TOTAL_COST as string,
+            cell: EXPENDITURE_MATRIX.COL_TOTAL_COST as string,
             value: totalCost,
           },
           {
-            cell: ExpenditureMatrixCol.PPMP as string,
+            cell: EXPENDITURE_MATRIX.COL_PPMP as string,
             value: ppmp,
           },
           {
-            cell: ExpenditureMatrixCol.APP_SUPPLIES as string,
+            cell: EXPENDITURE_MATRIX.COL_APP_SUPPLIES as string,
             value: appSupplies,
           },
           {
-            cell: ExpenditureMatrixCol.APP_TICKET as string,
+            cell: EXPENDITURE_MATRIX.COL_APP_TICKET as string,
             value: appTicket,
           },
           {
-            cell: ExpenditureMatrixCol.MANNER_OF_RELEASE as string,
+            cell: EXPENDITURE_MATRIX.COL_MANNER_OF_RELEASE as string,
             value: mannerOfRelease,
           },
           {
-            cell: ExpenditureMatrixCol.TOTAL_OBLIGATION as string,
+            cell: EXPENDITURE_MATRIX.COL_TOTAL_OBLIGATION as string,
             value: totalObligation,
           },
           {
-            cell: ExpenditureMatrixCol.TOTAL_DISBURSEMENT as string,
+            cell: EXPENDITURE_MATRIX.COL_TOTAL_DISBURSEMENT as string,
             value: totalDisbursement,
           },
         ];
@@ -184,8 +178,8 @@ class ExpenditureMatrix extends Worksheet {
 
         if (this.beMonth) {
           const cols = [
-            ExpenditureMatrixCol.OBLIGATION_MONTH_START_INDEX as number,
-            ExpenditureMatrixCol.DISBURSEMENT_MOTH_START_INDEX as number,
+            EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_START_INDEX as number,
+            EXPENDITURE_MATRIX.COL_DISBURSEMENT_MOTH_START_INDEX as number,
           ];
           const row = this.ws.getRow(currentRow);
 
@@ -193,7 +187,7 @@ class ExpenditureMatrix extends Worksheet {
             const monthCol = col + this.beMonth;
 
             row.getCell(monthCol).value = {
-              formula: ExpenditureMatrixCol.TOTAL_COST + currentRow,
+              formula: EXPENDITURE_MATRIX.COL_TOTAL_COST + currentRow,
             };
           }
         }

@@ -1,17 +1,20 @@
 import Worksheet from './worksheet';
 import {
-  BudgetEstimateCell,
-  BudgetEstimateRow,
-  BudgetEstimateCol,
-  ExpensePrefix,
-  ExpenseGroup,
-  GAAObject,
-  MannerOfRelease,
   ExpenseItem,
   YesNo,
   ActivityInfo,
+  ExpenseGroup,
+  GAAObject,
+  MannerOfRelease,
 } from './types';
 import { extractResult } from './utils';
+import {
+  BUDGET_ESTIMATE,
+  EXPENSE_PREFIX,
+  EXPENSE_GROUP,
+  GAA_OBJECT,
+  MANNER_OF_RELEASE,
+} from './constants';
 
 class BudgetEstimate extends Worksheet {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -20,37 +23,39 @@ class BudgetEstimate extends Worksheet {
   }
 
   get program() {
-    return this.ws?.getCell(BudgetEstimateCell.PROGRAM).text;
+    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_PROGRAM).text;
   }
 
   get output() {
-    return this.ws?.getCell(BudgetEstimateCell.OUTPUT).text;
+    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_OUTPUT).text;
   }
 
   get outputIndicator() {
-    return this.ws?.getCell(BudgetEstimateCell.OUTPUT_INDICATOR).text;
+    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_OUTPUT_INDICATOR).text;
   }
 
   get activity() {
-    return this.ws?.getCell(BudgetEstimateCell.ACTIVITY).text;
+    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_ACTIVITY).text;
   }
 
   get activityIndicator() {
-    return this.ws?.getCell(BudgetEstimateCell.ACTIVITY_INDICATOR).text;
+    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_ACTIVITY_INDICATOR).text;
   }
 
   get month() {
-    const stDate = this.ws?.getCell(BudgetEstimateCell.START_DATE).text;
+    const stDate = this.ws?.getCell(BUDGET_ESTIMATE.CELL_START_DATE).text;
 
     if (stDate) return new Date(stDate).getMonth();
   }
 
   get venue() {
-    return this.ws?.getCell(BudgetEstimateCell.VENUE).text;
+    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_VENUE).text;
   }
 
   get totalPax() {
-    return extractResult(this.ws?.getCell(BudgetEstimateCell.TOTAL_PAX).value);
+    return extractResult(
+      this.ws?.getCell(BUDGET_ESTIMATE.CELL_TOTAL_PAX).value,
+    );
   }
 
   get activityInfo() {
@@ -76,19 +81,19 @@ class BudgetEstimate extends Worksheet {
   }
 
   boardLodging() {
-    const prefix = ExpensePrefix.BOARD_LODGING;
-    const col = BudgetEstimateCol.BOARD_LODGING;
+    const prefix = EXPENSE_PREFIX.BOARD_LODGING;
+    const col = BUDGET_ESTIMATE.COL_BOARD_LODGING;
     const boardLodgingPax = this._parseExpenses(
       col,
-      BudgetEstimateRow.BOARD_LODGING_START,
-      BudgetEstimateRow.BOARD_LODGING_END,
+      BUDGET_ESTIMATE.ROW_BOARD_LODGING_START,
+      BUDGET_ESTIMATE.ROW_BOARD_LODGING_END,
       prefix,
     );
 
     const boardLodgingOther = this._parseExpenses(
       col,
-      BudgetEstimateRow.BOARD_LODGING_OTHER,
-      BudgetEstimateRow.BOARD_LODGING_OTHER,
+      BUDGET_ESTIMATE.ROW_BOARD_LODGING_OTHER,
+      BUDGET_ESTIMATE.ROW_BOARD_LODGING_OTHER,
       prefix,
     );
 
@@ -96,26 +101,26 @@ class BudgetEstimate extends Worksheet {
   }
 
   travelExpenses() {
-    const prefix = ExpensePrefix.TRAVEL;
+    const prefix = EXPENSE_PREFIX.TRAVEL;
 
     const travelRegion = this._parseExpenses(
-      BudgetEstimateCol.TRAVEL_REGION,
-      BudgetEstimateRow.TRAVEL_REGION_START,
-      BudgetEstimateRow.TRAVEL_REGION_END,
+      BUDGET_ESTIMATE.COL_TRAVEL_REGION,
+      BUDGET_ESTIMATE.ROW_TRAVEL_REGION_START,
+      BUDGET_ESTIMATE.ROW_TRAVEL_REGION_END,
       prefix,
     );
 
     const travelCO = this._parseExpenses(
-      BudgetEstimateCol.TRAVEL_CO,
-      BudgetEstimateRow.TRAVEL_CO_START,
-      BudgetEstimateRow.TRAVEL_CO_END,
+      BUDGET_ESTIMATE.COL_TRAVEL_CO,
+      BUDGET_ESTIMATE.ROW_TRAVEL_CO_START,
+      BUDGET_ESTIMATE.ROW_TRAVEL_CO_END,
       prefix,
     );
 
     const travelOther = this._parseExpenses(
-      BudgetEstimateCol.TRAVEL_OTHER,
-      BudgetEstimateRow.TRAVEL_OTHER,
-      BudgetEstimateRow.TRAVEL_OTHER,
+      BUDGET_ESTIMATE.COL_TRAVEL_OTHER,
+      BUDGET_ESTIMATE.ROW_TRAVEL_OTHER,
+      BUDGET_ESTIMATE.ROW_TRAVEL_OTHER,
       prefix,
     );
 
@@ -124,18 +129,18 @@ class BudgetEstimate extends Worksheet {
 
   honorarium() {
     return this._parseExpenses(
-      BudgetEstimateCol.HONORARIUM,
-      BudgetEstimateRow.HONORARIUM_START,
-      BudgetEstimateRow.HONORARIUM_END,
-      ExpensePrefix.HONORARIUM,
+      BUDGET_ESTIMATE.COL_HONORARIUM,
+      BUDGET_ESTIMATE.ROW_HONORARIUM_START,
+      BUDGET_ESTIMATE.ROW_HONORARIUM_END,
+      EXPENSE_PREFIX.HONORARIUM,
     );
   }
 
   suppliesContingency() {
     return this._parseExpenses(
-      BudgetEstimateCol.SUPPLIES_CONTINGENCY,
-      BudgetEstimateRow.SUPPLIES_CONTINGENCY_START,
-      BudgetEstimateRow.SUPPLIES_CONTINGENCY_END,
+      BUDGET_ESTIMATE.COL_SUPPLIES_CONTINGENCY,
+      BUDGET_ESTIMATE.ROW_SUPPLIES_CONTINGENCY_START,
+      BUDGET_ESTIMATE.ROW_SUPPLIES_CONTINGENCY_END,
       '',
     );
   }
@@ -170,34 +175,35 @@ class BudgetEstimate extends Worksheet {
     const quantity = extractResult(this.ws?.getCell('H' + row).value);
     const freq = extractResult(this.ws?.getCell('J' + row).value) || 1;
 
-    let expenseGroup = ExpenseGroup.TRAINING_SCHOLARSHIPS_EXPENSES;
-    let gaaObject = GAAObject.TRAINING_EXPENSES;
+    let expenseGroup: ExpenseGroup =
+      EXPENSE_GROUP.TRAINING_SCHOLARSHIPS_EXPENSES;
+    let gaaObject: GAAObject = GAA_OBJECT.TRAINING_EXPENSES;
     let ppmp: YesNo = 'N';
     let appSupplies: YesNo = 'N';
     let appTicket: YesNo = 'N';
-    let mannerOfRelease = MannerOfRelease.DIRECT_PAYMENT;
+    let mannerOfRelease: MannerOfRelease = MANNER_OF_RELEASE.DIRECT_PAYMENT;
 
-    if (expenseItem.includes(ExpensePrefix.BOARD_LODGING)) {
-      mannerOfRelease = MannerOfRelease.FOR_DOWNLOAD_BOARD;
+    if (expenseItem.includes(EXPENSE_PREFIX.BOARD_LODGING)) {
+      mannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_BOARD;
     }
 
-    if (expenseItem.includes(ExpensePrefix.TRAVEL)) {
+    if (expenseItem.includes(EXPENSE_PREFIX.TRAVEL)) {
       const keywords = ['Resource', 'Technical', 'Bureau', 'Other'];
 
       if (!keywords.some(s => expenseItem.includes(s))) {
-        mannerOfRelease = MannerOfRelease.FOR_DOWNLOAD_PSF;
+        mannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_PSF;
       }
     }
 
     if (expenseItem.toLowerCase().includes('supplies')) {
-      expenseGroup = ExpenseGroup.SUPPLIES_EXPENSES;
-      gaaObject = GAAObject.OTHER_SUPPLIES;
+      expenseGroup = EXPENSE_GROUP.SUPPLIES_EXPENSES;
+      gaaObject = GAA_OBJECT.OTHER_SUPPLIES;
       appSupplies = 'Y';
-      mannerOfRelease = MannerOfRelease.CASH_ADVANCE;
+      mannerOfRelease = MANNER_OF_RELEASE.CASH_ADVANCE;
     }
 
     if (expenseItem === 'Contingency') {
-      mannerOfRelease = MannerOfRelease.CASH_ADVANCE;
+      mannerOfRelease = MANNER_OF_RELEASE.CASH_ADVANCE;
     }
 
     const expense: ExpenseItem = {

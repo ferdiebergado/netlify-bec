@@ -6,8 +6,7 @@
   "scripts": {
     "build": "esbuild src/app.ts src/app.css --bundle --sourcemap --minify --outdir=public",
     "build:watch": "esbuild src/app.ts src/app.css --bundle --watch --outdir=public",
-    "netlify:build": "netlify build",
-    "dev": "npm run netlify:build && netlify dev"
+    "dev": "netlify dev"
   },
   "keywords": [],
   "author": "",

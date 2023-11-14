@@ -101,13 +101,13 @@ class ExpenditureMatrix extends Worksheet {
             ).value = 1;
 
         const totalCost = {
-          formula: `O${currentRow}*P${currentRow}*Q${currentRow}`,
+          formula: `${EXPENDITURE_MATRIX.COL_COSTING_QUANTITY}${currentRow}*${EXPENDITURE_MATRIX.COL_COSTING_UNIT_COST}${currentRow}*${EXPENDITURE_MATRIX.COL_COSTING_FREQUENCY}${currentRow}`,
         };
         const totalObligation = {
-          formula: `sum(AS${currentRow}:BD${currentRow})`,
+          formula: `sum(${EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_START}${currentRow}:${EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_END}${currentRow})`,
         };
         const totalDisbursement = {
-          formula: `sum(BF${currentRow}:BQ${currentRow})`,
+          formula: `sum(${EXPENDITURE_MATRIX.COL_DISBURSEMENT_MONTH_START}${currentRow}:${EXPENDITURE_MATRIX.COL_DISBURSEMENT_MONTH_END}${currentRow})`,
         };
 
         const data: CellData[] = [
@@ -179,7 +179,7 @@ class ExpenditureMatrix extends Worksheet {
         if (this.beMonth) {
           const cols = [
             EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_START_INDEX as number,
-            EXPENDITURE_MATRIX.COL_DISBURSEMENT_MOTH_START_INDEX as number,
+            EXPENDITURE_MATRIX.COL_DISBURSEMENT_MONTH_START_INDEX as number,
           ];
           const row = this.ws.getRow(currentRow);
 

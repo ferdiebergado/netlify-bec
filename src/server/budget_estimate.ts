@@ -166,14 +166,20 @@ class BudgetEstimate extends Worksheet {
     row: string | number,
     itemPrefix: string,
   ) {
-    const unitCost = extractResult(this.ws?.getCell('K' + row).value);
+    const unitCost = extractResult(
+      this.ws?.getCell(BUDGET_ESTIMATE.COL_AMOUNT + row).value,
+    );
 
     if (!unitCost || unitCost == 0) return;
 
     const expenseItem =
       itemPrefix + this.ws?.getCell(itemCol + row).text.trim();
-    const quantity = extractResult(this.ws?.getCell('H' + row).value);
-    const freq = extractResult(this.ws?.getCell('J' + row).value) || 1;
+    const quantity = extractResult(
+      this.ws?.getCell(BUDGET_ESTIMATE.COL_NUM_PAX + row).value,
+    );
+    const freq =
+      extractResult(this.ws?.getCell(BUDGET_ESTIMATE.COL_DAYS + row).value) ||
+      1;
 
     let expenseGroup: ExpenseGroup =
       EXPENSE_GROUP.TRAINING_SCHOLARSHIPS_EXPENSES;
@@ -188,7 +194,7 @@ class BudgetEstimate extends Worksheet {
     }
 
     if (expenseItem.includes(EXPENSE_PREFIX.TRAVEL)) {
-      const keywords = ['Resource', 'Technical', 'Bureau', 'Other'];
+      const keywords = BUDGET_ESTIMATE.NON_PAX_KEYWORDS;
 
       if (!keywords.some(s => expenseItem.includes(s))) {
         mannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_PSF;

@@ -7,7 +7,7 @@ class ExpenditureMatrix extends Worksheet {
   beMonth?: number;
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(xls: ArrayBuffer, sheet: string) {
+  constructor(xls: ArrayBuffer, sheet: string = EXPENDITURE_MATRIX.SHEET_NAME) {
     super(xls, sheet);
   }
 
@@ -50,42 +50,6 @@ class ExpenditureMatrix extends Worksheet {
 
       this.ws.getCell(cell).value = value;
     }
-
-    // sheet title
-    this.ws.getCell('A7').value = {
-      formula: 'CONCATENATE("FY ",B5," EXPENDITURE FORM")',
-      result: undefined,
-    };
-
-    // previous year physical target column heading
-    this.ws.getCell('X9').value = {
-      formula: 'CONCATENATE("FY ",B5-1," Physical Target")',
-      result: undefined,
-    };
-
-    // physical target column heading
-    this.ws.getCell('AE9').value = {
-      formula: 'CONCATENATE("FY ",B5," Physical Target")',
-      result: undefined,
-    };
-
-    // financial obligation column heading
-    this.ws.getCell('AR9').value = {
-      formula: 'CONCATENATE("FY ",B5," FINANCIAL OBLIGATION PROGRAM")',
-      result: undefined,
-    };
-
-    // financial disbursement column heading
-    this.ws.getCell('BE9').value = {
-      formula: 'CONCATENATE("FY ",B5," FINANCIAL DISBURSEMENT PROGRAM")',
-      result: undefined,
-    };
-
-    // following year financial disbursement column heading
-    this.ws.getCell('BR9').value = {
-      formula: 'CONCATENATE("FY ",B5+1," FINANCIAL DISBURSEMENT PROGRAM")',
-      result: undefined,
-    };
 
     // track the activity month
     this.beMonth = info.month;
@@ -136,15 +100,12 @@ class ExpenditureMatrix extends Worksheet {
 
       const totalCost = {
         formula: `${EXPENDITURE_MATRIX.COL_COSTING_QUANTITY}${currentRow}*${EXPENDITURE_MATRIX.COL_COSTING_UNIT_COST}${currentRow}*${EXPENDITURE_MATRIX.COL_COSTING_FREQUENCY}${currentRow}`,
-        result: undefined,
       };
       const totalObligation = {
         formula: `SUM(${EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_START}${currentRow}:${EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_END}${currentRow})`,
-        result: undefined,
       };
       const totalDisbursement = {
         formula: `SUM(${EXPENDITURE_MATRIX.COL_DISBURSEMENT_MONTH_START}${currentRow}:${EXPENDITURE_MATRIX.COL_DISBURSEMENT_MONTH_END}${currentRow})`,
-        result: undefined,
       };
 
       const data: CellData[] = [
@@ -240,7 +201,6 @@ class ExpenditureMatrix extends Worksheet {
 
           row.getCell(monthCol).value = {
             formula: EXPENDITURE_MATRIX.COL_TOTAL_COST + currentRow,
-            result: undefined,
           };
         }
       }
@@ -263,7 +223,6 @@ class ExpenditureMatrix extends Worksheet {
     for (const col of grandCols) {
       const grandTotal = {
         formula: `SUM(${col}${startRow}:${col}${endRow - 1})`,
-        result: undefined,
       };
 
       this.ws!.getCell(col + (startRow - 1)).value = grandTotal;

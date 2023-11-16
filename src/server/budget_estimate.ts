@@ -18,7 +18,7 @@ import {
 
 class BudgetEstimate extends Worksheet {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(xls: ArrayBuffer, sheet: string) {
+  constructor(xls: ArrayBuffer, sheet: string = BUDGET_ESTIMATE.SHEET_NAME) {
     super(xls, sheet);
   }
 
@@ -29,16 +29,31 @@ class BudgetEstimate extends Worksheet {
     const month = new Date(stDate).getMonth();
 
     const info: ActivityInfo = {
+      // program
       program: this.ws.getCell(BUDGET_ESTIMATE.CELL_PROGRAM).text,
+
+      // output
       output: this.ws.getCell(BUDGET_ESTIMATE.CELL_OUTPUT).text,
+
+      // output indicator
       outputIndicator: this.ws.getCell(BUDGET_ESTIMATE.CELL_OUTPUT_INDICATOR)
         .text,
+
+      // activity
       activity: this.ws.getCell(BUDGET_ESTIMATE.CELL_ACTIVITY).text,
+
+      // activity indicator
       activityIndicator: this.ws.getCell(
         BUDGET_ESTIMATE.CELL_ACTIVITY_INDICATOR,
       ).text,
+
+      // month
       month,
+
+      // venue
       venue: this.ws.getCell(BUDGET_ESTIMATE.CELL_VENUE).text,
+
+      // total pax
       totalPax: extractResult(
         this.ws.getCell(BUDGET_ESTIMATE.CELL_TOTAL_PAX).value,
       ),

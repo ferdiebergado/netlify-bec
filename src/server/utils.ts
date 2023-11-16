@@ -21,8 +21,8 @@ function extractResult(value: CellValue): number {
   return 0;
 }
 
-function timestamp(): number {
+function createTimestamp(): number {
   return new Date().getTime();
 }
 
-export { isCellFormulaValue, extractResult, timestamp };
+export { isCellFormulaValue, extractResult, createTimestamp };

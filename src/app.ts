@@ -1,5 +1,5 @@
 import { CONVERT_URL } from './server/constants';
-import { timestamp } from './server/utils';
+import { createTimestamp } from './server/utils';
 
 const excelForm = document.forms.namedItem(
   'excelForm',
@@ -98,7 +98,7 @@ async function handleSubmit(event: SubmitEvent) {
       contentDisposition && contentDisposition.match(/filename="(.+?)"/);
     const filename = filenameMatch
       ? filenameMatch[1]
-      : `em-${timestamp()}.xlsx`;
+      : `em-${createTimestamp()}.xlsx`;
 
     // Create a Blob URL
     const blobUrl = URL.createObjectURL(blob);

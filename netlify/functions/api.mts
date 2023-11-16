@@ -4,7 +4,7 @@ import serverless from 'serverless-http';
 import multer from 'multer';
 import { EXCEL_MIMETYPE } from '../../src/server/constants';
 import convert from '../../src/server/converter';
-import { timestamp } from '../../src/server/utils';
+import { createTimestamp } from '../../src/server/utils';
 
 const api = express();
 const router = Router();
@@ -14,20 +14,20 @@ function fileFilter(
   _req: Request,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback,
-) {
+): void {
   if (file.mimetype !== EXCEL_MIMETYPE) return cb(new Error('Wrong file type'));
 
   cb(null, true);
 }
 
-async function handleConvert(req: Request, res: Response) {
+async function handleConvert(req: Request, res: Response): Promise<void> {
   const { file } = req;
 
   if (!file) throw new Error('File is required.');
 
   const beBuff = file.buffer;
   const outBuff = await convert(beBuff);
-  const filename = `em-${timestamp()}.xlsx`;
+  const filename = `em-${createTimestamp()}.xlsx`;
 
   res
     .header({

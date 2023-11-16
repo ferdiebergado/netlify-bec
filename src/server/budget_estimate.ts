@@ -1,5 +1,5 @@
 import Worksheet from './worksheet';
-import {
+import type {
   ExpenseItem,
   YesNo,
   ActivityInfo,
@@ -22,50 +22,26 @@ class BudgetEstimate extends Worksheet {
     super(xls, sheet);
   }
 
-  get program() {
-    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_PROGRAM).text;
-  }
-
-  get output() {
-    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_OUTPUT).text;
-  }
-
-  get outputIndicator() {
-    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_OUTPUT_INDICATOR).text;
-  }
-
-  get activity() {
-    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_ACTIVITY).text;
-  }
-
-  get activityIndicator() {
-    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_ACTIVITY_INDICATOR).text;
-  }
-
-  get month() {
-    const stDate = this.ws?.getCell(BUDGET_ESTIMATE.CELL_START_DATE).text;
-
-    if (stDate) return new Date(stDate).getMonth();
-  }
-
-  get venue() {
-    return this.ws?.getCell(BUDGET_ESTIMATE.CELL_VENUE).text;
-  }
-
-  get totalPax() {
-    return extractResult(
-      this.ws?.getCell(BUDGET_ESTIMATE.CELL_TOTAL_PAX).value,
-    );
-  }
-
   get activityInfo() {
+    if (!this.ws) throw new Error(BudgetEstimate.LOAD_ERROR_MSG);
+
+    const stDate = this.ws.getCell(BUDGET_ESTIMATE.CELL_START_DATE).text;
+    const month = new Date(stDate).getMonth();
+
     const info: ActivityInfo = {
-      program: this.program,
-      output: this.output,
-      outputIndicator: this.outputIndicator,
-      activity: this.activity,
-      activityIndicator: this.activityIndicator,
-      month: this.month,
+      program: this.ws.getCell(BUDGET_ESTIMATE.CELL_PROGRAM).text,
+      output: this.ws.getCell(BUDGET_ESTIMATE.CELL_OUTPUT).text,
+      outputIndicator: this.ws.getCell(BUDGET_ESTIMATE.CELL_OUTPUT_INDICATOR)
+        .text,
+      activity: this.ws.getCell(BUDGET_ESTIMATE.CELL_ACTIVITY).text,
+      activityIndicator: this.ws.getCell(
+        BUDGET_ESTIMATE.CELL_ACTIVITY_INDICATOR,
+      ).text,
+      month,
+      venue: this.ws.getCell(BUDGET_ESTIMATE.CELL_VENUE).text,
+      totalPax: extractResult(
+        this.ws.getCell(BUDGET_ESTIMATE.CELL_TOTAL_PAX).value,
+      ),
     };
 
     return info;
@@ -83,14 +59,14 @@ class BudgetEstimate extends Worksheet {
   boardLodging() {
     const prefix = EXPENSE_PREFIX.BOARD_LODGING;
     const col = BUDGET_ESTIMATE.COL_BOARD_LODGING;
-    const boardLodgingPax = this._parseExpenses(
+    const boardLodgingPax = this._collectExpenseItems(
       col,
       BUDGET_ESTIMATE.ROW_BOARD_LODGING_START,
       BUDGET_ESTIMATE.ROW_BOARD_LODGING_END,
       prefix,
     );
 
-    const boardLodgingOther = this._parseExpenses(
+    const boardLodgingOther = this._collectExpenseItems(
       col,
       BUDGET_ESTIMATE.ROW_BOARD_LODGING_OTHER,
       BUDGET_ESTIMATE.ROW_BOARD_LODGING_OTHER,
@@ -103,21 +79,21 @@ class BudgetEstimate extends Worksheet {
   travelExpenses() {
     const prefix = EXPENSE_PREFIX.TRAVEL;
 
-    const travelRegion = this._parseExpenses(
+    const travelRegion = this._collectExpenseItems(
       BUDGET_ESTIMATE.COL_TRAVEL_REGION,
       BUDGET_ESTIMATE.ROW_TRAVEL_REGION_START,
       BUDGET_ESTIMATE.ROW_TRAVEL_REGION_END,
       prefix,
     );
 
-    const travelCO = this._parseExpenses(
+    const travelCO = this._collectExpenseItems(
       BUDGET_ESTIMATE.COL_TRAVEL_CO,
       BUDGET_ESTIMATE.ROW_TRAVEL_CO_START,
       BUDGET_ESTIMATE.ROW_TRAVEL_CO_END,
       prefix,
     );
 
-    const travelOther = this._parseExpenses(
+    const travelOther = this._collectExpenseItems(
       BUDGET_ESTIMATE.COL_TRAVEL_OTHER,
       BUDGET_ESTIMATE.ROW_TRAVEL_OTHER,
       BUDGET_ESTIMATE.ROW_TRAVEL_OTHER,
@@ -128,7 +104,7 @@ class BudgetEstimate extends Worksheet {
   }
 
   honorarium() {
-    return this._parseExpenses(
+    return this._collectExpenseItems(
       BUDGET_ESTIMATE.COL_HONORARIUM,
       BUDGET_ESTIMATE.ROW_HONORARIUM_START,
       BUDGET_ESTIMATE.ROW_HONORARIUM_END,
@@ -137,7 +113,7 @@ class BudgetEstimate extends Worksheet {
   }
 
   suppliesContingency() {
-    return this._parseExpenses(
+    return this._collectExpenseItems(
       BUDGET_ESTIMATE.COL_SUPPLIES_CONTINGENCY,
       BUDGET_ESTIMATE.ROW_SUPPLIES_CONTINGENCY_START,
       BUDGET_ESTIMATE.ROW_SUPPLIES_CONTINGENCY_END,
@@ -145,7 +121,7 @@ class BudgetEstimate extends Worksheet {
     );
   }
 
-  _parseExpenses(
+  _collectExpenseItems(
     col: string,
     startRow: number,
     endRow: number,
@@ -166,20 +142,20 @@ class BudgetEstimate extends Worksheet {
     row: string | number,
     itemPrefix: string,
   ) {
+    if (!this.ws) throw new Error(BudgetEstimate.LOAD_ERROR_MSG);
+
     const unitCost = extractResult(
-      this.ws?.getCell(BUDGET_ESTIMATE.COL_AMOUNT + row).value,
+      this.ws.getCell(BUDGET_ESTIMATE.COL_AMOUNT + row).value,
     );
 
-    if (!unitCost || unitCost == 0) return;
+    if (!unitCost || unitCost === 0) return;
 
-    const expenseItem =
-      itemPrefix + this.ws?.getCell(itemCol + row).text.trim();
+    const expenseItem = itemPrefix + this.ws.getCell(itemCol + row).text.trim();
     const quantity = extractResult(
-      this.ws?.getCell(BUDGET_ESTIMATE.COL_NUM_PAX + row).value,
+      this.ws.getCell(BUDGET_ESTIMATE.COL_NUM_PAX + row).value,
     );
     const freq =
-      extractResult(this.ws?.getCell(BUDGET_ESTIMATE.COL_DAYS + row).value) ||
-      1;
+      extractResult(this.ws.getCell(BUDGET_ESTIMATE.COL_DAYS + row).value) || 1;
 
     let expenseGroup: ExpenseGroup =
       EXPENSE_GROUP.TRAINING_SCHOLARSHIPS_EXPENSES;

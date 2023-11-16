@@ -1,6 +1,8 @@
 import Excel from 'exceljs';
 
 class Worksheet {
+  static LOAD_ERROR_MSG = 'Worksheet not set.  Call the load() method first.';
+
   wb: Excel.Workbook;
 
   ws?: Excel.Worksheet;
@@ -10,7 +12,6 @@ class Worksheet {
     protected sheet: string,
   ) {
     this.wb = new Excel.Workbook();
-    this.ws = undefined;
   }
 
   async load() {

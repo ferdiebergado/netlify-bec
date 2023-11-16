@@ -1,11 +1,9 @@
 import Worksheet from './worksheet';
 import BudgetEstimate from './budget_estimate';
-import { ActivityInfo, ExpenseItem, CellData } from './types';
+import type { ActivityInfo, ExpenseItem, CellData } from './types';
 import { EXPENDITURE_MATRIX } from './constants';
 
 class ExpenditureMatrix extends Worksheet {
-  static LOAD_ERROR_MSG = 'Worksheet not set.  Call the load() method first.';
-
   beMonth?: number;
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor

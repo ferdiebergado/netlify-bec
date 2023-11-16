@@ -6,6 +6,6 @@
 - add pico css (OK)
 - add favicon (OK)
 - add eslint and prettier (OK)
+- use express (OK)
 - try node-xlsx
-- use express
 - try bun

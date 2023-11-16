@@ -1,17 +1,14 @@
 import Excel from 'exceljs';
 
 class Worksheet {
-  xls: ArrayBuffer;
-
-  sheet: string;
-
   wb: Excel.Workbook;
 
   ws?: Excel.Worksheet;
 
-  constructor(xls: ArrayBuffer, sheet: string) {
-    this.xls = xls;
-    this.sheet = sheet;
+  constructor(
+    protected xls: ArrayBuffer,
+    protected sheet: string,
+  ) {
     this.wb = new Excel.Workbook();
     this.ws = undefined;
   }

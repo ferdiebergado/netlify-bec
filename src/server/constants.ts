@@ -89,6 +89,11 @@ const MANNER_OF_RELEASE = {
   CASH_ADVANCE: 'Cash Advance',
 } as const;
 
+const CONVERT_URL = '/api/convert';
+
+const EXCEL_MIMETYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
 export {
   BUDGET_ESTIMATE,
   EXPENDITURE_MATRIX,
@@ -96,4 +101,6 @@ export {
   GAA_OBJECT,
   MANNER_OF_RELEASE,
   EXPENSE_GROUP,
+  CONVERT_URL,
+  EXCEL_MIMETYPE,
 };

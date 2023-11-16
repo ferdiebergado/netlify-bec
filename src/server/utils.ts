@@ -1,11 +1,11 @@
 import { CellFormulaValue, CellValue } from 'exceljs';
 
-const isCellFormulaValue = (obj: any): obj is CellFormulaValue => {
+function isCellFormulaValue(obj: any): obj is CellFormulaValue {
   if (obj.result) return true;
   return false;
-};
+}
 
-const extractResult = (value: CellValue): number => {
+function extractResult(value: CellValue): number {
   if (value) {
     if (typeof value === 'number') return value;
 
@@ -19,10 +19,10 @@ const extractResult = (value: CellValue): number => {
   }
 
   return 0;
-};
+}
 
-const timestamp = (): number => {
+function timestamp(): number {
   return new Date().getTime();
-};
+}
 
 export { isCellFormulaValue, extractResult, timestamp };

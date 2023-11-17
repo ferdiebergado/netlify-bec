@@ -24,17 +24,11 @@
       </header>
       <article>
         <div id="alert" class="alert"></div>
-        <form enctype="multipart/form-data" name="excelForm">
+        <form id="excelForm">
           <label for="excelFile"
             >Select the Budget Estimate (Download template
             <a href="BLD-BE-001 Budget Estimate template.xlsx">here</a>)
-            <input
-              type="file"
-              id="excelFile"
-              name="excelFile"
-              accept=".xlsx"
-              required
-            />
+            <input type="file" id="excelFile" accept=".xlsx" required />
           </label>
           <button id="convert" type="submit">Convert</button>
         </form>

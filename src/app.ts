@@ -1,7 +1,7 @@
 import { CONVERT_URL } from './server/constants';
 import { createTimestamp } from './server/utils';
 
-const excelForm = document.forms.namedItem(
+const excelForm = document.getElementById(
   'excelForm',
 ) as HTMLFormElement | null;
 const fileInput = document.getElementById(

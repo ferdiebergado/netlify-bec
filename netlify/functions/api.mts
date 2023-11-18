@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-import express, { Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import express, { Router } from 'express';
 import serverless from 'serverless-http';
 import multer from 'multer';
 import { EXCEL_MIMETYPE } from '../../src/server/constants';
@@ -9,6 +10,17 @@ import { createTimestamp } from '../../src/server/utils';
 const api = express();
 const router = Router();
 const storage = multer.memoryStorage();
+
+function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _next: NextFunction,
+) {
+  console.error(err.stack);
+  res.status(500).send({ error: 'Conversion failed!' });
+}
 
 function fileFilter(
   _req: Request,
@@ -20,27 +32,36 @@ function fileFilter(
   cb(null, true);
 }
 
-async function handleConvert(req: Request, res: Response): Promise<void> {
-  const { file } = req;
+async function handleConvert(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  Promise.resolve()
+    .then(async () => {
+      const { file } = req;
 
-  if (!file) throw new Error('File is required.');
+      if (!file) throw new Error('File is required.');
 
-  const beBuff = file.buffer;
-  const outBuff = await convert(beBuff);
-  const filename = `em-${createTimestamp()}.xlsx`;
+      const beBuff = file.buffer;
+      const outBuff = await convert(beBuff);
+      const filename = `em-${createTimestamp()}.xlsx`;
 
-  res
-    .header({
-      'Content-Type': EXCEL_MIMETYPE,
-      'Content-Disposition': `attachment; filename=${filename}`,
-      'Content-Length': outBuff.byteLength.toString(),
+      res
+        .header({
+          'Content-Type': EXCEL_MIMETYPE,
+          'Content-Disposition': `attachment; filename=${filename}`,
+          'Content-Length': outBuff.byteLength.toString(),
+        })
+        .end(outBuff);
     })
-    .end(outBuff);
+    .catch(next);
 }
 
 const upload = multer({ storage, fileFilter }).single('excelFile');
 
 router.post('/convert', upload, handleConvert);
+router.use(errorHandler);
 
 api.use('/api/', router);
 

@@ -1,15 +1,16 @@
 import Excel from 'exceljs';
 
 class Worksheet {
-  static LOAD_ERROR_MSG = 'Worksheet not set.  Call the load() method first.';
+  static readonly LOAD_ERROR_MSG =
+    'Worksheet not set.  Call the load() method first.';
 
-  wb: Excel.Workbook;
+  protected wb: Excel.Workbook;
 
-  ws?: Excel.Worksheet;
+  protected ws?: Excel.Worksheet;
 
   constructor(
-    protected xls: ArrayBuffer,
-    protected sheet: string,
+    protected readonly xls: ArrayBuffer,
+    protected readonly sheet: string,
   ) {
     this.wb = new Excel.Workbook();
   }

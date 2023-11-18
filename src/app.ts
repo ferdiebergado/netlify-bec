@@ -76,13 +76,11 @@ async function handleSubmit(event: SubmitEvent) {
     });
 
     if (!res.ok) {
-      const err = 'Failed to convert. Server returned:';
+      const { error } = await res.json();
 
-      console.error(err, res.status, res.statusText);
+      console.error(error, res.status, res.statusText);
 
-      showAlert(err, 'error');
-
-      throw new Error(err);
+      throw new Error(error);
     }
 
     showAlert('Conversion successful. Download will start automatically.');
@@ -116,10 +114,10 @@ async function handleSubmit(event: SubmitEvent) {
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
   } catch (error) {
+    // Handle error
     const msg =
       'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
-    console.error(msg, error);
-    // Handle error as needed
+
     showAlert(msg, 'error');
     isLoading = false;
     toggleSpinner(btnConvert!, 'Convert');

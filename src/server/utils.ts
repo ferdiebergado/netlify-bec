@@ -1,8 +1,7 @@
 import { CellFormulaValue, CellValue } from 'exceljs';
 
 function isCellFormulaValue(obj: any): obj is CellFormulaValue {
-  if (obj.result) return true;
-  return false;
+  return 'result' in obj
 }
 
 function extractResult(value: CellValue): number {

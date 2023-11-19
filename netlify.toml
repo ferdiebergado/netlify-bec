@@ -2,13 +2,21 @@
 publish = "public"
 
 [functions]
-  external_node_modules = ["express"]
-  node_bundler = "esbuild"
-  included_files = ["./data/*"]
-  
-[[redirects]]
-  force = true
-  from = "/api/*"
-  status = 200
-  to = "/.netlify/functions/api/:splat"
+external_node_modules = ["express"]
+node_bundler = "esbuild"
+included_files = ["./data/*"]
 
+[[redirects]]
+force = true
+from = "/api/*"
+status = 200
+to = "/.netlify/functions/api/:splat"
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+Referrer-Policy = "same-origin"
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "DENY"
+X-XSS-Protection = "1; mode=block"

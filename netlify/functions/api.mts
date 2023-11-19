@@ -63,6 +63,7 @@ const upload = multer({ storage, fileFilter }).single('excelFile');
 router.post('/convert', upload, handleConvert);
 router.use(errorHandler);
 
+api.disable('x-powered-by');
 api.use('/api/', router);
 
 export const handler = serverless(api, { binary: true });

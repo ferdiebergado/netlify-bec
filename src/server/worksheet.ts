@@ -1,6 +1,6 @@
 import Excel from 'exceljs';
 
-class Worksheet {
+export default class Worksheet {
   static readonly LOAD_ERROR_MSG =
     'Worksheet not set.  Call the load() method first.';
 
@@ -21,5 +21,3 @@ class Worksheet {
     this.ws = this.wb.getWorksheet(this.sheet);
   }
 }
-
-export default Worksheet;

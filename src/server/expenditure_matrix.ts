@@ -3,7 +3,7 @@ import BudgetEstimate from './budget_estimate';
 import type { ActivityInfo, ExpenseItem, CellData } from './types';
 import { EXPENDITURE_MATRIX } from './constants';
 
-class ExpenditureMatrix extends Worksheet {
+export default class ExpenditureMatrix extends Worksheet {
   beMonth?: number;
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -248,5 +248,3 @@ class ExpenditureMatrix extends Worksheet {
     return buffer;
   }
 }
-
-export default ExpenditureMatrix;

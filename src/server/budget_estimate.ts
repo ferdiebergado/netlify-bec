@@ -16,7 +16,7 @@ import {
   MANNER_OF_RELEASE,
 } from './constants';
 
-class BudgetEstimate extends Worksheet {
+export default class BudgetEstimate extends Worksheet {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(xls: ArrayBuffer, sheet: string = BUDGET_ESTIMATE.SHEET_NAME) {
     super(xls, sheet);
@@ -226,5 +226,3 @@ class BudgetEstimate extends Worksheet {
     return expense;
   }
 }
-
-export default BudgetEstimate;

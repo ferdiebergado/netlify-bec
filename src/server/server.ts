@@ -1,13 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 import type { NextFunction, Request, Response } from 'express';
 import express, { Router } from 'express';
-import serverless from 'serverless-http';
 import multer from 'multer';
-import { EXCEL_MIMETYPE } from '../../src/server/constants';
-import convert from '../../src/server/converter';
-import { createTimestamp } from '../../src/server/utils';
+import { EXCEL_MIMETYPE } from './constants';
+import convert from './converter';
+import { createTimestamp } from './utils';
 
-const api = express();
 const router = Router();
 const storage = multer.memoryStorage();
 
@@ -63,7 +61,9 @@ const upload = multer({ storage, fileFilter }).single('excelFile');
 router.post('/convert', upload, handleConvert);
 router.use(errorHandler);
 
-api.disable('x-powered-by');
-api.use('/api/', router);
+const server = express();
 
-export const handler = serverless(api, { binary: true });
+server.disable('x-powered-by');
+server.use('/api/', router);
+
+export default server;

@@ -165,7 +165,7 @@ class BudgetEstimate extends Worksheet {
 
     if (!unitCost || unitCost === 0) return;
 
-    const expenseItem = itemPrefix + this.ws.getCell(itemCol + row).text.trim();
+    let expenseItem = itemPrefix + this.ws.getCell(itemCol + row).text.trim();
     const quantity = extractResult(
       this.ws.getCell(BUDGET_ESTIMATE.COL_NUM_PAX + row).value,
     );
@@ -179,6 +179,7 @@ class BudgetEstimate extends Worksheet {
     let appSupplies: YesNo = 'N';
     let appTicket: YesNo = 'N';
     let mannerOfRelease: MannerOfRelease = MANNER_OF_RELEASE.DIRECT_PAYMENT;
+    let tevLocation = '';
 
     if (expenseItem.includes(EXPENSE_PREFIX.BOARD_LODGING)) {
       mannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_BOARD;
@@ -186,9 +187,14 @@ class BudgetEstimate extends Worksheet {
 
     if (expenseItem.includes(EXPENSE_PREFIX.TRAVEL)) {
       const keywords = BUDGET_ESTIMATE.NON_PAX_KEYWORDS;
+      const isNonPax = keywords.some(s => expenseItem.includes(s));
 
-      if (!keywords.some(s => expenseItem.includes(s))) {
+      if (!isNonPax) {
+        const index = expenseItem.indexOf('of');
+        tevLocation = expenseItem.substring(index + 3);
+
         mannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_PSF;
+        expenseItem += ' Participants';
       }
     }
 
@@ -210,6 +216,7 @@ class BudgetEstimate extends Worksheet {
       quantity,
       freq,
       unitCost,
+      tevLocation,
       ppmp,
       appSupplies,
       appTicket,

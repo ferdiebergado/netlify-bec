@@ -83,6 +83,7 @@ class ExpenditureMatrix extends Worksheet {
         quantity,
         freq,
         unitCost,
+        tevLocation,
         ppmp,
         appSupplies,
         appTicket,
@@ -111,69 +112,74 @@ class ExpenditureMatrix extends Worksheet {
       const data: CellData[] = [
         {
           // expense group
-          cell: EXPENDITURE_MATRIX.COL_EXPENSE_GROUP as string,
+          cell: EXPENDITURE_MATRIX.COL_EXPENSE_GROUP,
           value: expenseGroup,
           dataValidation: expenseGrpValidation,
         },
         {
           // gaa object
-          cell: EXPENDITURE_MATRIX.COL_GAA_OBJECT as string,
+          cell: EXPENDITURE_MATRIX.COL_GAA_OBJECT,
           value: gaaObject,
           dataValidation: gaaObjValidation,
         },
         {
           // expense item
-          cell: EXPENDITURE_MATRIX.COL_EXPENSE_ITEM as string,
+          cell: EXPENDITURE_MATRIX.COL_EXPENSE_ITEM,
           value: expenseItem,
         },
         {
           // quantity
-          cell: EXPENDITURE_MATRIX.COL_QUANTITY as string,
+          cell: EXPENDITURE_MATRIX.COL_QUANTITY,
           value: quantity,
         },
         {
           // frequency
-          cell: EXPENDITURE_MATRIX.COL_FREQUENCY as string,
+          cell: EXPENDITURE_MATRIX.COL_FREQUENCY,
           value: freq,
         },
         {
           // unit cost
-          cell: EXPENDITURE_MATRIX.COL_UNIT_COST as string,
+          cell: EXPENDITURE_MATRIX.COL_UNIT_COST,
           value: unitCost,
         },
         {
           // total cost
-          cell: EXPENDITURE_MATRIX.COL_TOTAL_COST as string,
+          cell: EXPENDITURE_MATRIX.COL_TOTAL_COST,
           value: totalCost,
         },
         {
+          // location for tev
+          cell: EXPENDITURE_MATRIX.COL_LOCATION_TEV,
+          value: tevLocation,
+        },
+        {
           // ppmp
-          cell: EXPENDITURE_MATRIX.COL_PPMP as string,
+          cell: EXPENDITURE_MATRIX.COL_PPMP,
           value: ppmp,
         },
         {
           // app supplies
-          cell: EXPENDITURE_MATRIX.COL_APP_SUPPLIES as string,
+          cell: EXPENDITURE_MATRIX.COL_APP_SUPPLIES,
           value: appSupplies,
         },
         {
           // app ticket
-          cell: EXPENDITURE_MATRIX.COL_APP_TICKET as string,
+          cell: EXPENDITURE_MATRIX.COL_APP_TICKET,
           value: appTicket,
         },
         {
           // manner of release
-          cell: EXPENDITURE_MATRIX.COL_MANNER_OF_RELEASE as string,
+          cell: EXPENDITURE_MATRIX.COL_MANNER_OF_RELEASE,
           value: mannerOfRelease,
         },
         {
           // total obligation
-          cell: EXPENDITURE_MATRIX.COL_TOTAL_OBLIGATION as string,
+          cell: EXPENDITURE_MATRIX.COL_TOTAL_OBLIGATION,
           value: totalObligation,
         },
         {
           // total disbursement
-          cell: EXPENDITURE_MATRIX.COL_TOTAL_DISBURSEMENT as string,
+          cell: EXPENDITURE_MATRIX.COL_TOTAL_DISBURSEMENT,
           value: totalDisbursement,
         },
       ];
@@ -191,8 +197,8 @@ class ExpenditureMatrix extends Worksheet {
       // create a reference the total cost at the corresponding obligation and disbursement month column
       if (this.beMonth) {
         const cols = [
-          EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_START_INDEX as number,
-          EXPENDITURE_MATRIX.COL_DISBURSEMENT_MONTH_START_INDEX as number,
+          EXPENDITURE_MATRIX.COL_OBLIGATION_MONTH_START_INDEX,
+          EXPENDITURE_MATRIX.COL_DISBURSEMENT_MONTH_START_INDEX,
         ];
         const row = this.ws.getRow(currentRow);
 
@@ -215,9 +221,9 @@ class ExpenditureMatrix extends Worksheet {
 
   _updateGrandTotals(startRow: number, endRow: number): void {
     const grandCols = [
-      EXPENDITURE_MATRIX.COL_TOTAL_COST as string,
-      EXPENDITURE_MATRIX.COL_TOTAL_OBLIGATION as string,
-      EXPENDITURE_MATRIX.COL_TOTAL_DISBURSEMENT as string,
+      EXPENDITURE_MATRIX.COL_TOTAL_COST,
+      EXPENDITURE_MATRIX.COL_TOTAL_OBLIGATION,
+      EXPENDITURE_MATRIX.COL_TOTAL_DISBURSEMENT,
     ];
 
     for (const col of grandCols) {

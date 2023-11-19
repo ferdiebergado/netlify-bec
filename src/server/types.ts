@@ -17,6 +17,7 @@ type ExpenseItem = {
   quantity: number;
   freq: number;
   unitCost: number;
+  tevLocation: string;
   ppmp?: YesNo;
   appSupplies: YesNo;
   appTicket: YesNo;

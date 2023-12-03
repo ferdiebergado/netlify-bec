@@ -60,14 +60,16 @@ async function handleSubmit(event: SubmitEvent) {
   isLoading = true;
   toggleSpinner(btnConvert!, 'Converting...');
 
-  const selectedFile = fileInput!.files?.[0];
+  const selectedFiles = fileInput!.files;
 
-  if (!selectedFile) {
+  if (!selectedFiles) {
     throw new Error('No file selected for conversion.');
   }
 
   const formData = new FormData();
-  formData.append('excelFile', selectedFile);
+  for (const file of selectedFiles) {
+    formData.append('excelFile', file);
+  }
 
   try {
     const res = await fetch(CONVERT_URL, {

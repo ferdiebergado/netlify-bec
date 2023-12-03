@@ -37,11 +37,12 @@ async function handleConvert(
 ): Promise<void> {
   Promise.resolve()
     .then(async () => {
-      if (!req.files) throw new Error('File is required.');
+      const { file } = req;
 
-      const files = req.files as Express.Multer.File[];
-      const buffers: Buffer[] = files.map(file => file.buffer);
-      const outBuff = await convert(buffers);
+      if (!file) throw new Error('File is required.');
+
+      const beBuff = file.buffer;
+      const outBuff = await convert(beBuff);
       const filename = `em-${createTimestamp()}.xlsx`;
 
       res
@@ -55,7 +56,7 @@ async function handleConvert(
     .catch(next);
 }
 
-const upload = multer({ storage, fileFilter }).array('excelFile');
+const upload = multer({ storage, fileFilter }).single('excelFile');
 
 router.post('/convert', upload, handleConvert);
 router.use(errorHandler);

@@ -8,31 +8,33 @@ type GAAObject = (typeof GAA_OBJECT)[keyof typeof GAA_OBJECT];
 type MannerOfRelease =
   (typeof MANNER_OF_RELEASE)[keyof typeof MANNER_OF_RELEASE];
 
-type YesNo = 'Y' | 'N';
-
 type ExpenseItem = {
-  expenseGroup?: ExpenseGroup;
-  gaaObject?: GAAObject;
+  expenseGroup: ExpenseGroup;
+  gaaObject: GAAObject;
   expenseItem: string;
   quantity: number;
-  freq: number;
+  freq?: number;
   unitCost: number;
-  tevLocation: string;
-  ppmp?: YesNo;
-  appSupplies: YesNo;
-  appTicket: YesNo;
+  tevLocation?: string;
+  ppmp?: boolean;
+  appSupplies?: boolean;
+  appTicket?: boolean;
   mannerOfRelease: MannerOfRelease;
+  [key: string]: any;
 };
 
-type ActivityInfo = {
-  program?: string;
-  output?: string;
-  outputIndicator?: string;
-  activity?: string;
-  activityIndicator?: string;
-  month?: number;
+type Activity = {
+  program: string;
+  output: string;
+  outputIndicator: string;
+  activityTitle: string;
+  activityIndicator: string;
+  month: number;
   venue: string;
   totalPax: number;
+  outputPhysicalTarget: number;
+  activityPhysicalTarget: number;
+  expenseItems: ExpenseItem[];
 };
 
 type CellData = {
@@ -42,11 +44,10 @@ type CellData = {
 };
 
 export {
-  YesNo,
   ExpenseGroup,
   GAAObject,
   MannerOfRelease,
   ExpenseItem,
-  ActivityInfo,
+  Activity,
   CellData,
 };

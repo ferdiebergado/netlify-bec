@@ -2,7 +2,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import express, { Router } from 'express';
 import multer from 'multer';
-import { EXCEL_MIMETYPE } from './constants';
+import { EXCEL_MIMETYPE, MAX_FILESIZE, MAX_UPLOADS } from './constants';
 import convert from './converter';
 import { createTimestamp } from './utils';
 
@@ -26,6 +26,8 @@ function fileFilter(
   cb: multer.FileFilterCallback,
 ): void {
   if (file.mimetype !== EXCEL_MIMETYPE) return cb(new Error('Wrong file type'));
+
+  if (file.size > MAX_FILESIZE) return cb(new Error('File too large'));
 
   cb(null, true);
 }
@@ -55,7 +57,7 @@ async function handleConvert(
     .catch(next);
 }
 
-const upload = multer({ storage, fileFilter }).array('excelFile');
+const upload = multer({ storage, fileFilter }).array('excelFile', MAX_UPLOADS);
 
 router.post('/convert', upload, handleConvert);
 router.use(errorHandler);

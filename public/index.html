@@ -19,7 +19,7 @@
       <header>
         <hgroup>
           <h1>Budget Estimate Converter</h1>
-          <h2>Converts a Budget Estimate into an Expenditure Matrix</h2>
+          <h2>Converts Budget Estimates into an Expenditure Matrix</h2>
         </hgroup>
       </header>
       <article>
@@ -28,7 +28,13 @@
           <label for="excelFile"
             >Select the Budget Estimate (Download template
             <a href="BLD-BE-001 Budget Estimate template.xlsx">here</a>)
-            <input type="file" id="excelFile" accept=".xlsx" multiple required />
+            <input
+              type="file"
+              id="excelFile"
+              accept=".xlsx"
+              multiple
+              required
+            />
           </label>
           <button id="convert" type="submit">Convert</button>
         </form>

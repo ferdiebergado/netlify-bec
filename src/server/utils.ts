@@ -1,7 +1,7 @@
 import { CellFormulaValue, CellValue } from 'exceljs';
 
 function isCellFormulaValue(obj: any): obj is CellFormulaValue {
-  return 'result' in obj
+  return 'result' in obj;
 }
 
 function extractResult(value: CellValue): number {
@@ -24,4 +24,14 @@ function createTimestamp(): number {
   return new Date().getTime();
 }
 
-export { isCellFormulaValue, extractResult, createTimestamp };
+function getCellValueAsNumber(cellValue: string): number {
+  const numericValue = +cellValue;
+  return isNaN(numericValue) ? 0 : numericValue;
+}
+
+export {
+  isCellFormulaValue,
+  extractResult,
+  createTimestamp,
+  getCellValueAsNumber,
+};

@@ -120,13 +120,18 @@ function getExpenseItems(
 
 function boardLodging(sheet: Worksheet) {
   const blPrefix = 'Board and Lodging of';
-  const blMannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_BOARD;
+  let blMannerOfRelease: MannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_BOARD;
+
+  if (sheet.getCell(BUDGET_ESTIMATE.BOARD_LODGING_DIRECT_PAYMENT_CELL).value)
+    blMannerOfRelease = MANNER_OF_RELEASE.DIRECT_PAYMENT;
+
   const bl = getExpenseItems(
     sheet,
-    BUDGET_ESTIMATE.BOARD_LODGING_ROW_INDEX,
+    BUDGET_ESTIMATE.BOARD_LODGING_START_ROW_INDEX,
     BUDGET_ESTIMATE.EXPENSE_ITEM_FIRST_COL_INDEX,
     4,
     blPrefix,
+    undefined,
     blMannerOfRelease,
   );
   const blOthers = getExpenseItems(
@@ -135,6 +140,7 @@ function boardLodging(sheet: Worksheet) {
     BUDGET_ESTIMATE.EXPENSE_ITEM_FIRST_COL_INDEX,
     1,
     blPrefix,
+    undefined,
     blMannerOfRelease,
   );
   return [...bl, ...blOthers];
@@ -149,6 +155,7 @@ function travelExpenses(sheet: Worksheet, venue: string) {
     BUDGET_ESTIMATE.EXPENSE_ITEM_SECOND_COL_INDEX,
     18,
     tevPrefix,
+    undefined,
     tevMannerOfRelease,
   );
 
@@ -192,6 +199,7 @@ function otherExpenses(sheet: Worksheet) {
     BUDGET_ESTIMATE.EXPENSE_ITEM_COL_INDEX,
     3,
     '',
+    undefined,
     MANNER_OF_RELEASE.CASH_ADVANCE,
   );
 }

@@ -67,10 +67,25 @@ function createActivityRow(
   activity: Activity,
   isFirst: boolean = false,
 ) {
+  const {
+    ACTIVITY_ROW_INDEX,
+    ACTIVITIES_COL,
+    PERFORMANCE_INDICATOR_COL,
+    PHYSICAL_TARGET_MONTH_COL_INDEX,
+    PHYSICAL_TARGET_TOTAL_COL,
+    TOTAL_COST_COL,
+    PHYSICAL_TARGET_MONTH_START_COL_INDEX,
+    PHYSICAL_TARGET_MONTH_END_COL_INDEX,
+    OBLIGATION_MONTH_COL_INDEX,
+    DISBURSEMENT_MONTH_COL_INDEX,
+    TOTAL_OBLIGATION_COL,
+    TOTAL_DISBURSEMENT_COL,
+  } = EXPENDITURE_MATRIX;
+
   let activityRowIndex = targetRow;
 
   if (isFirst) {
-    activityRowIndex = EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX;
+    activityRowIndex = ACTIVITY_ROW_INDEX;
   } else {
     duplicateActivity(ws, targetRow);
   }
@@ -94,32 +109,28 @@ function createActivityRow(
   const activityRow = ws.getRow(activityRowIndex);
 
   // activity
-  activityRow.getCell(EXPENDITURE_MATRIX.ACTIVITIES_COL).value = activityTitle;
+  activityRow.getCell(ACTIVITIES_COL).value = activityTitle;
 
   // activity indicator
-  activityRow.getCell(EXPENDITURE_MATRIX.PERFORMANCE_INDICATOR_COL).value =
-    activityIndicator;
+  activityRow.getCell(PERFORMANCE_INDICATOR_COL).value = activityIndicator;
 
   // activity physical target
-  activityRow.getCell(
-    EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_COL_INDEX + month,
-  ).value = activityPhysicalTarget;
+  activityRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + month).value =
+    activityPhysicalTarget;
 
   // costing grand total
-  activityRow.getCell(EXPENDITURE_MATRIX.TOTAL_COST_COL).value = sumFormula(
-    EXPENDITURE_MATRIX.TOTAL_COST_COL,
-  );
+  activityRow.getCell(TOTAL_COST_COL).value = sumFormula(TOTAL_COST_COL);
 
   // physical target grand total
-  activityRow.getCell(EXPENDITURE_MATRIX.PHYSICAL_TARGET_TOTAL_COL).value = {
-    formula: `SUM(${EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_START_COL_INDEX}${activityRowIndex}:${EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_END_COL_INDEX}${activityRowIndex})`,
+  const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${activityRowIndex}`;
+  const physicalTargetMonthEndCell = `${PHYSICAL_TARGET_MONTH_END_COL_INDEX}${activityRowIndex}`;
+
+  activityRow.getCell(PHYSICAL_TARGET_TOTAL_COL).value = {
+    formula: `SUM(${physicalTargetMonthStartCell}:${physicalTargetMonthEndCell})`,
   };
 
   // obligation and disbursement grand total per month
-  [
-    EXPENDITURE_MATRIX.OBLIGATION_MONTH_COL_INDEX,
-    EXPENDITURE_MATRIX.DISBURSEMENT_MONTH_COL_INDEX,
-  ].forEach(c => {
+  [OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX].forEach(c => {
     for (let i = 0; i < 12; i++) {
       const cell = activityRow.getCell(c + i);
       const col = cell.$col$row;
@@ -131,12 +142,13 @@ function createActivityRow(
   });
 
   // obligation grand total
-  activityRow.getCell(EXPENDITURE_MATRIX.TOTAL_OBLIGATION_COL).value =
-    sumFormula(EXPENDITURE_MATRIX.TOTAL_OBLIGATION_COL);
+  activityRow.getCell(TOTAL_OBLIGATION_COL).value =
+    sumFormula(TOTAL_OBLIGATION_COL);
 
   // disbursement grand total
-  activityRow.getCell(EXPENDITURE_MATRIX.TOTAL_DISBURSEMENT_COL).value =
-    sumFormula(EXPENDITURE_MATRIX.TOTAL_DISBURSEMENT_COL);
+  activityRow.getCell(TOTAL_DISBURSEMENT_COL).value = sumFormula(
+    TOTAL_DISBURSEMENT_COL,
+  );
 }
 
 function createOutputRow(
@@ -146,10 +158,21 @@ function createOutputRow(
   rank: number,
   isFirst = false,
 ) {
+  const {
+    OUTPUT_ROW_INDEX,
+    OUTPUT_COL,
+    RANK_COL,
+    PERFORMANCE_INDICATOR_COL,
+    PHYSICAL_TARGET_MONTH_COL_INDEX,
+    PHYSICAL_TARGET_TOTAL_COL,
+    PHYSICAL_TARGET_MONTH_START_COL_INDEX,
+    PHYSICAL_TARGET_MONTH_END_COL_INDEX,
+  } = EXPENDITURE_MATRIX;
+
   let outputRowIndex = targetRow;
 
   if (isFirst) {
-    outputRowIndex = EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX;
+    outputRowIndex = OUTPUT_ROW_INDEX;
   } else {
     duplicateOutput(ws, targetRow);
   }
@@ -158,21 +181,22 @@ function createOutputRow(
 
   // output
   const outputRow = ws.getRow(outputRowIndex);
-  outputRow.getCell(EXPENDITURE_MATRIX.OUTPUT_COL).value = output;
-  outputRow.getCell(EXPENDITURE_MATRIX.RANK_COL).value = rank;
+  outputRow.getCell(OUTPUT_COL).value = output;
+  outputRow.getCell(RANK_COL).value = rank;
 
   // output indicator
-  outputRow.getCell(EXPENDITURE_MATRIX.PERFORMANCE_INDICATOR_COL).value =
-    outputIndicator;
+  outputRow.getCell(PERFORMANCE_INDICATOR_COL).value = outputIndicator;
 
   // output physical target
-  outputRow.getCell(
-    EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_COL_INDEX + month,
-  ).value = outputPhysicalTarget;
+  outputRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + month).value =
+    outputPhysicalTarget;
 
   // physical target grand total
-  outputRow.getCell(EXPENDITURE_MATRIX.PHYSICAL_TARGET_TOTAL_COL).value = {
-    formula: `SUM(${EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_START_COL_INDEX}${outputRowIndex}:${EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_END_COL_INDEX}${outputRowIndex})`,
+  const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${outputRowIndex}`;
+  const physicalTargetMonthEndCell = `${PHYSICAL_TARGET_MONTH_END_COL_INDEX}${outputRowIndex}`;
+
+  outputRow.getCell(PHYSICAL_TARGET_TOTAL_COL).value = {
+    formula: `SUM(${physicalTargetMonthStartCell}:${physicalTargetMonthEndCell})`,
   };
 }
 
@@ -197,6 +221,29 @@ function createExpenseItemRow(
   month: number,
   isFirst = false,
 ) {
+  const {
+    EXPENSE_GROUP_COL,
+    GAA_OBJECT_COL,
+    EXPENSE_ITEM_COL,
+    QUANTITY_COL,
+    UNIT_COST_COL,
+    FREQUENCY_COL,
+    TOTAL_COST_COL,
+    TEV_LOCATION_COL,
+    PPMP_COL,
+    APP_SUPPLIES_COL,
+    APP_TICKET_COL,
+    MANNER_OF_RELEASE_COL,
+    TOTAL_OBLIGATION_COL,
+    OBLIGATION_MONTH_START_COL,
+    OBLIGATION_MONTH_END_COL,
+    OBLIGATION_MONTH_COL_INDEX,
+    TOTAL_DISBURSEMENT_COL,
+    DISBURSEMENT_MONTH_START_COL,
+    DISBURSEMENT_MONTH_END_COL,
+    DISBURSEMENT_MONTH_COL_INDEX,
+  } = EXPENDITURE_MATRIX;
+
   let rowIndex = targetRow;
 
   if (isFirst) rowIndex = targetRow - 1;
@@ -218,82 +265,78 @@ function createExpenseItemRow(
   } = expense;
 
   // expense group
-  const expenseGroupCell = currentRow.getCell(
-    EXPENDITURE_MATRIX.EXPENSE_GROUP_COL,
-  );
+  const expenseGroupCell = currentRow.getCell(EXPENSE_GROUP_COL);
   expenseGroupCell.value = expenseGroup;
 
   // gaa object
-  const gaaObjectCell = currentRow.getCell(EXPENDITURE_MATRIX.GAA_OBJECT_COL);
+  const gaaObjectCell = currentRow.getCell(GAA_OBJECT_COL);
   gaaObjectCell.value = gaaObject;
 
   // expense item
-  currentRow.getCell(EXPENDITURE_MATRIX.EXPENSE_ITEM_COL).value = expenseItem;
+  currentRow.getCell(EXPENSE_ITEM_COL).value = expenseItem;
 
   // quantity
-  currentRow.getCell(EXPENDITURE_MATRIX.QUANTITY_COL).value = quantity;
+  currentRow.getCell(QUANTITY_COL).value = quantity;
 
   // unit cost
-  currentRow.getCell(EXPENDITURE_MATRIX.UNIT_COST_COL).value = unitCost;
+  currentRow.getCell(UNIT_COST_COL).value = unitCost;
 
   // frequency
-  currentRow.getCell(EXPENDITURE_MATRIX.FREQUENCY_COL).value = freq || 1;
+  currentRow.getCell(FREQUENCY_COL).value = freq || 1;
 
   // total amount
-  currentRow.getCell(EXPENDITURE_MATRIX.TOTAL_COST_COL).value = {
-    formula: `${EXPENDITURE_MATRIX.QUANTITY_COL}${rowIndex}*${EXPENDITURE_MATRIX.UNIT_COST_COL}${rowIndex}*${EXPENDITURE_MATRIX.FREQUENCY_COL}${rowIndex}`,
+  currentRow.getCell(TOTAL_COST_COL).value = {
+    formula: `${QUANTITY_COL}${rowIndex}*${UNIT_COST_COL}${rowIndex}*${FREQUENCY_COL}${rowIndex}`,
   };
 
   // tev location
-  currentRow.getCell(EXPENDITURE_MATRIX.TEV_LOCATION_COL).value = tevLocation;
+  currentRow.getCell(TEV_LOCATION_COL).value = tevLocation;
 
   // ppmp
-  const ppmpCell = currentRow.getCell(EXPENDITURE_MATRIX.PPMP_COL);
+  const ppmpCell = currentRow.getCell(PPMP_COL);
   ppmpCell.dataValidation = YES_NO_VALIDATION;
   if (ppmp) ppmpCell.value = YES;
 
   // app supplies
-  const appSuppliesCell = currentRow.getCell(
-    EXPENDITURE_MATRIX.APP_SUPPLIES_COL,
-  );
+  const appSuppliesCell = currentRow.getCell(APP_SUPPLIES_COL);
   appSuppliesCell.dataValidation = YES_NO_VALIDATION;
   if (appSupplies) appSuppliesCell.value = YES;
 
   // app ticket
-  const appTicketCell = currentRow.getCell(EXPENDITURE_MATRIX.APP_TICKET_COL);
+  const appTicketCell = currentRow.getCell(APP_TICKET_COL);
   appTicketCell.dataValidation = YES_NO_VALIDATION;
   if (appTicket) appTicketCell.value = YES;
 
   // manner of release
-  const mannerOfReleaseCell = currentRow.getCell(
-    EXPENDITURE_MATRIX.MANNER_OF_RELEASE_COL,
-  );
+  const mannerOfReleaseCell = currentRow.getCell(MANNER_OF_RELEASE_COL);
   mannerOfReleaseCell.value = mannerOfRelease;
   mannerOfReleaseCell.dataValidation = MANNER_VALIDATION;
 
   // total obligation
-  currentRow.getCell(EXPENDITURE_MATRIX.TOTAL_OBLIGATION_COL).value = {
-    formula: `SUM(${EXPENDITURE_MATRIX.OBLIGATION_MONTH_START_COL}${rowIndex}:${EXPENDITURE_MATRIX.OBLIGATION_MONTH_END_COL}${rowIndex})`,
+  const obligationMonthStartCell = `${OBLIGATION_MONTH_START_COL}${rowIndex}`;
+  const obligationMonthEndCell = `${OBLIGATION_MONTH_END_COL}${rowIndex}`;
+
+  currentRow.getCell(TOTAL_OBLIGATION_COL).value = {
+    formula: `SUM(${obligationMonthStartCell}:${obligationMonthEndCell})`,
   };
 
   const totalRef = {
-    formula: `${EXPENDITURE_MATRIX.TOTAL_COST_COL}${rowIndex}`,
+    formula: `${TOTAL_COST_COL}${rowIndex}`,
   };
 
   // obligation month
-  currentRow.getCell(
-    EXPENDITURE_MATRIX.OBLIGATION_MONTH_COL_INDEX + month,
-  ).value = totalRef;
+  currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + month).value = totalRef;
 
   // total disbursement
-  currentRow.getCell(EXPENDITURE_MATRIX.TOTAL_DISBURSEMENT_COL).value = {
-    formula: `SUM(${EXPENDITURE_MATRIX.DISBURSEMENT_MONTH_START_COL}${rowIndex}:${EXPENDITURE_MATRIX.DISBURSEMENT_MONTH_END_COL}${rowIndex})`,
+  const disbursementMonthStartCell = `${DISBURSEMENT_MONTH_START_COL}${rowIndex}`;
+  const disbursementMonthEndCell = `${DISBURSEMENT_MONTH_END_COL}${rowIndex}`;
+
+  currentRow.getCell(TOTAL_DISBURSEMENT_COL).value = {
+    formula: `SUM(${disbursementMonthStartCell}:${disbursementMonthEndCell})`,
   };
 
   // disbursement month
-  currentRow.getCell(
-    EXPENDITURE_MATRIX.DISBURSEMENT_MONTH_COL_INDEX + month,
-  ).value = totalRef;
+  currentRow.getCell(DISBURSEMENT_MONTH_COL_INDEX + month).value = totalRef;
 }
 
 export {

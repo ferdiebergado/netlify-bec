@@ -82,15 +82,15 @@ function getExpenseItems(
     }
 
     const expenseItem = `${prefix} ${item}`;
+    const expenseItemLowered = expenseItem.toLowerCase();
 
     if (
-      expenseItem.toLowerCase().includes('travel') &&
-      expenseItem.toLowerCase().includes('participants')
+      expenseItemLowered.includes('travel') &&
+      expenseItemLowered.includes('participants')
     )
       tevLocation = item;
 
     const freq = getCellValueAsNumber(row.getCell(FREQ_CELL_INDEX).text || '1');
-
     const unitCost = parseFloat(row.getCell(UNIT_COST_CELL_INDEX).text);
 
     if (VENUES_BY_AIR.includes(venue)) appTicket = true;

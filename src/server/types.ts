@@ -1,10 +1,7 @@
-import { CellValue, DataValidation } from 'exceljs';
 import { EXPENSE_GROUP, GAA_OBJECT, MANNER_OF_RELEASE } from './constants';
 
 type ExpenseGroup = (typeof EXPENSE_GROUP)[keyof typeof EXPENSE_GROUP];
-
 type GAAObject = (typeof GAA_OBJECT)[keyof typeof GAA_OBJECT];
-
 type MannerOfRelease =
   (typeof MANNER_OF_RELEASE)[keyof typeof MANNER_OF_RELEASE];
 
@@ -37,17 +34,4 @@ type Activity = {
   expenseItems: ExpenseItem[];
 };
 
-type CellData = {
-  cell: string;
-  value: CellValue;
-  dataValidation?: DataValidation;
-};
-
-export {
-  ExpenseGroup,
-  GAAObject,
-  MannerOfRelease,
-  ExpenseItem,
-  Activity,
-  CellData,
-};
+export { ExpenseGroup, GAAObject, MannerOfRelease, ExpenseItem, Activity };

@@ -102,7 +102,7 @@ const MAX_UPLOADS = 150;
 
 const MAX_FILESIZE = 1024 * 1024 * 5;
 
-const PLANE_VENUES = [
+const VENUES_BY_AIR = [
   'BACOLOD',
   'BORACAY',
   'BUTUAN',
@@ -138,5 +138,5 @@ export {
   MANNER_VALIDATION,
   MAX_UPLOADS,
   MAX_FILESIZE,
-  PLANE_VENUES,
+  VENUES_BY_AIR,
 };

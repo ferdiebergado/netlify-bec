@@ -4,7 +4,7 @@ import {
   EXPENSE_GROUP,
   GAA_OBJECT,
   MANNER_OF_RELEASE,
-  PLANE_VENUES,
+  VENUES_BY_AIR,
 } from './constants';
 import {
   Activity,
@@ -52,13 +52,16 @@ function getExpenseItems(
   venue = '',
   mannerOfRelease: MannerOfRelease = MANNER_OF_RELEASE.DIRECT_PAYMENT,
 ) {
+  const { QUANTITY_CELL_INDEX, FREQ_CELL_INDEX, UNIT_COST_CELL_INDEX } =
+    BUDGET_ESTIMATE;
+
   const items: ExpenseItem[] = [];
 
   for (let i = 0; i < numRows; i++) {
     const row = sheet.getRow(startRowIndex);
 
     const quantity = getCellValueAsNumber(
-      row.getCell(BUDGET_ESTIMATE.QUANTITY_CELL_INDEX).text,
+      row.getCell(QUANTITY_CELL_INDEX).text,
     );
     if (quantity === 0) continue;
 
@@ -86,15 +89,11 @@ function getExpenseItems(
     )
       tevLocation = item;
 
-    const freq = getCellValueAsNumber(
-      row.getCell(BUDGET_ESTIMATE.FREQ_CELL_INDEX).text || '1',
-    );
+    const freq = getCellValueAsNumber(row.getCell(FREQ_CELL_INDEX).text || '1');
 
-    const unitCost = parseFloat(
-      row.getCell(BUDGET_ESTIMATE.UNIT_COST_CELL_INDEX).text,
-    );
+    const unitCost = parseFloat(row.getCell(UNIT_COST_CELL_INDEX).text);
 
-    if (PLANE_VENUES.includes(venue)) appTicket = true;
+    if (VENUES_BY_AIR.includes(venue)) appTicket = true;
 
     items.push(
       createExpenseItem(
@@ -120,39 +119,55 @@ function getExpenseItems(
 
 function boardLodging(sheet: Worksheet) {
   const blPrefix = 'Board and Lodging of';
-  let blMannerOfRelease: MannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_BOARD;
+  const { FOR_DOWNLOAD_BOARD, DIRECT_PAYMENT } = MANNER_OF_RELEASE;
+  const {
+    BOARD_LODGING_DIRECT_PAYMENT_CELL,
+    BOARD_LODGING_START_ROW_INDEX,
+    EXPENSE_ITEM_FIRST_COL_INDEX,
+    BOARD_LODGING_OTHER_ROW_INDEX,
+  } = BUDGET_ESTIMATE;
 
-  if (sheet.getCell(BUDGET_ESTIMATE.BOARD_LODGING_DIRECT_PAYMENT_CELL).value)
-    blMannerOfRelease = MANNER_OF_RELEASE.DIRECT_PAYMENT;
+  let blMannerOfRelease: MannerOfRelease = FOR_DOWNLOAD_BOARD;
+
+  if (sheet.getCell(BOARD_LODGING_DIRECT_PAYMENT_CELL).value)
+    blMannerOfRelease = DIRECT_PAYMENT;
 
   const bl = getExpenseItems(
     sheet,
-    BUDGET_ESTIMATE.BOARD_LODGING_START_ROW_INDEX,
-    BUDGET_ESTIMATE.EXPENSE_ITEM_FIRST_COL_INDEX,
+    BOARD_LODGING_START_ROW_INDEX,
+    EXPENSE_ITEM_FIRST_COL_INDEX,
     4,
     blPrefix,
     undefined,
     blMannerOfRelease,
   );
+
   const blOthers = getExpenseItems(
     sheet,
-    BUDGET_ESTIMATE.BOARD_LODGING_OTHER_ROW_INDEX,
-    BUDGET_ESTIMATE.EXPENSE_ITEM_FIRST_COL_INDEX,
+    BOARD_LODGING_OTHER_ROW_INDEX,
+    EXPENSE_ITEM_FIRST_COL_INDEX,
     1,
     blPrefix,
     undefined,
     blMannerOfRelease,
   );
+
   return [...bl, ...blOthers];
 }
 
 function travelExpenses(sheet: Worksheet, venue: string) {
   const tevPrefix = 'Travel Expenses of Participants from';
   const tevMannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_PSF;
+  const {
+    TRAVEL_REGION_ROW_INDEX,
+    EXPENSE_ITEM_SECOND_COL_INDEX,
+    TRAVEL_CO_ROW_INDEX,
+    TRAVEL_OTHER_ROW_INDEX,
+  } = BUDGET_ESTIMATE;
   const tevPax = getExpenseItems(
     sheet,
-    BUDGET_ESTIMATE.TRAVEL_REGION_ROW_INDEX,
-    BUDGET_ESTIMATE.EXPENSE_ITEM_SECOND_COL_INDEX,
+    TRAVEL_REGION_ROW_INDEX,
+    EXPENSE_ITEM_SECOND_COL_INDEX,
     18,
     tevPrefix,
     undefined,
@@ -162,8 +177,8 @@ function travelExpenses(sheet: Worksheet, venue: string) {
   const tevPrefixNonPax = 'Travel Expenses of';
   const tevNonPax = getExpenseItems(
     sheet,
-    BUDGET_ESTIMATE.TRAVEL_CO_ROW_INDEX,
-    BUDGET_ESTIMATE.EXPENSE_ITEM_SECOND_COL_INDEX,
+    TRAVEL_CO_ROW_INDEX,
+    EXPENSE_ITEM_SECOND_COL_INDEX,
     3,
     tevPrefixNonPax,
     venue,
@@ -171,8 +186,8 @@ function travelExpenses(sheet: Worksheet, venue: string) {
 
   const tevNonPaxOther = getExpenseItems(
     sheet,
-    BUDGET_ESTIMATE.TRAVEL_OTHER_ROW_INDEX,
-    BUDGET_ESTIMATE.EXPENSE_ITEM_SECOND_COL_INDEX,
+    TRAVEL_OTHER_ROW_INDEX,
+    EXPENSE_ITEM_SECOND_COL_INDEX,
     1,
     tevPrefixNonPax,
     venue,
@@ -205,8 +220,20 @@ function otherExpenses(sheet: Worksheet) {
 }
 
 export default function parseActivity(ws: Worksheet) {
-  const venue = ws.getCell(BUDGET_ESTIMATE.VENUE_CELL).text;
-  const stDate = ws.getCell(BUDGET_ESTIMATE.START_DATE_CELL).text;
+  const {
+    VENUE_CELL,
+    START_DATE_CELL,
+    PROGRAM_CELL,
+    OUTPUT_CELL,
+    OUTPUT_INDICATOR_CELL,
+    ACTIVITY_CELL,
+    ACTIVITY_INDICATOR_CELL,
+    TOTAL_PAX_CELL,
+    OUTPUT_PHYSICAL_TARGET_CELL,
+    ACTIVITY_PHYSICAL_TARGET_CELL,
+  } = BUDGET_ESTIMATE;
+  const venue = ws.getCell(VENUE_CELL).text;
+  const stDate = ws.getCell(START_DATE_CELL).text;
   const month = new Date(stDate).getMonth();
   const bl = boardLodging(ws);
   const tev = travelExpenses(ws, venue);
@@ -215,19 +242,19 @@ export default function parseActivity(ws: Worksheet) {
 
   const info: Activity = {
     // program
-    program: ws.getCell(BUDGET_ESTIMATE.PROGRAM_CELL).text,
+    program: ws.getCell(PROGRAM_CELL).text,
 
     // output
-    output: ws.getCell(BUDGET_ESTIMATE.OUTPUT_CELL).text,
+    output: ws.getCell(OUTPUT_CELL).text,
 
     // output indicator
-    outputIndicator: ws.getCell(BUDGET_ESTIMATE.OUTPUT_INDICATOR_CELL).text,
+    outputIndicator: ws.getCell(OUTPUT_INDICATOR_CELL).text,
 
     // activity
-    activityTitle: ws.getCell(BUDGET_ESTIMATE.ACTIVITY_CELL).text,
+    activityTitle: ws.getCell(ACTIVITY_CELL).text,
 
     // activity indicator
-    activityIndicator: ws.getCell(BUDGET_ESTIMATE.ACTIVITY_INDICATOR_CELL).text,
+    activityIndicator: ws.getCell(ACTIVITY_INDICATOR_CELL).text,
 
     // month
     month,
@@ -236,17 +263,13 @@ export default function parseActivity(ws: Worksheet) {
     venue,
 
     // total pax
-    totalPax: extractResult(ws.getCell(BUDGET_ESTIMATE.TOTAL_PAX_CELL).value),
+    totalPax: extractResult(ws.getCell(TOTAL_PAX_CELL).value),
 
     // output physical target
-    outputPhysicalTarget: +ws.getCell(
-      BUDGET_ESTIMATE.OUTPUT_PHYSICAL_TARGET_CELL,
-    ).text,
+    outputPhysicalTarget: +ws.getCell(OUTPUT_PHYSICAL_TARGET_CELL).text,
 
     // activity physical target
-    activityPhysicalTarget: +ws.getCell(
-      BUDGET_ESTIMATE.ACTIVITY_PHYSICAL_TARGET_CELL,
-    ).text,
+    activityPhysicalTarget: +ws.getCell(ACTIVITY_PHYSICAL_TARGET_CELL).text,
 
     // expense items
     expenseItems: [...bl, ...tev, ...hon, ...others],

@@ -2,7 +2,11 @@ import { Workbook } from 'exceljs';
 import { Activity } from './types';
 import config from './config';
 import parseActivity from './budget_estimate';
-import { AUXILLIARY_SHEETS, EXPENDITURE_MATRIX } from './constants';
+import {
+  AUXILLIARY_SHEETS,
+  BUDGET_ESTIMATE,
+  EXPENDITURE_MATRIX,
+} from './constants';
 import {
   createActivityRow,
   createExpenseItemRow,
@@ -22,7 +26,7 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
   const programs: string[] = [];
   const activities: Activity[] = [];
 
-  let targetRow = 17;
+  let targetRow = EXPENDITURE_MATRIX.TARGET_ROW_INDEX;
   let isFirst = true;
   let rank = 1;
 
@@ -41,7 +45,9 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
       }
 
       // skip if not a budget estimate template
-      if (sheet.getCell('C4').text !== 'PROGRAM:') {
+      if (
+        sheet.getCell(BUDGET_ESTIMATE.PROGRAM_HEADING_CELL).text !== 'PROGRAM:'
+      ) {
         console.log('skipping non budget estimate sheet:', name);
         return;
       }
@@ -57,7 +63,7 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
   activities.sort(orderByProgram).forEach(activity => {
     const { program, month, expenseItems } = activity;
 
-    let programRowIndex = targetRow;
+    let programRowIndex: number = targetRow;
 
     // program
     if (isFirst) {
@@ -72,7 +78,7 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
     }
 
     const programRow = emWs.getRow(programRowIndex);
-    programRow.getCell('C').value = program;
+    programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
 
     createOutputRow(emWs, targetRow, activity, rank, isFirst);
 

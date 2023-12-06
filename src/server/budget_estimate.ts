@@ -240,7 +240,7 @@ export default function parseActivity(ws: Worksheet) {
 
     // output physical target
     outputPhysicalTarget: +ws.getCell(
-      BUDGET_ESTIMATE.ACTIVITY_PHYSICAL_TARGET_CELL,
+      BUDGET_ESTIMATE.OUTPUT_PHYSICAL_TARGET_CELL,
     ).text,
 
     // activity physical target

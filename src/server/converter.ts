@@ -16,7 +16,9 @@ import {
   orderByProgram,
 } from './expenditure_matrix';
 
-export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
+export default async function convert(
+  files: Express.Multer.File[],
+): Promise<ArrayBuffer> {
   const em = new Workbook();
   await em.xlsx.readFile(config.paths.emTemplate);
   const emWs = em.getWorksheet(1);
@@ -30,7 +32,13 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
   let isFirst = true;
   let rank = 1;
 
-  const loadAndParseWorkbook = async (buffer: Buffer): Promise<void> => {
+  const loadAndParseWorkbook = async (
+    file: Express.Multer.File,
+  ): Promise<void> => {
+    const { originalname, buffer } = file;
+
+    console.log('processing file:', originalname);
+
     const be = new Workbook();
     await be.xlsx.load(buffer);
 
@@ -54,7 +62,7 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
         }
 
         // eslint-disable-next-line no-console
-        // console.log('processing', name);
+        console.log('processing sheet:', name);
 
         const activity = parseActivity(sheet);
         activities.push(activity);
@@ -65,7 +73,7 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
   };
 
   // Use Promise.all to wait for all promises to resolve
-  await Promise.all(buffers.map(buffer => loadAndParseWorkbook(buffer)));
+  await Promise.all(files.map(file => loadAndParseWorkbook(file)));
 
   activities.sort(orderByProgram).forEach(activity => {
     const { program, month, expenseItems } = activity;

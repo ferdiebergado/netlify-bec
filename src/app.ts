@@ -1,4 +1,4 @@
-import { CONVERT_URL } from './server/constants';
+import { API_ENDPOINT } from './server/constants';
 import { createTimestamp } from './server/utils';
 
 // Constants
@@ -65,7 +65,7 @@ async function handleConversion(selectedFiles: FileList) {
   });
 
   try {
-    const res = await fetch(CONVERT_URL, {
+    const res = await fetch(API_ENDPOINT, {
       method: 'POST',
       body: formData,
     });

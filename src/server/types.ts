@@ -34,4 +34,21 @@ type Activity = {
   expenseItems: ExpenseItem[];
 };
 
-export { ExpenseGroup, GAAObject, MannerOfRelease, ExpenseItem, Activity };
+type DatabaseConfig = {
+  uri: string;
+  dbName: string;
+};
+
+type Document = {
+  [key: string]: any;
+};
+
+export {
+  ExpenseGroup,
+  GAAObject,
+  MannerOfRelease,
+  ExpenseItem,
+  Activity,
+  DatabaseConfig,
+  Document,
+};

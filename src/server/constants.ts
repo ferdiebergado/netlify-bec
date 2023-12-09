@@ -1,6 +1,10 @@
 import { DataValidation } from 'exceljs';
 
-const CONVERT_URL = '/api/convert';
+const BASE_URL = '/api';
+
+const CONVERT_URL = '/convert';
+
+const API_ENDPOINT = `${BASE_URL}/${CONVERT_URL}`;
 
 const BUDGET_ESTIMATE = {
   PROGRAM_HEADING_CELL: 'C4',
@@ -133,7 +137,6 @@ export {
   GAA_OBJECT,
   MANNER_OF_RELEASE,
   EXPENSE_GROUP,
-  CONVERT_URL,
   EXCEL_MIMETYPE,
   AUXILLIARY_SHEETS,
   YES,
@@ -142,4 +145,7 @@ export {
   MAX_UPLOADS,
   MAX_FILESIZE,
   VENUES_BY_AIR,
+  BASE_URL,
+  CONVERT_URL,
+  API_ENDPOINT,
 };

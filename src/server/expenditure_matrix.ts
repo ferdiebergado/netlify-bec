@@ -23,7 +23,7 @@ function duplicateRows(
   srcRowIndex: number,
   numRows: number,
 ) {
-  for (let j = 0; j < numRows; j++) {
+  for (let j = 0; j < numRows; j += 1) {
     const newRow = ws.insertRow(targetRowIndex, []);
     const srcRow = ws.getRow(srcRowIndex);
 
@@ -35,8 +35,10 @@ function duplicateRows(
       targetCell.dataValidation = cell.dataValidation;
     });
 
-    targetRowIndex++;
-    srcRowIndex++;
+    // eslint-disable-next-line no-param-reassign
+    targetRowIndex += 1;
+    // eslint-disable-next-line no-param-reassign
+    srcRowIndex += 1;
   }
 }
 
@@ -98,13 +100,11 @@ function createActivityRow(
     expenseItems,
   } = activity;
 
-  const sumFormula = (cell: string) => {
-    return {
-      formula: `SUM(${cell}${activityRowIndex + 1}:${cell}${
-        activityRowIndex + expenseItems.length
-      })`,
-    };
-  };
+  const sumFormula = (cell: string) => ({
+    formula: `SUM(${cell}${activityRowIndex + 1}:${cell}${
+      activityRowIndex + expenseItems.length
+    })`,
+  });
 
   const activityRow = ws.getRow(activityRowIndex);
 
@@ -131,7 +131,7 @@ function createActivityRow(
 
   // obligation and disbursement grand total per month
   [OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX].forEach(c => {
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 12; i += 1) {
       const cell = activityRow.getCell(c + i);
       const col = cell.$col$row;
       const re = /\$([A-Z]+)\$/;
@@ -203,15 +203,17 @@ function createOutputRow(
 function orderByProgram(a: Activity, b: Activity): number {
   if (a.program < b.program) {
     return -1;
-  } else if (a.program > b.program) {
-    return 1;
-  } else {
-    if (a.output < b.output) {
-      return -1;
-    } else {
-      return 1;
-    }
   }
+
+  if (a.program > b.program) {
+    return 1;
+  }
+
+  if (a.output < b.output) {
+    return -1;
+  }
+
+  return 1;
 }
 
 function createExpenseItemRow(

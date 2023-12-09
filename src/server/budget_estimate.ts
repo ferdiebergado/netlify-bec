@@ -57,12 +57,13 @@ function getExpenseItems(
 
   const items: ExpenseItem[] = [];
 
-  for (let i = 0; i < numRows; i++) {
+  for (let i = 0; i < numRows; i += 1) {
     const row = sheet.getRow(startRowIndex);
 
     const quantity = getCellValueAsNumber(
       row.getCell(QUANTITY_CELL_INDEX).text,
     );
+    // eslint-disable-next-line no-continue
     if (quantity === 0) continue;
 
     const item = row.getCell(startColIndex).text;
@@ -71,7 +72,7 @@ function getExpenseItems(
       EXPENSE_GROUP.TRAINING_SCHOLARSHIPS_EXPENSES;
     let gaaObject: GAAObject = GAA_OBJECT.TRAINING_EXPENSES;
     let tevLocation = '';
-    let ppmp = false;
+    const ppmp = false;
     let appSupplies = false;
     let appTicket = false;
 
@@ -111,7 +112,8 @@ function getExpenseItems(
       ),
     );
 
-    startRowIndex++;
+    // eslint-disable-next-line no-param-reassign
+    startRowIndex += 1;
   }
 
   return items;

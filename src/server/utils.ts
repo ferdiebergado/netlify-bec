@@ -9,7 +9,7 @@ function extractResult(value: CellValue): number {
     if (typeof value === 'number') return value;
 
     if (isCellFormulaValue(value)) {
-      const result = value.result;
+      const { result } = value;
 
       if (result && typeof result === 'number') {
         return result;
@@ -26,7 +26,7 @@ function createTimestamp(): number {
 
 function getCellValueAsNumber(cellValue: string): number {
   const numericValue = +cellValue;
-  return isNaN(numericValue) ? 0 : numericValue;
+  return Number.isNaN(numericValue) ? 0 : numericValue;
 }
 
 export {

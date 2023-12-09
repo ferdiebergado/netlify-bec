@@ -30,35 +30,42 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
   let isFirst = true;
   let rank = 1;
 
-  for (const buffer of buffers) {
+  const loadAndParseWorkbook = async (buffer: Buffer): Promise<void> => {
     const be = new Workbook();
     await be.xlsx.load(buffer);
 
-    // eslint-disable-next-line @typescript-eslint/no-loop-func
-    be.eachSheet(sheet => {
-      const { name } = sheet;
+    return new Promise<void>(resolve => {
+      be.eachSheet(sheet => {
+        const { name } = sheet;
 
-      // skip auxilliary sheets
-      if (AUXILLIARY_SHEETS.includes(name)) {
-        console.log('skipping', name);
-        return;
-      }
+        if (AUXILLIARY_SHEETS.includes(name)) {
+          // eslint-disable-next-line no-console
+          // console.log('skipping', name);
+          return;
+        }
 
-      // skip if not a budget estimate template
-      if (
-        sheet.getCell(BUDGET_ESTIMATE.PROGRAM_HEADING_CELL).text !== 'PROGRAM:'
-      ) {
-        console.log('skipping non budget estimate sheet:', name);
-        return;
-      }
+        if (
+          sheet.getCell(BUDGET_ESTIMATE.PROGRAM_HEADING_CELL).text !==
+          'PROGRAM:'
+        ) {
+          // eslint-disable-next-line no-console
+          // console.log('skipping non budget estimate sheet:', name);
+          return;
+        }
 
-      console.log('processing', name);
+        // eslint-disable-next-line no-console
+        // console.log('processing', name);
 
-      const activity = parseActivity(sheet);
+        const activity = parseActivity(sheet);
+        activities.push(activity);
+      });
 
-      activities.push(activity);
+      resolve();
     });
-  }
+  };
+
+  // Use Promise.all to wait for all promises to resolve
+  await Promise.all(buffers.map(buffer => loadAndParseWorkbook(buffer)));
 
   activities.sort(orderByProgram).forEach(activity => {
     const { program, month, expenseItems } = activity;
@@ -69,12 +76,10 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
     if (isFirst) {
       programRowIndex = EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX;
       programs.push(program);
-    } else {
-      if (!programs.includes(program)) {
-        duplicateProgram(emWs, targetRow);
-        programs.push(program);
-        targetRow++;
-      }
+    } else if (!programs.includes(program)) {
+      duplicateProgram(emWs, targetRow);
+      programs.push(program);
+      targetRow += 1;
     }
 
     const programRow = emWs.getRow(programRowIndex);
@@ -82,30 +87,29 @@ export default async function convert(buffers: Buffer[]): Promise<ArrayBuffer> {
 
     createOutputRow(emWs, targetRow, activity, rank, isFirst);
 
-    rank++;
+    rank += 1;
 
-    if (!isFirst) targetRow++;
+    if (!isFirst) targetRow += 1;
 
     createActivityRow(emWs, targetRow, activity, isFirst);
 
-    if (!isFirst) targetRow++;
+    if (!isFirst) targetRow += 1;
 
     // expense items
     duplicateExpenseItem(emWs, targetRow, expenseItems.length);
 
-    for (const expense of expenseItems) {
+    expenseItems.forEach(expense => {
       createExpenseItemRow(emWs, targetRow, expense, month, isFirst);
-
-      targetRow++;
-    }
+      targetRow += 1;
+    });
 
     isFirst = false;
-    targetRow--;
+    targetRow -= 1;
   });
 
   emWs.spliceRows(targetRow + 1, 2);
 
-  console.log('writing to buffer...');
+  // console.log('writing to buffer...');
 
   const outBuff = await em.xlsx.writeBuffer();
 

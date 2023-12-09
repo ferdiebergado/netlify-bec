@@ -7,6 +7,7 @@ export default function errorHandler(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction,
 ) {
+  // eslint-disable-next-line no-console
   console.error(err.stack);
   res.status(500).send({ error: 'Conversion failed!' });
 }

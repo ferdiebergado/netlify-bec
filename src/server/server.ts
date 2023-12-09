@@ -1,36 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 import type { NextFunction, Request, Response } from 'express';
 import express, { Router } from 'express';
-import multer from 'multer';
-import { EXCEL_MIMETYPE, MAX_FILESIZE, MAX_UPLOADS } from './constants';
+import { EXCEL_MIMETYPE } from './constants';
 import convert from './converter';
 import { createTimestamp } from './utils';
-
-const router = Router();
-const storage = multer.memoryStorage();
-
-function errorHandler(
-  err: Error,
-  _req: Request,
-  res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _next: NextFunction,
-) {
-  console.error(err.stack);
-  res.status(500).send({ error: 'Conversion failed!' });
-}
-
-function fileFilter(
-  _req: Request,
-  file: Express.Multer.File,
-  cb: multer.FileFilterCallback,
-): void {
-  if (file.mimetype !== EXCEL_MIMETYPE) return cb(new Error('Wrong file type'));
-
-  if (file.size > MAX_FILESIZE) return cb(new Error('File too large'));
-
-  cb(null, true);
-}
+import logger from './logger';
+import upload from './upload';
+import errorHandler from './error_handler';
 
 async function handleConvert(
   req: Request,
@@ -57,8 +33,8 @@ async function handleConvert(
     .catch(next);
 }
 
-const upload = multer({ storage, fileFilter }).array('excelFile', MAX_UPLOADS);
-
+const router = Router();
+router.use(logger);
 router.post('/convert', upload, handleConvert);
 router.use(errorHandler);
 

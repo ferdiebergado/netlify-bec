@@ -1,0 +1,15 @@
+import { Request, Response, NextFunction } from 'express';
+
+export default function requestLogger(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) {
+  const { method, url, headers, query, body } = req;
+  console.log(new Date().toString(), `${method} ${url}`, {
+    headers,
+    query,
+    body,
+  });
+  next();
+}

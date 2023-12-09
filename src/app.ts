@@ -1,6 +1,12 @@
 import { CONVERT_URL } from './server/constants';
 import { createTimestamp } from './server/utils';
 
+// Constants
+const ALERT_SUCCESS_CLASS = 'alert-success';
+const ALERT_ERROR_CLASS = 'alert-error';
+const LOADING_CLASS = 'aria-busy';
+
+// Elements
 const excelForm = document.getElementById(
   'excelForm',
 ) as HTMLFormElement | null;
@@ -12,20 +18,19 @@ const btnConvert = document.getElementById(
   'convert',
 ) as HTMLButtonElement | null;
 
+// Check if required elements are present
 if (!excelForm || !fileInput || !divAlert || !btnConvert) {
   throw new Error('One or more required elements not found.');
 }
 
 let isLoading = false;
 
+// Utility Functions
 function hideAlert() {
   divAlert!.style.display = 'none';
 }
 
 function showAlert(msg: string, type: string = 'success') {
-  const ALERT_SUCCESS_CLASS = 'alert-success';
-  const ALERT_ERROR_CLASS = 'alert-error';
-
   let cls = ALERT_SUCCESS_CLASS;
 
   divAlert!.innerHTML = msg;
@@ -33,7 +38,7 @@ function showAlert(msg: string, type: string = 'success') {
 
   if (type === 'error') {
     divAlert!.classList.remove(ALERT_SUCCESS_CLASS);
-    cls = 'alert-error';
+    cls = ALERT_ERROR_CLASS;
   } else {
     divAlert!.classList.remove(ALERT_ERROR_CLASS);
   }
@@ -42,18 +47,68 @@ function showAlert(msg: string, type: string = 'success') {
 }
 
 function toggleSpinner(el: HTMLElement, val: string) {
-  const LOADING_CLASS = 'aria-busy';
-
   if (isLoading) {
     el.setAttribute(LOADING_CLASS, 'true');
   } else {
     el.removeAttribute(LOADING_CLASS);
   }
 
+  // eslint-disable-next-line no-param-reassign
   el.textContent = val;
 }
 
-async function handleSubmit(event: SubmitEvent) {
+async function handleConversion(selectedFiles: FileList) {
+  const formData = new FormData();
+
+  [...selectedFiles].forEach(file => {
+    formData.append('excelFile', file);
+  });
+
+  try {
+    const res = await fetch(CONVERT_URL, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const { error } = await res.json();
+      // eslint-disable-next-line no-console
+      console.error(error, res.status, res.statusText);
+      throw new Error(error);
+    }
+
+    showAlert('Conversion successful. Download will start automatically.');
+    isLoading = false;
+    toggleSpinner(btnConvert!, 'Convert');
+
+    const blob = await res.blob();
+    const contentDisposition = res.headers.get('Content-Disposition');
+    const filenameMatch =
+      contentDisposition && contentDisposition.match(/filename="(.+?)"/);
+    const filename = filenameMatch
+      ? filenameMatch[1]
+      : `em-${createTimestamp()}.xlsx`;
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    const msg =
+      'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
+    showAlert(msg, 'error');
+    isLoading = false;
+    toggleSpinner(btnConvert!, 'Convert');
+  }
+}
+
+function handleSubmit(event: SubmitEvent) {
   event.preventDefault();
 
   hideAlert();
@@ -66,68 +121,12 @@ async function handleSubmit(event: SubmitEvent) {
     throw new Error('No file selected for conversion.');
   }
 
-  const formData = new FormData();
-  for (const file of selectedFiles) {
-    formData.append('excelFile', file);
-  }
-
-  try {
-    const res = await fetch(CONVERT_URL, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const { error } = await res.json();
-
-      console.error(error, res.status, res.statusText);
-
-      throw new Error(error);
-    }
-
-    showAlert('Conversion successful. Download will start automatically.');
-    isLoading = false;
-    toggleSpinner(btnConvert!, 'Convert');
-
-    // Get the blob data from the response
-    const blob = await res.blob();
-
-    // Get the filename from the Content-Disposition header
-    const contentDisposition = res.headers.get('Content-Disposition');
-    const filenameMatch =
-      contentDisposition && contentDisposition.match(/filename="(.+?)"/);
-    const filename = filenameMatch
-      ? filenameMatch[1]
-      : `em-${createTimestamp()}.xlsx`;
-
-    // Create a Blob URL
-    const blobUrl = URL.createObjectURL(blob);
-
-    // Create an anchor element to trigger the download
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-
-    // Append the anchor to the document and trigger the download
-    document.body.appendChild(a);
-    a.click();
-
-    // Clean up: remove the anchor and revoke the Blob URL
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
-  } catch (error) {
-    // Handle error
-    const msg =
-      'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
-
-    showAlert(msg, 'error');
-    isLoading = false;
-    toggleSpinner(btnConvert!, 'Convert');
-  }
+  handleConversion(selectedFiles);
 }
 
+// Initialization
 hideAlert();
+toggleSpinner(btnConvert!, 'Convert');
 
-toggleSpinner(btnConvert, 'Convert');
-
+// Event Listeners
 excelForm.addEventListener('submit', handleSubmit);

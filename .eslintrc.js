@@ -1,7 +1,9 @@
 module.exports = {
-  plugins: ["import"],
-  extends: ["airbnb-typescript/base", "prettier"],
+  plugins: ['import'],
+  extends: ['airbnb-base', 'airbnb-typescript/base', 'prettier'],
   parserOptions: {
-    project: "./tsconfig.eslint.json",
+    project: true,
   },
+  ignorePatterns: ['**/*.js', 'node_modules', 'out', '.netlify', 'netlify'],
+  root: true,
 };

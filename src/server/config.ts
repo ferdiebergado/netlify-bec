@@ -9,8 +9,8 @@ const config = {
     beTemplate: 'BLD-BE-001 Budget Estimate template.xlsx',
   },
   db: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017',
-    databaseName: process.env.MONGODB_DBNAME || 'bec',
+    uri: process.env.VITE_TURSO_DB_URL,
+    token: process.env.VITE_TURSO_DB_AUTH_TOKEN,
   },
 };
 

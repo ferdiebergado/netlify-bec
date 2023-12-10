@@ -7,7 +7,7 @@ import { createTimestamp } from './utils';
 import logger from './logger';
 import upload from './upload';
 import errorHandler from './error_handler';
-import { updateDocument } from './database';
+import executeQuery from './database';
 
 async function handleConvert(
   req: Request,
@@ -20,12 +20,14 @@ async function handleConvert(
 
       const files = req.files as Express.Multer.File[];
       // const buffers: Buffer[] = files.map(file => file.buffer);
+
       const uploads = files.map(file => file.originalname);
-      await updateDocument(
-        'requests',
-        { _id: req.insertedId },
-        { $set: { uploads } },
-      );
+      const updateHitQuery = {
+        sql: 'UPDATE hits SET files = ? WHERE hit_id = ?;',
+        args: [uploads.toString(), req.insertedId!],
+      };
+
+      await executeQuery(updateHitQuery);
 
       const outBuff = await convert(files);
       const filename = `em-${createTimestamp()}.xlsx`;

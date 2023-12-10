@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { insertDocument } from './database';
+import executeQuery from './database';
 
 export default async function requestLogger(
   req: Request,
@@ -15,16 +15,21 @@ export default async function requestLogger(
         (req.headers['x-forwarded-for'] || '').split(',').pop().trim() ||
         req.socket.remoteAddress;
 
-      const document = {
-        timestamp: new Date().getTime(),
-        method,
-        url,
-        query,
-        ip: clientIp,
-        userAgent,
+      const createHitQuery = {
+        sql: 'INSERT INTO hits (timestamp,method,url,query,ip,user_agent) VALUES (?,?,?,?,?,?);',
+        args: [
+          new Date().toISOString(),
+          method,
+          url,
+          JSON.stringify(query),
+          clientIp,
+          userAgent,
+        ],
       };
 
-      req.insertedId = await insertDocument(document, 'requests');
+      const { lastInsertRowid } = await executeQuery(createHitQuery);
+
+      req.insertedId = lastInsertRowid;
 
       next();
     })

@@ -7,5 +7,5 @@
 - add favicon (OK)
 - add eslint and prettier (OK)
 - use express (OK)
-- try node-xlsx
+- try node-xlsx (X)
 - try bun

@@ -82,6 +82,8 @@ export default async function convert(
   // Use Promise.all to wait for all promises to resolve
   await Promise.all(files.map(file => loadAndParseWorkbook(file)));
 
+  const activityRows: number[] = [];
+
   activities.sort(orderByProgram).forEach(activity => {
     const { program, month, expenseItems } = activity;
 
@@ -106,7 +108,14 @@ export default async function convert(
 
     if (!isFirst) targetRow += 1;
 
-    createActivityRow(emWs, targetRow, activity, isFirst);
+    const activityRowIndex = createActivityRow(
+      emWs,
+      targetRow,
+      activity,
+      isFirst,
+    );
+
+    activityRows.push(activityRowIndex);
 
     if (!isFirst) targetRow += 1;
 
@@ -123,6 +132,34 @@ export default async function convert(
   });
 
   emWs.spliceRows(targetRow + 1, 2);
+
+  const { TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL } =
+    EXPENDITURE_MATRIX;
+
+  const lastRowIndex = targetRow + 2;
+
+  const grandTotalRow = emWs.getRow(lastRowIndex);
+
+  const setGrandTotalCell = (cell: string) => {
+    const totalCells = activityRows.map(row => cell + row);
+    grandTotalRow.getCell(cell).value = {
+      formula: `SUM(${totalCells.toString()})`,
+    };
+  };
+
+  setGrandTotalCell(TOTAL_COST_COL);
+  setGrandTotalCell(TOTAL_OBLIGATION_COL);
+  setGrandTotalCell(TOTAL_DISBURSEMENT_COL);
+
+  for (let i = 0; i < 26; i += 1) {
+    const col = i + 44;
+    const cell = grandTotalRow.getCell(col);
+    cell.value = {
+      formula: `SUM(${activityRows.map(
+        row => cell.address.replace(/\d+/, '') + row,
+      )})`,
+    };
+  }
 
   const outBuff = await em.xlsx.writeBuffer();
 

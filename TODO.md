@@ -8,4 +8,6 @@
 - add eslint and prettier (OK)
 - use express (OK)
 - try node-xlsx (X)
+- grand totals at last row (OK)
+- husky
 - try bun

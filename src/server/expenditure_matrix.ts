@@ -95,13 +95,15 @@ function duplicateExpenseItem(ws: Worksheet, targetRow: number, count: number) {
  * @param targetRow - The index where the activity row will be inserted.
  * @param activity - The activity information.
  * @param isFirst - A flag indicating if it is the first row. Default is `false`.
+ *
+ * @returns number - The index of the activity row
  */
 function createActivityRow(
   ws: Worksheet,
   targetRow: number,
   activity: Activity,
   isFirst: boolean = false,
-) {
+): number {
   const {
     ACTIVITY_ROW_INDEX,
     ACTIVITIES_COL,
@@ -166,11 +168,9 @@ function createActivityRow(
   [OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX].forEach(c => {
     for (let i = 0; i < 12; i += 1) {
       const cell = activityRow.getCell(c + i);
-      const col = cell.$col$row;
-      const re = /\$([A-Z]+)\$/;
-      const matches = re.exec(col);
+      const col = cell.address.replace(/\d+/, '');
 
-      cell.value = sumFormula(matches![1]);
+      cell.value = sumFormula(col);
     }
   });
 
@@ -182,6 +182,8 @@ function createActivityRow(
   activityRow.getCell(TOTAL_DISBURSEMENT_COL).value = sumFormula(
     TOTAL_DISBURSEMENT_COL,
   );
+
+  return activityRowIndex;
 }
 
 /**

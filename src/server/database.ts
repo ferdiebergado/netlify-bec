@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import {
   MongoClient,
   Db,
@@ -6,7 +7,7 @@ import {
   UpdateResult,
   ObjectId,
 } from 'mongodb';
-import { DatabaseConfig, Document } from './types';
+import { Document } from './types';
 import config from './config';
 
 const { uri, databaseName } = config.db;
@@ -16,6 +17,7 @@ async function insertDocument(
   collectionName: string,
 ): Promise<ObjectId> {
   const client = new MongoClient(uri);
+  console.log('Connecting to the database...');
 
   try {
     // Connect to MongoDB
@@ -67,4 +69,4 @@ async function updateDocument(
   }
 }
 
-export { DatabaseConfig, insertDocument, updateDocument };
+export { insertDocument, updateDocument };

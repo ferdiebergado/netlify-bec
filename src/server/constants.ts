@@ -1,11 +1,49 @@
 import { DataValidation } from 'exceljs';
 
+/**
+ * Base URL for the API endpoints.
+ */
 const BASE_URL = '/api';
 
+/**
+ * Endpoint for the conversion operation.
+ */
 const CONVERT_URL = '/convert';
 
+/**
+ * Full API endpoint combining the base URL and the conversion endpoint.
+ */
 const API_ENDPOINT = `${BASE_URL}/${CONVERT_URL}`;
 
+/**
+ * Maximum number of file uploads allowed.
+ */
+const MAX_UPLOADS = 150;
+
+/**
+ * Maximum file size allowed for uploads, specified in bytes.
+ */
+const MAX_FILESIZE = 1024 * 1024 * 5;
+
+/**
+ * Constant representing the value 'Y'.
+ */
+const YES = 'Y';
+
+/**
+ * MIME type for Excel files.
+ */
+const EXCEL_MIMETYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+/**
+ * List of auxiliary sheets that should be skipped during processing.
+ */
+const AUXILLIARY_SHEETS = ['ContingencyMatrix', 'Venues', 'Honorarium'];
+
+/**
+ * Constants related to the budget estimate structure.
+ */
 const BUDGET_ESTIMATE = {
   PROGRAM_HEADING_CELL: 'C4',
   PROGRAM_CELL: 'F4',
@@ -34,6 +72,9 @@ const BUDGET_ESTIMATE = {
   SUPPLIES_ROW_INDEX: 60,
 } as const;
 
+/**
+ * Constants related to the expenditure matrix structure.
+ */
 const EXPENDITURE_MATRIX = {
   PROGRAM_COL: 'C',
   OUTPUT_COL: 'D',
@@ -71,16 +112,25 @@ const EXPENDITURE_MATRIX = {
   DISBURSEMENT_MONTH_COL_INDEX: 58,
 } as const;
 
+/**
+ * Constants related to expense groups.
+ */
 const EXPENSE_GROUP = {
   TRAINING_SCHOLARSHIPS_EXPENSES: 'Training and Scholarship Expenses',
   SUPPLIES_EXPENSES: 'Supplies and Materials Expenses',
 } as const;
 
+/**
+ * Constants related to GAA objects.
+ */
 const GAA_OBJECT = {
   TRAINING_EXPENSES: 'Training Expenses',
   OTHER_SUPPLIES: 'Other Supplies and Materials Expenses',
 } as const;
 
+/**
+ * Constants related to the manner of release.
+ */
 const MANNER_OF_RELEASE = {
   FOR_DOWNLOAD_BOARD: 'For Downloading (Board and Lodging)',
   FOR_DOWNLOAD_PSF: 'For Downloading (Program Support Funds)',
@@ -88,27 +138,25 @@ const MANNER_OF_RELEASE = {
   CASH_ADVANCE: 'Cash Advance',
 } as const;
 
-const EXCEL_MIMETYPE =
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-
-const AUXILLIARY_SHEETS = ['ContingencyMatrix', 'Venues', 'Honorarium'];
-
-const YES = 'Y';
-
+/**
+ * Data validation settings for validating 'yes' or 'no'.
+ */
 const YES_NO_VALIDATION: DataValidation = {
   type: 'list',
   formulae: ['links!$P$1:$P$2'],
 };
 
+/**
+ * Data validation settings for validating manner of release.
+ */
 const MANNER_VALIDATION: DataValidation = {
   type: 'list',
   formulae: ['links!$O$1:$O$5'],
 };
 
-const MAX_UPLOADS = 150;
-
-const MAX_FILESIZE = 1024 * 1024 * 5;
-
+/**
+ * List of venues accessible by air travel.
+ */
 const VENUES_BY_AIR = [
   'BACOLOD',
   'BORACAY',

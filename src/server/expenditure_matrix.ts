@@ -42,18 +42,43 @@ function duplicateRows(
   }
 }
 
+/**
+ * Duplicates the program row in a worksheet.
+ *
+ * @param ws - The worksheet where the program row will be duplicated.
+ * @param targetRow - The index where the duplicate program row will be inserted.
+ */
 function duplicateProgram(ws: Worksheet, targetRow: number) {
   duplicateRows(ws, targetRow, EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX, 1);
 }
 
+/**
+ * Duplicates the output row in a worksheet.
+ *
+ * @param ws - The worksheet where the output row will be duplicated.
+ * @param targetRow - The index where the duplicate output row will be inserted.
+ */
 function duplicateOutput(ws: Worksheet, targetRow: number) {
   duplicateRows(ws, targetRow, EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX, 1);
 }
 
+/**
+ * Duplicates the activity row in a worksheet.
+ *
+ * @param ws - The worksheet where the activity row will be duplicated.
+ * @param targetRow - The index where the duplicate activity row will be inserted.
+ */
 function duplicateActivity(ws: Worksheet, targetRow: number) {
   duplicateRows(ws, targetRow, EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX, 1);
 }
 
+/**
+ * Duplicates the expense item row in a worksheet.
+ *
+ * @param ws - The worksheet where the expense item row will be duplicated.
+ * @param targetRow - The index where the duplicate expense item row will be inserted.
+ * @param count - The number of expense item rows to be duplicated.
+ */
 function duplicateExpenseItem(ws: Worksheet, targetRow: number, count: number) {
   duplicateRows(
     ws,
@@ -63,6 +88,14 @@ function duplicateExpenseItem(ws: Worksheet, targetRow: number, count: number) {
   );
 }
 
+/**
+ * Creates or duplicates an activity row in a worksheet.
+ *
+ * @param ws - The worksheet where the activity row will be created or duplicated.
+ * @param targetRow - The index where the activity row will be inserted.
+ * @param activity - The activity information.
+ * @param isFirst - A flag indicating if it is the first row. Default is `false`.
+ */
 function createActivityRow(
   ws: Worksheet,
   targetRow: number,
@@ -151,6 +184,15 @@ function createActivityRow(
   );
 }
 
+/**
+ * Creates or duplicates an output row in a worksheet.
+ *
+ * @param ws - The worksheet where the output row will be created or duplicated.
+ * @param targetRow - The index where the output row will be inserted.
+ * @param activity - The activity information.
+ * @param rank - The rank of the output.
+ * @param isFirst - A flag indicating if it is the first row. Default is `false`.
+ */
 function createOutputRow(
   ws: Worksheet,
   targetRow: number,
@@ -200,6 +242,13 @@ function createOutputRow(
   };
 }
 
+/**
+ * Orders activities based on program and output.
+ *
+ * @param a - The first activity.
+ * @param b - The second activity.
+ * @returns A number indicating the order.
+ */
 function orderByProgram(a: Activity, b: Activity): number {
   if (a.program < b.program) {
     return -1;
@@ -216,6 +265,15 @@ function orderByProgram(a: Activity, b: Activity): number {
   return 1;
 }
 
+/**
+ * Creates or duplicates an expense item row in a worksheet.
+ *
+ * @param ws - The worksheet where the expense item row will be created or duplicated.
+ * @param targetRow - The index where the expense item row will be inserted.
+ * @param expense - The expense item information.
+ * @param month - The month index.
+ * @param isFirst - A flag indicating if it is the first row. Default is `false`.
+ */
 function createExpenseItemRow(
   ws: Worksheet,
   targetRow: number,

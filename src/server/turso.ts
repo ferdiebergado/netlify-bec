@@ -1,11 +1,17 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { createClient } from '@libsql/client';
+import { createClient, Client } from '@libsql/client';
 import config from './config';
 
-export default function useTurso() {
+/**
+ * Creates a Turso database client based on the configuration settings.
+ *
+ * @throws {Error} Throws an error if the database URL or authentication token is not set.
+ * @returns {Client} The Turso database client.
+ */
+export default function useTurso(): Client {
   const { uri, token } = config.db;
 
-  if (!uri) throw new Error('VITE_TURSO_DB_URL not set!');
+  if (!uri || !token) throw new Error('VITE_TURSO_DB_URL not set!');
 
   return createClient({
     url: uri,

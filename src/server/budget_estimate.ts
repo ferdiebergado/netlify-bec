@@ -15,6 +15,22 @@ import {
 } from './types';
 import { extractResult, getCellValueAsNumber } from './utils';
 
+/**
+ * Creates an ExpenseItem object.
+ *
+ * @param {ExpenseGroup} expenseGroup - The expense group.
+ * @param {GAAObject} gaaObject - The GAA object.
+ * @param {string} expenseItem - The expense item description.
+ * @param {number} quantity - The quantity of the item.
+ * @param {number} freq - The frequency of the item.
+ * @param {number} unitCost - The unit cost of the item.
+ * @param {MannerOfRelease} mannerOfRelease - The manner of release for the expense.
+ * @param {string} tevLocation - The location for TEV (Travel Expense Voucher) if applicable.
+ * @param {boolean} ppmp - Indicates if PPMP (Program Project Management Plan) is applicable.
+ * @param {boolean} appSupplies - Indicates if the item is applicable for supplies expenses.
+ * @param {boolean} appTicket - Indicates if the item is applicable for airfare ticket expenses.
+ * @returns {ExpenseItem} The created ExpenseItem object.
+ */
 function createExpenseItem(
   expenseGroup: ExpenseGroup,
   gaaObject: GAAObject,
@@ -43,15 +59,27 @@ function createExpenseItem(
   };
 }
 
+/**
+ * Gets an array of ExpenseItem objects from a worksheet based on provided parameters.
+ *
+ * @param {Worksheet} sheet - The worksheet containing expense data.
+ * @param {number} startRowIndex - The starting row index for reading expense data.
+ * @param {number} startColIndex - The starting column index for reading expense data.
+ * @param {number} numRows - The number of rows to read.
+ * @param {string} prefix - The prefix for creating expense item descriptions.
+ * @param {string} venue - The venue information.
+ * @param {MannerOfRelease} mannerOfRelease - The manner of release for the expenses.
+ * @returns {ExpenseItem[]} An array of ExpenseItem objects.
+ */
 function getExpenseItems(
   sheet: Worksheet,
   startRowIndex: number,
   startColIndex: number,
   numRows: number,
   prefix: string,
-  venue = '',
+  venue: string = '',
   mannerOfRelease: MannerOfRelease = MANNER_OF_RELEASE.DIRECT_PAYMENT,
-) {
+): ExpenseItem[] {
   const { QUANTITY_CELL_INDEX, FREQ_CELL_INDEX, UNIT_COST_CELL_INDEX } =
     BUDGET_ESTIMATE;
 
@@ -119,7 +147,13 @@ function getExpenseItems(
   return items;
 }
 
-function boardLodging(sheet: Worksheet) {
+/**
+ * Reads and parses board and lodging expenses from a worksheet.
+ *
+ * @param {Worksheet} sheet - The worksheet containing board and lodging expense data.
+ * @returns {ExpenseItem[]} An array of ExpenseItem objects representing board and lodging expenses.
+ */
+function boardLodging(sheet: Worksheet): ExpenseItem[] {
   const blPrefix = 'Board and Lodging of';
   const { FOR_DOWNLOAD_BOARD, DIRECT_PAYMENT } = MANNER_OF_RELEASE;
   const {
@@ -157,7 +191,14 @@ function boardLodging(sheet: Worksheet) {
   return [...bl, ...blOthers];
 }
 
-function travelExpenses(sheet: Worksheet, venue: string) {
+/**
+ * Reads and parses travel expenses from a worksheet based on the provided venue.
+ *
+ * @param {Worksheet} sheet - The worksheet containing travel expense data.
+ * @param {string} venue - The venue information.
+ * @returns {ExpenseItem[]} An array of ExpenseItem objects representing travel expenses.
+ */
+function travelExpenses(sheet: Worksheet, venue: string): ExpenseItem[] {
   const tevPrefix = 'Travel Expenses of Participants from';
   const tevMannerOfRelease = MANNER_OF_RELEASE.FOR_DOWNLOAD_PSF;
   const {
@@ -198,7 +239,13 @@ function travelExpenses(sheet: Worksheet, venue: string) {
   return [...tevPax, ...tevNonPax, ...tevNonPaxOther];
 }
 
-function honorarium(sheet: Worksheet) {
+/**
+ * Reads and parses honorarium expenses from a worksheet.
+ *
+ * @param {Worksheet} sheet - The worksheet containing honorarium expense data.
+ * @returns {ExpenseItem[]} An array of ExpenseItem objects representing honorarium expenses.
+ */
+function honorarium(sheet: Worksheet): ExpenseItem[] {
   const honorariumPrefix = 'Honorarium of';
   return getExpenseItems(
     sheet,
@@ -209,7 +256,13 @@ function honorarium(sheet: Worksheet) {
   );
 }
 
-function otherExpenses(sheet: Worksheet) {
+/**
+ * Reads and parses other expenses from a worksheet.
+ *
+ * @param {Worksheet} sheet - The worksheet containing other expense data.
+ * @returns {ExpenseItem[]} An array of ExpenseItem objects representing other expenses.
+ */
+function otherExpenses(sheet: Worksheet): ExpenseItem[] {
   return getExpenseItems(
     sheet,
     BUDGET_ESTIMATE.SUPPLIES_ROW_INDEX,
@@ -221,7 +274,13 @@ function otherExpenses(sheet: Worksheet) {
   );
 }
 
-export default function parseActivity(ws: Worksheet) {
+/**
+ * Parses activity information from a worksheet, including related expense items.
+ *
+ * @param {Worksheet} ws - The worksheet containing activity information.
+ * @returns {Activity} An object representing parsed activity information.
+ */
+export default function parseActivity(ws: Worksheet): Activity {
   const {
     VENUE_CELL,
     START_DATE_CELL,

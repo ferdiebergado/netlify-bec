@@ -9,6 +9,14 @@ import upload from './upload';
 import errorHandler from './error_handler';
 import executeQuery from './database';
 
+/**
+ * Handles the conversion of files to Excel format and sends the converted file as a response.
+ *
+ * @param req - The Express request object.
+ * @param res - The Express response object.
+ * @param next - The next middleware function.
+ * @returns A Promise that resolves once the conversion is complete.
+ */
 async function handleConvert(
   req: Request,
   res: Response,
@@ -45,8 +53,13 @@ async function handleConvert(
 
 const router = Router();
 
+// Logger middleware
 router.use(logger);
+
+// Route for handling file conversion
 router.post(CONVERT_URL, upload, handleConvert);
+
+// Error handling middleware
 router.use(errorHandler);
 
 const server = express();

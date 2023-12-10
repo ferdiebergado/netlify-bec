@@ -16,6 +16,12 @@ import {
   orderByProgram,
 } from './expenditure_matrix';
 
+/**
+ * Converts uploaded files into an ArrayBuffer representing the expenditure matrix.
+ *
+ * @param {Express.Multer.File[]} files - The array of uploaded files.
+ * @returns {Promise<ArrayBuffer>} A promise that resolves to the ArrayBuffer of the expenditure matrix.
+ */
 export default async function convert(
   files: Express.Multer.File[],
 ): Promise<ArrayBuffer> {
@@ -37,6 +43,7 @@ export default async function convert(
   ): Promise<void> => {
     const { originalname, buffer } = file;
 
+    // eslint-disable-next-line no-console
     console.log('processing file:', originalname);
 
     const be = new Workbook();
@@ -116,8 +123,6 @@ export default async function convert(
   });
 
   emWs.spliceRows(targetRow + 1, 2);
-
-  // console.log('writing to buffer...');
 
   const outBuff = await em.xlsx.writeBuffer();
 

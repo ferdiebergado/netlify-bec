@@ -26,6 +26,7 @@
     "eslint-config-airbnb-typescript": "^17.1.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-security": "^2.0.0",
     "netlify-cli": "^17.2.1",
     "prettier": "3.0.3",
     "supertest": "^6.3.3",

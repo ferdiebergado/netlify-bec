@@ -1,9 +1,16 @@
 module.exports = {
-  plugins: ['import', 'security'],
-  extends: ['airbnb-base', 'airbnb-typescript/base', 'prettier'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-type-checked',
+    'prettier',
+  ],
+  plugins: ['@typescript-eslint', 'import', 'security', 'n', 'promise'],
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     project: true,
+    tsconfigRootDir: __dirname,
   },
-  ignorePatterns: ['**/*.js', 'node_modules', 'out', '.netlify', 'netlify'],
   root: true,
+  ignorePatterns: ['**/*.js', 'node_modules', 'out', '.netlify', 'netlify'],
 }

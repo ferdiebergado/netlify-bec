@@ -134,3 +134,4 @@ dist
 
 # static assets
 public/app.*
+public/client.*

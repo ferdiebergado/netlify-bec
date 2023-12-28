@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-redeclare
 import type { NextFunction, Request, Response } from 'express';
 import express, { Router } from 'express';
 import { BASE_URL, CONVERT_URL, EXCEL_MIMETYPE } from './constants';
@@ -15,13 +14,10 @@ import executeQuery from './database';
  * @param req - The Express request object.
  * @param res - The Express response object.
  * @param next - The next middleware function.
+ *
  * @returns A Promise that resolves once the conversion is complete.
  */
-async function handleConvert(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
+function handleConvert(req: Request, res: Response, next: NextFunction): void {
   Promise.resolve()
     .then(async () => {
       if (!req.files) throw new Error('File is required.');

@@ -1,4 +1,4 @@
-import { isCellFormulaValue, extractResult } from '../utils';
+import { isCellFormulaValue, extractResult } from '../../src/server/utils';
 
 describe('isCellFormulaValue', () => {
   test('returns true if object is a Cell Formula', () => {

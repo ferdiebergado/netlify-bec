@@ -113,32 +113,6 @@ const EXPENDITURE_MATRIX = {
 } as const;
 
 /**
- * Constants related to expense groups.
- */
-const EXPENSE_GROUP = {
-  TRAINING_SCHOLARSHIPS_EXPENSES: 'Training and Scholarship Expenses',
-  SUPPLIES_EXPENSES: 'Supplies and Materials Expenses',
-} as const;
-
-/**
- * Constants related to GAA objects.
- */
-const GAA_OBJECT = {
-  TRAINING_EXPENSES: 'Training Expenses',
-  OTHER_SUPPLIES: 'Other Supplies and Materials Expenses',
-} as const;
-
-/**
- * Constants related to the manner of release.
- */
-const MANNER_OF_RELEASE = {
-  FOR_DOWNLOAD_BOARD: 'For Downloading (Board and Lodging)',
-  FOR_DOWNLOAD_PSF: 'For Downloading (Program Support Funds)',
-  DIRECT_PAYMENT: 'Direct Payment',
-  CASH_ADVANCE: 'Cash Advance',
-} as const;
-
-/**
  * Data validation settings for validating 'yes' or 'no'.
  */
 const YES_NO_VALIDATION: DataValidation = {
@@ -179,12 +153,35 @@ const VENUES_BY_AIR = [
   'ZAMBOANGA',
 ];
 
+/**
+ * Values related to expense groups.
+ */
+enum ExpenseGroup {
+  TRAINING_SCHOLARSHIPS_EXPENSES = 'Training and Scholarship Expenses',
+  SUPPLIES_EXPENSES = 'Supplies and Materials Expenses',
+}
+
+/**
+ * Values related to GAA objects.
+ */
+enum GAAObject {
+  TRAINING_EXPENSES = 'Training Expenses',
+  OTHER_SUPPLIES = 'Other Supplies and Materials Expenses',
+}
+
+/**
+ * Values related to the manner of release.
+ */
+enum ReleaseManner {
+  FOR_DOWNLOAD_BOARD = 'For Downloading (Board and Lodging)',
+  FOR_DOWNLOAD_PSF = 'For Downloading (Program Support Funds)',
+  DIRECT_PAYMENT = 'Direct Payment',
+  CASH_ADVANCE = 'Cash Advance',
+}
+
 export {
   BUDGET_ESTIMATE,
   EXPENDITURE_MATRIX,
-  GAA_OBJECT,
-  MANNER_OF_RELEASE,
-  EXPENSE_GROUP,
   EXCEL_MIMETYPE,
   AUXILLIARY_SHEETS,
   YES,
@@ -196,4 +193,7 @@ export {
   BASE_URL,
   CONVERT_URL,
   API_ENDPOINT,
+  ReleaseManner,
+  GAAObject,
+  ExpenseGroup,
 };

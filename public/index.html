@@ -26,14 +26,15 @@
         <div id="alert" class="alert"></div>
         <form id="excelForm">
           <label for="excelFile"
-            >Select the Budget Estimate(s) (Download template
-            <a href="BLD-BE-001 Budget Estimate template.xlsx">here</a>)
+            >Upload the Budget Estimate(s) <small>[Maximum of 40 files only]</small><br>
+            Click <a href="BLD-BE-001 Budget Estimate template.xlsx">here</a> to download the template.
             <input
               type="file"
               id="excelFile"
               accept=".xlsx"
               multiple
               required
+              placeholder="Click to upload"
             />
           </label>
           <button id="convert" type="submit">Convert</button>

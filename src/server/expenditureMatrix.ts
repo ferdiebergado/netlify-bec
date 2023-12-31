@@ -7,7 +7,7 @@ import {
 } from './constants';
 import type { Activity, ExcelFile, ExpenseItem } from '../types/globals';
 import { BudgetEstimate } from './budgetEstimate';
-import { Worksheet } from 'exceljs';
+import { Row, Worksheet } from 'exceljs';
 
 /**
  * Represents a specialized workbook for managing expenditure matrices.
@@ -73,9 +73,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     srcRowIndex: number,
     numRows: number = 1,
   ): void {
+    let currentRowIndex = targetRowIndex;
+    let currentSrcRowIndex = srcRowIndex;
+
     for (let j = 0; j < numRows; j += 1) {
-      const newRow = sheet.insertRow(targetRowIndex, []);
-      const srcRow = sheet.getRow(srcRowIndex);
+      const newRow = sheet.insertRow(currentRowIndex, []);
+      const srcRow = sheet.getRow(currentSrcRowIndex);
 
       srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         const targetCell = newRow.getCell(colNumber);
@@ -85,10 +88,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         targetCell.dataValidation = cell.dataValidation;
       });
 
-      // eslint-disable-next-line no-param-reassign
-      targetRowIndex += 1;
-      // eslint-disable-next-line no-param-reassign
-      srcRowIndex += 1;
+      currentRowIndex += 1;
+      currentSrcRowIndex += 1;
     }
   }
 
@@ -210,6 +211,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     // activity indicator
     activityRow.getCell(PERFORMANCE_INDICATOR_COL).value = activityIndicator;
 
+    if (!isFirstActivity) {
+      ExpenditureMatrix.clearPreviousPhysicalTargets(activityRow);
+    }
+
     // activity physical target
     activityRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + month).value =
       activityPhysicalTarget;
@@ -245,6 +250,24 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     );
 
     return activityRowIndex;
+  }
+
+  static clearPreviousPhysicalTargets(row: Row) {
+    for (let i = 0; i < 12; i += 1) {
+      row.getCell(
+        EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_COL_INDEX + i,
+      ).value = '';
+    }
+  }
+
+  static clearPreviousFinancialPrograms(row: Row) {
+    const { OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX } =
+      EXPENDITURE_MATRIX;
+
+    for (let i = 0; i < 12; i += 1) {
+      row.getCell(OBLIGATION_MONTH_COL_INDEX + i).value = '';
+      row.getCell(DISBURSEMENT_MONTH_COL_INDEX + i).value = '';
+    }
   }
 
   /**
@@ -294,6 +317,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     // output indicator
     outputRow.getCell(PERFORMANCE_INDICATOR_COL).value = outputIndicator;
+
+    if (!isFirstActivity) {
+      ExpenditureMatrix.clearPreviousPhysicalTargets(outputRow);
+    }
 
     // output physical target
     outputRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + month).value =
@@ -426,6 +453,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     const totalRef = {
       formula: `${TOTAL_COST_COL}${rowIndex}`,
     };
+
+    if (!isFirstActivity) {
+      ExpenditureMatrix.clearPreviousFinancialPrograms(currentRow);
+    }
 
     // obligation month
     currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + month).value = totalRef;

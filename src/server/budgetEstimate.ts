@@ -68,17 +68,23 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const { QUANTITY_CELL_INDEX, FREQ_CELL_INDEX, UNIT_COST_CELL_INDEX } =
       BUDGET_ESTIMATE;
     const { prefix, releaseManner, venue, hasPPMP } = options;
+    let currentRowIndex = startRowIndex;
 
     for (let i = 0; i < numRows; i += 1) {
-      const row = sheet.getRow(startRowIndex);
+      const row = sheet.getRow(currentRowIndex);
 
+      currentRowIndex += 1;
+
+      const unitCost = Number.parseFloat(
+        row.getCell(UNIT_COST_CELL_INDEX).text,
+      );
       const quantity = getCellValueAsNumber(
         row.getCell(QUANTITY_CELL_INDEX).text,
       );
       // eslint-disable-next-line no-continue
-      if (quantity === 0) continue;
+      if (quantity === 0 || unitCost === 0) continue;
 
-      const item = row.getCell(startColIndex).text;
+      const item = row.getCell(startColIndex).text.trim();
 
       let expenseGroup: ExpenseGroup =
         ExpenseGroup.TRAINING_SCHOLARSHIPS_EXPENSES;
@@ -105,7 +111,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const freq = getCellValueAsNumber(
         row.getCell(FREQ_CELL_INDEX).text || '1',
       );
-      const unitCost = parseFloat(row.getCell(UNIT_COST_CELL_INDEX).text);
 
       if (venue && VENUES_BY_AIR.includes(venue)) hasAPPTicket = true;
 
@@ -124,9 +129,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       };
 
       expenseItems.push(newExpenseItem);
-
-      // eslint-disable-next-line no-param-reassign
-      startRowIndex += 1;
     }
 
     return expenseItems;
@@ -394,7 +396,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
 
     const otherExpenses = BudgetEstimate.getExpenseItems(
       sheet,
-      BUDGET_ESTIMATE.SUPPLIES_ROW_INDEX,
+      BUDGET_ESTIMATE.MEAL_EXPENSES_ROW_INDEX,
       BUDGET_ESTIMATE.EXPENSE_ITEM_COL_INDEX,
       3,
       expenseData,

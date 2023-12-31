@@ -5,7 +5,7 @@ import { ExpenditureMatrix } from './expenditureMatrix';
 /**
  * Converts uploaded files into an ArrayBuffer representing the expenditure matrix.
  *
- * @param {Express.Multer.File[]} files - The array of uploaded files.
+ * @param {Express.Multer.File[]} files The array of uploaded files.
  *
  * @returns {Promise<ArrayBuffer>} A promise that resolves to the ArrayBuffer of the expenditure matrix.
  */

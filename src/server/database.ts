@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { InStatement, ResultSet } from '@libsql/client/.';
 import useTurso from './turso';
 
@@ -34,10 +33,7 @@ export default async function executeQuery(
    */
   const client = useTurso();
 
-  try {
-    const result = await client.execute(query);
-    return result;
-  } catch (error: any) {
-    throw new Error(`Error executing query: ${error.message}`);
-  }
+  const result = await client.execute(query);
+
+  return result;
 }

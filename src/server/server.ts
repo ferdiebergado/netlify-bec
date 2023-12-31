@@ -1,59 +1,55 @@
-import type { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import express, { Router } from 'express';
 import { BASE_URL, CONVERT_URL, EXCEL_MIMETYPE } from './constants';
 import convert from './converter';
-import { createTimestamp } from './utils';
-import logger from './logger';
+import { asyncMiddlewareWrapper, createTimestamp } from './utils';
 import upload from './upload';
 import errorHandler from './error_handler';
-import executeQuery from './database';
 
 /**
  * Handles the conversion of files to Excel format and sends the converted file as a response.
  *
- * @param req - The Express request object.
- * @param res - The Express response object.
- * @param next - The next middleware function.
+ * @param req The Express request object.
+ * @param res The Express response object.
+ * @param next The next middleware function.
  *
  * @returns A Promise that resolves once the conversion is complete.
  */
-function handleConvert(req: Request, res: Response, next: NextFunction): void {
-  Promise.resolve()
-    .then(async () => {
-      if (!req.files) throw new Error('File is required.');
+async function conversionHandler(req: Request, res: Response): Promise<void> {
+  if (!req.files) throw new Error('File is required.');
 
-      const files = req.files as Express.Multer.File[];
-      // const buffers: Buffer[] = files.map(file => file.buffer);
+  const files = req.files as Express.Multer.File[];
 
-      const uploads = files.map(file => file.originalname);
-      const updateHitQuery = {
-        sql: 'UPDATE hits SET files = ? WHERE hit_id = ?;',
-        args: [uploads.toString(), req.insertedId!],
-      };
+  // if (process.env.NODE_ENV === 'production') {
+  //   const uploads = files.map(file => file.originalname);
+  //   const updateHitQuery = {
+  //     sql: 'UPDATE hits SET files = ? WHERE hit_id = ?;',
+  //     args: [uploads.toString(), req.insertedId!],
+  //   };
 
-      await executeQuery(updateHitQuery);
+  //   await executeQuery(updateHitQuery);
+  // }
 
-      const outBuff = await convert(files);
-      const filename = `em-${createTimestamp()}.xlsx`;
+  const outBuff = await convert(files);
+  const filename = `em-${createTimestamp()}.xlsx`;
 
-      res
-        .header({
-          'Content-Type': EXCEL_MIMETYPE,
-          'Content-Disposition': `attachment; filename=${filename}`,
-          'Content-Length': outBuff.byteLength.toString(),
-        })
-        .end(outBuff);
+  res
+    .header({
+      'Content-Type': EXCEL_MIMETYPE,
+      'Content-Disposition': `attachment; filename=${filename}`,
+      'Content-Length': outBuff.byteLength.toString(),
     })
-    .catch(next);
+    .end(outBuff);
 }
 
 const router = Router();
 
 // Logger middleware
-router.use(logger);
+// router.use(asyncMiddlewareWrapper(logger));
 
 // Route for handling file conversion
-router.post(CONVERT_URL, upload, handleConvert);
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+router.post(CONVERT_URL, upload, asyncMiddlewareWrapper(conversionHandler));
 
 // Error handling middleware
 router.use(errorHandler);

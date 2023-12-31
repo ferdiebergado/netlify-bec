@@ -13,12 +13,12 @@ const CONVERT_URL = '/convert';
 /**
  * Full API endpoint combining the base URL and the conversion endpoint.
  */
-const API_ENDPOINT = `${BASE_URL}/${CONVERT_URL}`;
+const API_ENDPOINT = `${BASE_URL}${CONVERT_URL}`;
 
 /**
  * Maximum number of file uploads allowed.
  */
-const MAX_UPLOADS = 150;
+const MAX_UPLOADS = 40;
 
 /**
  * Maximum file size allowed for uploads, specified in bytes.
@@ -40,6 +40,10 @@ const EXCEL_MIMETYPE =
  * List of auxiliary sheets that should be skipped during processing.
  */
 const AUXILLIARY_SHEETS = ['ContingencyMatrix', 'Venues', 'Honorarium'];
+
+const BOARD_LODGING_EXPENSE_PREFIX = 'Board and Lodging of';
+const HONORARIUM_EXPENSE_PREFIX = 'Honorarium of';
+const TRAVEL_EXPENSE_PREFIX = 'Travel Expenses of';
 
 /**
  * Constants related to the budget estimate structure.
@@ -196,4 +200,7 @@ export {
   ReleaseManner,
   GAAObject,
   ExpenseGroup,
+  BOARD_LODGING_EXPENSE_PREFIX,
+  HONORARIUM_EXPENSE_PREFIX,
+  TRAVEL_EXPENSE_PREFIX,
 };

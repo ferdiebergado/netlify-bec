@@ -17,7 +17,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
     ecmaVersion: 'latest',
     sourceType: 'module',
-    // typescript-eslint specific options
+    // FIXED: typescript-eslint specific options
     warnOnUnsupportedTypeScriptVersion: true,
     EXPERIMENTAL_useProjectService: true,
   },
@@ -32,6 +32,7 @@ module.exports = {
     {
       files: ['**/*.test.ts', '**/*.test.tsx'],
       env: {
+        node: true,
         jest: true,
       },
     },

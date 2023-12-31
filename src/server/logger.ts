@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import executeQuery from './database';
 import { InStatement, InValue } from '@libsql/client/.';
 
-export default function requestLogger(
+export default async function requestLogger(
   req: Request,
   _res: Response,
   next: NextFunction,
@@ -36,11 +36,9 @@ export default function requestLogger(
     ],
   };
 
-  Promise.resolve()
-    .then(async () => {
-      const result = await executeQuery(createHitQuery);
-      const { lastInsertRowid } = result;
-      req.insertedId = lastInsertRowid;
-    })
-    .catch(next);
+  const result = await executeQuery(createHitQuery);
+  const { lastInsertRowid } = result;
+  req.insertedId = lastInsertRowid;
+
+  next();
 }

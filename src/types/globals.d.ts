@@ -1,3 +1,4 @@
+import type { Request, Response, NextFunction } from 'express';
 import { ReleaseManner, GAAObject, ExpenseGroup } from '../server/constants';
 
 /**
@@ -52,3 +53,9 @@ type ExcelFile = {
   filename: string;
   buffer: Buffer;
 };
+
+type ExpressMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => void;

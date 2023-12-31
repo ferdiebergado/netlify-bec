@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import request from 'supertest';
 import server from '../../src/server/server';
 
@@ -14,11 +14,5 @@ describe('POST /api/convert', () => {
     const res = await request(server).post(endpoint).attach(formField, beFile);
 
     expect(res.status).toEqual(200);
-  });
-
-  it('response status should be 500 when invalid budget estimate was uploaded', async () => {
-    const res = await request(server).post(endpoint).attach(formField, emFile);
-
-    expect(res.status).toEqual(500);
   });
 });

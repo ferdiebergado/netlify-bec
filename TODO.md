@@ -9,5 +9,16 @@
 - use express (OK)
 - try node-xlsx (X)
 - grand totals at last row (OK)
+- transfer conversion to client side (OK)
+- fix format of jsdoc (@param {type} var - description.)
+- clarify location for tev and manner of release of tev
+- support drag and drop of files
+- simplify YESNOVALIDATION in constants
+- validate if proper template
+- complete the documentation
+- reorder methods in expenditure matrix
+- join the types to their respective functions
+- throw error if uploaded file is not based on the budget estimate template
+- remove sorting of activities
 - husky
 - try bun

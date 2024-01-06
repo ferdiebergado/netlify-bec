@@ -1,17 +1,6 @@
 [build]
 publish = "public"
 
-[functions]
-external_node_modules = ["express","@libsql/client"]
-node_bundler = "esbuild"
-included_files = ["./data/*"]
-
-[[redirects]]
-force = true
-from = "/api/*"
-status = 200
-to = "/.netlify/functions/api/:splat"
-
 [[headers]]
 for = "/*"
 

@@ -1,0 +1,173 @@
+/* Variables and Color Palette */
+:root {
+  --primary-color: #3498db;
+  --background-color: #eee;
+  --secondary-background-color: #fff;
+  --text-color: #333;
+  --link-color: var(--primary-color);
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #1976d2;
+    --background-color: #222;
+    --secondary-background-color: #333;
+    --text-color: #fff;
+    --link-color: #0dd;
+  }
+}
+
+/* General Styles */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: Play, sans-serif;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Set minimum height to full viewport height */
+}
+
+/* Heading styles */
+h1,
+h2,
+h3 {
+  color: var(--text-color);
+  margin: 0;
+}
+
+/* Anchor Styles */
+a {
+  color: var(--link-color);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #0056b3; /* Darker color on hover */
+}
+
+a:visited {
+  color: #8e44ad; /* Visited link color */
+}
+
+/* Container Styles */
+.container {
+  flex: 1;
+  margin: 0 auto; /* Center the container */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card Styles */
+.card {
+  box-shadow: 0 16px 18px rgba(0 0 0 / 10%);
+  background-color: var(--secondary-background-color);
+  color: var(--text-color);
+  border-radius: 8px;
+  padding: 30px;
+  margin: auto;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+/* File Input Styles */
+input[type='file'] {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Button Styles */
+button {
+  background-color: var(--primary-color);
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
+  margin: 3em auto 1em;
+}
+
+button:hover {
+  background-color: #2980b9;
+}
+
+/* File Input Button Styles */
+input[type='file']::file-selector-button {
+  padding: 0.3em 0.5em;
+  border-radius: 0.3em;
+  margin: 5px;
+}
+
+input[type='file']::file-selector-button:hover {
+  background-color: var(--secondary-background-color);
+}
+
+/* Alert Styles */
+.alert {
+  color: white;
+  padding: 20px;
+  border-radius: 13px;
+  margin-bottom: 2rem;
+}
+
+.alert-success {
+  background-color: darkturquoise;
+}
+
+.alert-error {
+  background-color: mediumvioletred;
+}
+
+header {
+  margin: 4rem 0.5rem 0.1rem;
+  text-align: center;
+}
+
+footer {
+  color: var(--text-color);
+  text-align: center;
+  padding: 20px;
+  margin-top: auto; /* Push the footer to the bottom */
+  font-size: small;
+}
+
+/* Media queries for common screen sizes */
+@media only screen and (width < 600px) {
+  /* small screens */
+  .container {
+    width: 100%;
+  }
+
+  .card {
+    width: 90%;
+  }
+}
+
+@media only screen and (width >= 601px) and (width <= 1024px) {
+  /* medium screens */
+  .container {
+    width: 80%;
+  }
+
+  .card {
+    width: 100%;
+  }
+}
+
+@media only screen and (width >= 1025px) {
+  /* large screens */
+  .container {
+    width: 50%;
+  }
+
+  .card {
+    width: 100%;
+  }
+}

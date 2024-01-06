@@ -4,7 +4,7 @@ import type {
   ExpenseOptions,
   ActivityInfo,
   Activity,
-} from '../types/globals';
+} from './types/globals';
 import {
   AUXILLIARY_SHEETS,
   BOARD_LODGING_EXPENSE_PREFIX,
@@ -17,7 +17,7 @@ import {
   VENUES_BY_AIR,
 } from './constants';
 import { extractResult, getCellValueAsNumber } from './utils';
-import { Worksheet } from 'exceljs';
+import type { Worksheet } from 'exceljs';
 
 /**
  * Represents a specialized workbook for managing budget estimates.

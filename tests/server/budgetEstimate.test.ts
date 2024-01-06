@@ -1,10 +1,13 @@
 import path from 'path';
-import { BudgetEstimate } from '../../src/server/budgetEstimate';
-import config from '../../src/server/config';
+import { BudgetEstimate } from '../../src/budgetEstimate';
+import config from '../../src/config';
 import type { ActivityInfo, ExpenseItem } from '../../src/types/globals';
 
 describe('BudgetEstimate class', () => {
-  const budgetEstimateFile = path.join(config.paths.data, 'be_test.xlsx');
+  const budgetEstimateFile = path.join(
+    config.paths.data,
+    'be_test.xlsx',
+  ) as string;
   let budgetEstimate: BudgetEstimate;
 
   beforeEach(async () => {

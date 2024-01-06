@@ -1,6 +1,4 @@
 import { CellFormulaValue, CellValue } from 'exceljs';
-import type { Request, Response, NextFunction } from 'express';
-import { ExpressMiddleware } from '../types/globals';
 
 /**
  * Checks if the given object is a CellFormulaValue.
@@ -54,23 +52,9 @@ function getCellValueAsNumber(cellValue: string): number {
   return Number.isNaN(numericValue) ? 0 : numericValue;
 }
 
-/**
- * Create a wrapper function to handle async middleware.
- *
- * @param {ExpressMiddleware} fn The async middleware
- *
- * @returns {ExpressMiddleware} The middleware were the async operations and errors were handled
- */
-function asyncMiddlewareWrapper(fn: ExpressMiddleware): ExpressMiddleware {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-}
-
 export {
   isCellFormulaValue,
   extractResult,
   createTimestamp,
   getCellValueAsNumber,
-  asyncMiddlewareWrapper,
 };

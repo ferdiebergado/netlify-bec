@@ -1,5 +1,6 @@
 import type { Worksheet } from 'exceljs';
-import Excel from 'exceljs';
+import { Convertible } from './types/globals';
+import ExcelJS from 'exceljs';
 
 /**
  * Represents an abstract workbook with basic functionality for working with Excel files using the exceljs library.
@@ -13,9 +14,9 @@ export abstract class Workbook<T extends Workbook<T>> {
    * The instance of the Excel Workbook used for operations.
    *
    * @protected
-   * @type {Excel.Workbook}
+   * @type {ExcelJS.Workbook}
    */
-  protected wb: Excel.Workbook = new Excel.Workbook();
+  protected wb: ExcelJS.Workbook = new ExcelJS.Workbook();
 
   /**
    * The instance of the Excel Worksheet (optional) within the workbook.
@@ -29,9 +30,9 @@ export abstract class Workbook<T extends Workbook<T>> {
    * The source of the workbook, which can be either a file path (string) or a Buffer containing workbook data.
    *
    * @protected
-   * @type {string|Buffer|undefined}
+   * @type {Convertible}
    */
-  protected source?: string | Buffer;
+  protected source?: Convertible;
 
   /**
    * Creates an instance of the concrete Workbook class.
@@ -49,13 +50,14 @@ export abstract class Workbook<T extends Workbook<T>> {
    * @param {string|Buffer} source - The source of the workbook data, either a file path (string) or a Buffer.
    * @returns {Promise<void>} - A Promise that resolves when the initialization is complete.
    */
-  async initializeAsync(source: string | Buffer): Promise<void> {
-    if (typeof source === 'string') {
-      await this.wb.xlsx.readFile(source);
-    } else if (source instanceof Buffer) {
-      await this.wb.xlsx.load(source);
-    }
+  async initializeAsync(source: Convertible): Promise<void> {
+    // if (typeof source === 'string') {
+    //   await this.wb.xlsx.readFile(source);
+    // } else if (source instanceof Buffer || source instanceof ArrayBuffer) {
+    //   await this.wb.xlsx.load(source);
+    // }
 
+    await this.wb.xlsx.load(source);
     this.source = source;
   }
 
@@ -68,7 +70,7 @@ export abstract class Workbook<T extends Workbook<T>> {
    * @returns {Promise<T>} - A Promise that resolves with the created and initialized instance of the concrete Workbook class.
    */
   static async createAsync<T extends Workbook<T>>(
-    source: string | Buffer,
+    source: Convertible,
   ): Promise<T> {
     const instance = new (this as unknown as { new (): T })();
     await instance.initializeAsync(source);

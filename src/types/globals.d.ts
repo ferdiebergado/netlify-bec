@@ -1,5 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
-import { ReleaseManner, GAAObject, ExpenseGroup } from '../server/constants';
+import { ReleaseManner, GAAObject, ExpenseGroup } from '../constants';
 
 /**
  * Represents an activity, including program details, output, venue, etc., along with associated expense items.
@@ -49,13 +48,10 @@ type ExpenseOptions = {
   venue?: string;
 };
 
+type Buffers = Buffer | ArrayBuffer;
+type Convertible = string | Buffers;
+
 type ExcelFile = {
   filename: string;
-  buffer: Buffer;
+  buffer: Buffers;
 };
-
-type ExpressMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => void;

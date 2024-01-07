@@ -1,10 +1,10 @@
-import path from 'node:path';
+import path from 'path';
 import { readFile } from 'node:fs/promises';
 import * as Excel from 'exceljs';
-import { ExpenditureMatrix } from '../../src/server/expenditureMatrix';
-import config from '../../src/server/config';
-import type { ActivityInfo, ExpenseItem } from '../../src/types/globals';
-import { extractResult } from '../../src/server/utils';
+import { ExpenditureMatrix } from '../../src/expenditureMatrix';
+import config from '../../src/config';
+import type { ActivityInfo } from '../../src/types/globals';
+import { extractResult } from '../../src/utils';
 
 describe('Expenditure Matrix class', () => {
   let expenditureMatrix: ExpenditureMatrix;
@@ -45,9 +45,11 @@ describe('Expenditure Matrix class', () => {
   beforeEach(async () => {
     const emFile = config.paths.emTemplate as string;
     expenditureMatrix = await ExpenditureMatrix.createAsync(emFile);
-    const filename: string = path.join(config.paths.data, 'be_test.xlsx');
+    const filename = path.join(config.paths.data, 'be_test.xlsx') as string;
     const buffer = await readFile(filename);
-    const result = await expenditureMatrix.convert([{ filename, buffer }]);
+    const result = await expenditureMatrix.fromBudgetEstimates([
+      { filename, buffer },
+    ]);
     const wb = new Excel.Workbook();
 
     await wb.xlsx.load(result);

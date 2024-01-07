@@ -30,17 +30,26 @@
       <div class="card">
         <div id="alert" class="alert"></div>
         <form id="excelForm">
-          <label for="excelFile">Upload the Budget Estimate(s):</label>
-          <input type="file" id="excelFile" accept=".xlsx" multiple required />
-          <p>
-            <small
-              >Download template
-              <a href="templates/BLD-BE-001 Budget Estimate template.xlsx"
-                >here</a
-              >.</small
-            >
-          </p>
-          <p id="status"></p>
+          <label for="excelFile" class="drop-container" id="dropcontainer">
+            <span class="drop-title">Drop files here</span>
+            or
+            <input
+              type="file"
+              id="excelFile"
+              accept=".xlsx"
+              multiple
+              required
+            />
+            <span>
+              <small
+                >Download template
+                <a href="templates/BLD-BE-001 Budget Estimate template.xlsx"
+                  >here</a
+                >.</small
+              >
+            </span>
+          </label>
+
           <button id="convert" type="submit">CONVERT</button>
         </form>
       </div>

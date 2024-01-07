@@ -1,4 +1,7 @@
+import config from './config';
 import convert from './converter';
+import { ExpenditureMatrix } from './expenditureMatrix';
+import { ExcelFile } from './types/globals';
 import { createTimestamp } from './utils';
 
 // Constants
@@ -10,6 +13,9 @@ const excelForm = document.forms.namedItem('excelForm');
 const fileInput = document.getElementById('excelFile') as HTMLInputElement;
 const divAlert = document.getElementById('alert') as HTMLDivElement;
 const btnConvert = document.getElementById('convert') as HTMLButtonElement;
+const dropContainer = document.getElementById(
+  'dropcontainer',
+) as HTMLLabelElement;
 
 let isLoading = false;
 
@@ -44,28 +50,49 @@ function updateBtnConvert() {
   }
 }
 
+function initiateDownload(buffer: ArrayBuffer) {
+  const blob = new Blob([buffer]);
+
+  const filename = `em-${createTimestamp()}.xlsx`;
+  const blobUrl = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+
+  document.body.appendChild(a);
+  a.click();
+
+  document.body.removeChild(a);
+  URL.revokeObjectURL(blobUrl);
+}
+
 async function processFiles(files: FileList) {
   try {
-    const emBuffer = await convert(files);
+    const emTemplate = config.paths.emTemplate;
+    const res = await fetch(emTemplate);
+    const arrayBuffer = await res.arrayBuffer();
+    const expenditureMatrix =
+      await ExpenditureMatrix.createAsync<ExpenditureMatrix>(arrayBuffer);
+
+    const excelFiles: ExcelFile[] = [];
+
+    await Promise.allSettled(
+      [...files].map(async file => {
+        excelFiles.push({
+          filename: file.name,
+          buffer: await file.arrayBuffer(),
+        });
+      }),
+    );
+
+    const buffer = await expenditureMatrix.fromBudgetEstimates(excelFiles);
 
     showAlert('Conversion successful. Download will start automatically.');
     isLoading = false;
     updateBtnConvert();
 
-    const blob = new Blob([emBuffer]);
-
-    const filename = `em-${createTimestamp()}.xlsx`;
-    const blobUrl = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = filename;
-
-    document.body.appendChild(a);
-    a.click();
-
-    document.body.removeChild(a);
-    URL.revokeObjectURL(blobUrl);
+    initiateDownload(buffer);
   } catch (error) {
     const msg =
       'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
@@ -86,7 +113,7 @@ function handleSubmit(event: SubmitEvent) {
 
   if (!files) throw new Error('Missing file(s)!');
 
-  processFiles(files).catch(e => console.log(e));
+  processFiles(files).catch(e => console.error(e));
 }
 
 // Initialization
@@ -95,3 +122,26 @@ updateBtnConvert();
 
 // Event Listeners
 excelForm?.addEventListener('submit', handleSubmit);
+
+dropContainer.addEventListener(
+  'dragover',
+  e => {
+    // prevent default to allow drop
+    e.preventDefault();
+  },
+  false,
+);
+
+dropContainer.addEventListener('dragenter', () => {
+  dropContainer.classList.add('drag-active');
+});
+
+dropContainer.addEventListener('dragleave', () => {
+  dropContainer.classList.remove('drag-active');
+});
+
+dropContainer.addEventListener('drop', e => {
+  e.preventDefault();
+  dropContainer.classList.remove('drag-active');
+  fileInput.files = e.dataTransfer.files;
+});

@@ -10,9 +10,9 @@
 - try node-xlsx (X)
 - grand totals at last row (OK)
 - transfer conversion to client side (OK)
+- support drag and drop of files (OK)
 - fix format of jsdoc (@param {type} var - description.)
 - clarify location for tev and manner of release of tev
-- support drag and drop of files
 - simplify YESNOVALIDATION in constants
 - validate if proper template
 - complete the documentation

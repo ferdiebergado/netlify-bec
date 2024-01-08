@@ -1,6 +1,4 @@
-@use 'spinner';
-@use 'fileinput';
-@use 'alerts';
+@import 'spinner', 'fileinput', 'alerts';
 
 /* Variables and Color Palette */
 :root {

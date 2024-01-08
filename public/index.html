@@ -49,8 +49,14 @@
               >
             </span>
           </label>
-
-          <button id="convert" type="submit">CONVERT</button>
+          <div id="overlay" class="overlay hidden">
+            <div class="spinner-container">
+              <div id="spinner" class="spinner"></div>
+            </div>
+          </div>
+          <button id="convert" type="submit">
+            <span id="spinner" class="hidden"></span>CONVERT
+          </button>
         </form>
       </div>
     </main>

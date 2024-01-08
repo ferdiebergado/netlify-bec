@@ -42,7 +42,7 @@ function showAlert(msg: string, type: string = 'success') {
   }
 }
 
-function updateBtnConvert() {
+function updateConvertBtn() {
   if (isLoading) {
     btnConvert.textContent = 'Converting...';
     overlay.style.display = 'block';
@@ -54,9 +54,8 @@ function updateBtnConvert() {
 
 function initiateDownload(buffer: ArrayBuffer) {
   const blob = new Blob([buffer]);
-
-  const filename = `em-${createTimestamp()}.xlsx`;
   const blobUrl = URL.createObjectURL(blob);
+  const filename = `em-${createTimestamp()}.xlsx`;
 
   const a = document.createElement('a');
   a.href = blobUrl;
@@ -96,7 +95,7 @@ function handleSubmit(event: SubmitEvent) {
 
   hideAlert();
   isLoading = true;
-  updateBtnConvert();
+  updateConvertBtn();
 
   const { files } = fileInput;
 
@@ -105,26 +104,26 @@ function handleSubmit(event: SubmitEvent) {
   processFiles(files)
     .then(buffer => {
       showAlert('Conversion successful. Download will start automatically.');
-      isLoading = false;
-      updateBtnConvert();
 
       initiateDownload(buffer);
     })
-    .catch(handleError);
+    .catch(handleError)
+    .finally(() => {
+      isLoading = false;
+      updateConvertBtn();
+    });
 }
 
 function handleError(error: Error) {
   const msg =
     'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
   showAlert(msg, 'error');
-  isLoading = false;
   console.error(error);
-  updateBtnConvert();
 }
 
 // Initialization
 hideAlert();
-updateBtnConvert();
+updateConvertBtn();
 
 // Event Listeners
 excelForm?.addEventListener('submit', handleSubmit);

@@ -1,31 +1,6 @@
 import { DataValidation } from 'exceljs';
 
 /**
- * Base URL for the API endpoints.
- */
-const BASE_URL = '/api';
-
-/**
- * Endpoint for the conversion operation.
- */
-const CONVERT_URL = '/convert';
-
-/**
- * Full API endpoint combining the base URL and the conversion endpoint.
- */
-const API_ENDPOINT = `${BASE_URL}${CONVERT_URL}`;
-
-/**
- * Maximum number of file uploads allowed.
- */
-const MAX_UPLOADS = 40;
-
-/**
- * Maximum file size allowed for uploads, specified in bytes.
- */
-const MAX_FILESIZE = 1024 * 1024 * 5;
-
-/**
  * Constant representing the value 'Y'.
  */
 const YES = 'Y';
@@ -191,12 +166,7 @@ export {
   YES,
   YES_NO_VALIDATION,
   MANNER_VALIDATION,
-  MAX_UPLOADS,
-  MAX_FILESIZE,
   VENUES_BY_AIR,
-  BASE_URL,
-  CONVERT_URL,
-  API_ENDPOINT,
   ReleaseManner,
   GAAObject,
   ExpenseGroup,

@@ -11,14 +11,15 @@
 - grand totals at last row (OK)
 - transfer conversion to client side (OK)
 - support drag and drop of files (OK)
+- add spinner/progress bar (OK)
+- clean up constants (OK)
+- reorder methods in expenditure matrix (OK)
+- remove sorting of activities (X)
 - fix format of jsdoc (@param {type} var - description.)
-- clarify location for tev and manner of release of tev
-- simplify YESNOVALIDATION in constants
-- validate if proper template
 - complete the documentation
-- reorder methods in expenditure matrix
+- clarify location for tev and manner of release of tev
+- validate if proper template
 - join the types to their respective functions
-- throw error if uploaded file is not based on the budget estimate template
-- remove sorting of activities
+- simplify YESNOVALIDATION in constants
 - husky
 - try bun

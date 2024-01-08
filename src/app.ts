@@ -1,5 +1,4 @@
 import config from './config';
-import convert from './converter';
 import { ExpenditureMatrix } from './expenditureMatrix';
 import { ExcelFile } from './types/globals';
 import { createTimestamp } from './utils';
@@ -16,12 +15,13 @@ const btnConvert = document.getElementById('convert') as HTMLButtonElement;
 const dropContainer = document.getElementById(
   'dropcontainer',
 ) as HTMLLabelElement;
+const overlay = document.getElementById('overlay') as HTMLDivElement;
 
 let isLoading = false;
 
 // Utility Functions
 function hideAlert() {
-  if (divAlert) divAlert.style.display = 'none';
+  divAlert.style.display = 'none';
 }
 
 function showAlert(msg: string, type: string = 'success') {
@@ -45,8 +45,10 @@ function showAlert(msg: string, type: string = 'success') {
 function updateBtnConvert() {
   if (isLoading) {
     btnConvert.textContent = 'Converting...';
+    overlay.style.display = 'block';
   } else {
     btnConvert.textContent = 'CONVERT';
+    overlay.style.display = 'none';
   }
 }
 
@@ -67,40 +69,26 @@ function initiateDownload(buffer: ArrayBuffer) {
   URL.revokeObjectURL(blobUrl);
 }
 
-async function processFiles(files: FileList) {
-  try {
-    const emTemplate = config.paths.emTemplate;
-    const res = await fetch(emTemplate);
-    const arrayBuffer = await res.arrayBuffer();
-    const expenditureMatrix =
-      await ExpenditureMatrix.createAsync<ExpenditureMatrix>(arrayBuffer);
+async function processFiles(files: FileList): Promise<ArrayBuffer> {
+  const emTemplate = config.paths.emTemplate;
+  const res = await fetch(emTemplate);
+  const arrayBuffer = await res.arrayBuffer();
+  const expenditureMatrix =
+    await ExpenditureMatrix.createAsync<ExpenditureMatrix>(arrayBuffer);
+  const excelFiles: ExcelFile[] = [];
 
-    const excelFiles: ExcelFile[] = [];
+  await Promise.allSettled(
+    [...files].map(async file => {
+      excelFiles.push({
+        filename: file.name,
+        buffer: await file.arrayBuffer(),
+      });
+    }),
+  );
 
-    await Promise.allSettled(
-      [...files].map(async file => {
-        excelFiles.push({
-          filename: file.name,
-          buffer: await file.arrayBuffer(),
-        });
-      }),
-    );
+  const buffer = await expenditureMatrix.fromBudgetEstimates(excelFiles);
 
-    const buffer = await expenditureMatrix.fromBudgetEstimates(excelFiles);
-
-    showAlert('Conversion successful. Download will start automatically.');
-    isLoading = false;
-    updateBtnConvert();
-
-    initiateDownload(buffer);
-  } catch (error) {
-    const msg =
-      'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
-    showAlert(msg, 'error');
-    isLoading = false;
-    console.error(error);
-    updateBtnConvert();
-  }
+  return buffer;
 }
 
 function handleSubmit(event: SubmitEvent) {
@@ -109,11 +97,29 @@ function handleSubmit(event: SubmitEvent) {
   hideAlert();
   isLoading = true;
   updateBtnConvert();
+
   const { files } = fileInput;
 
   if (!files) throw new Error('Missing file(s)!');
 
-  processFiles(files).catch(e => console.error(e));
+  processFiles(files)
+    .then(buffer => {
+      showAlert('Conversion successful. Download will start automatically.');
+      isLoading = false;
+      updateBtnConvert();
+
+      initiateDownload(buffer);
+    })
+    .catch(handleError);
+}
+
+function handleError(error: Error) {
+  const msg =
+    'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
+  showAlert(msg, 'error');
+  isLoading = false;
+  console.error(error);
+  updateBtnConvert();
 }
 
 // Initialization

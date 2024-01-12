@@ -6,7 +6,7 @@ const { sassPlugin } = require('esbuild-sass-plugin');
 
 esbuild
   .context({
-    entryPoints: ['src/app.ts', 'src/sass/app.scss'],
+    entryPoints: ['src/app.ts'],
     bundle: true,
     outdir: 'public',
     entryNames: '[name]',

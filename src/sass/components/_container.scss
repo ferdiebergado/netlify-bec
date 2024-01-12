@@ -1,0 +1,11 @@
+/* Container Styles */
+.container {
+  flex: 1;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: clamp(300px, 50%, 1000px);
+  box-sizing: border-box;
+}

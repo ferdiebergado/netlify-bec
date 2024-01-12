@@ -1,0 +1,65 @@
+/* Variables and Color Palette */
+:root {
+  --primary-color: #3498db;
+  --background-color: #eee;
+  --secondary-background-color: #fff;
+  --text-color: #333;
+  --link-color: var(--primary-color);
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #1976d2;
+    --background-color: #222;
+    --secondary-background-color: #333;
+    --text-color: #fff;
+    --link-color: #0dd;
+  }
+}
+
+/* General Styles */
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: Play, sans-serif;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Set minimum height to full viewport height */
+}
+
+/* Heading styles */
+h1,
+h2,
+h3 {
+  color: var(--text-color);
+  margin: 0;
+}
+
+/* Anchor Styles */
+a {
+  color: var(--link-color);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #0056b3; /* Darker color on hover */
+}
+
+a:visited {
+  color: #8e44ad; /* Visited link color */
+}
+
+header {
+  margin: 1rem 0.5rem 0.1rem;
+  text-align: center;
+}
+
+footer {
+  color: var(--text-color);
+  text-align: center;
+  padding: 20px;
+  margin-top: auto; /* Push the footer to the bottom */
+  font-size: small;
+}

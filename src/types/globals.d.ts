@@ -5,6 +5,7 @@ import { ReleaseManner, GAAObject, ExpenseGroup } from '../constants';
  */
 type Activity = {
   info: ActivityInfo;
+  tevPSF: ExpenseItem[];
   expenseItems: ExpenseItem[];
 };
 
@@ -55,3 +56,9 @@ type ExcelFile = {
   filename: string;
   buffer: Buffers;
 };
+
+type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
+  : T;

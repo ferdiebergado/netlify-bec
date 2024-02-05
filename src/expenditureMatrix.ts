@@ -2,10 +2,17 @@ import { Workbook } from './workbook';
 import {
   EXPENDITURE_MATRIX,
   MANNER_VALIDATION,
+  ReleaseManner,
   YES,
   YES_NO_VALIDATION,
 } from './constants';
-import type { Activity, ExcelFile, ExpenseItem } from './types/globals';
+import type {
+  Activity,
+  ActivityInfo,
+  DeepPartial,
+  ExcelFile,
+  ExpenseItem,
+} from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
 import type { Row, Worksheet } from 'exceljs';
 
@@ -155,14 +162,23 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }
 
   /**
-   * Duplicates the expense item row in the expenditure matrix.
+   * Duplicates an expense item at the specified target row index in the expenditure matrix.
    *
-   * @param targetRowIndex {number} The index where the duplicate expense item row will be inserted.
-   * @param copies {number} The number of expense item rows to be copied.
-   *
-   * @returns void
+   * @private
+   * @param {number} targetRowIndex - The row index where the expense item is to be duplicated.
+   * @param {number|undefined} copies - The number of copies to create (default is 1).
+   * @returns {void}
    */
-  private _duplicateExpenseItem(targetRowIndex: number, copies: number): void {
+  private _duplicateExpenseItem(targetRowIndex: number, copies?: number): void {
+    /**
+     * Duplicates a row in the expenditure matrix.
+     *
+     * @param {object} sheet - The active sheet where the duplication will occur.
+     * @param {number} targetIndex - The row index to duplicate.
+     * @param {number} sourceIndex - The row index from which to copy the data.
+     * @param {number} [numCopies=1] - The number of copies to create (default is 1).
+     * @returns {void}
+     */
     ExpenditureMatrix.duplicateRow(
       this.getActiveSheet(),
       targetRowIndex,
@@ -170,6 +186,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       copies,
     );
   }
+
   /**
    * Creates or duplicates an activity row in the expenditure matrix.
    *
@@ -483,9 +500,19 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     await Promise.allSettled(files.map(file => this._addToActivities(file)));
 
+    this.activities.sort(this._orderByProgramAndOutput);
+
     let currentRowIndex: number = EXPENDITURE_MATRIX.TARGET_ROW_INDEX;
     let isFirstActivity = true;
     let rank = 1;
+    let { program: currentProgram, output: currentOutput } =
+      this.activities[0].info;
+    let currentActivity: DeepPartial<Activity> = {
+      info: {
+        program: currentProgram,
+        output: currentOutput,
+      },
+    };
 
     /**
      * Records the indices of rows of each activity that contains the total unit cost
@@ -493,9 +520,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
      */
     const activityRows: number[] = [];
 
-    this.activities.sort(this._orderByProgram).forEach(activity => {
+    this.activities.forEach(activity => {
       const {
-        info: { program, month },
+        info: { program, month, output },
         expenseItems,
       } = activity;
 
@@ -504,20 +531,27 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       if (isFirstActivity) {
         programRowIndex = EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX;
-        this.programs.push(program);
+        // this.programs.push(program);
       } else {
-        if (!this.programs.includes(program)) {
+        if (program !== currentProgram) {
           this._duplicateProgram(programRowIndex);
-          this.programs.push(program);
           currentRowIndex += 1;
+          currentProgram = program;
         }
+        // if (!this.programs.includes(program)) {
+        //   this._duplicateProgram(programRowIndex);
+        //   this.programs.push(program);
+        //   currentRowIndex += 1;
+        // }
       }
 
       const programRow = sheet.getRow(programRowIndex);
       programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
 
       // output
-      this._createOutputRow(currentRowIndex, activity, rank, isFirstActivity);
+      if (output !== currentOutput) {
+        this._createOutputRow(currentRowIndex, activity, rank, isFirstActivity);
+      }
 
       rank += 1;
 
@@ -535,16 +569,24 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       if (!isFirstActivity) currentRowIndex += 1;
 
       // expense items
-      this._duplicateExpenseItem(currentRowIndex, expenseItems.length);
-
       expenseItems.forEach(expense => {
-        this._createExpenseItemRow(
-          currentRowIndex,
-          expense,
-          month,
-          isFirstActivity,
-        );
-        currentRowIndex += 1;
+        if (expense.releaseManner === ReleaseManner.FOR_DOWNLOAD_PSF) {
+          this._duplicateExpenseItem(currentRowIndex);
+          this._createExpenseItemRow(
+            currentRowIndex,
+            expense,
+            month,
+            isFirstActivity,
+          );
+          currentRowIndex += 1;
+        } else {
+          const act = currentActivity.expenseItems?.find(
+            exp => exp?.expenseItem === expense.expenseItem,
+          );
+          if (act) {
+            act.unitCost! += expense.unitCost;
+          }
+        }
       });
 
       if (isFirstActivity) currentRowIndex -= 1;
@@ -612,19 +654,20 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns A number indicating the order.
    */
-  private _orderByProgram(this: void, a: Activity, b: Activity): number {
-    if (a.info.program < b.info.program) {
-      return -1;
+  private _orderByProgramAndOutput(
+    this: void,
+    a: Activity,
+    b: Activity,
+  ): number {
+    const { program: programA, output: outputA } = a.info;
+    const { program: programB, output: outputB } = b.info;
+
+    const programComparison = programA.localeCompare(programB);
+
+    if (programComparison === 0) {
+      return outputA.localeCompare(outputB);
     }
 
-    if (a.info.program > b.info.program) {
-      return 1;
-    }
-
-    if (a.info.output < b.info.output) {
-      return -1;
-    }
-
-    return 1;
+    return programComparison;
   }
 }

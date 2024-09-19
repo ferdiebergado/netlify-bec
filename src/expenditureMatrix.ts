@@ -423,7 +423,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     // ppmp
     const ppmpCell = currentRow.getCell(PPMP_COL);
     ppmpCell.dataValidation = YES_NO_VALIDATION;
-    if (hasPPMP) ppmpCell.value = YES;
+    ppmpCell.value = 'N';
+    if (hasPPMP) ppmpCell.value = 'Y';
 
     // app supplies
     const appSuppliesCell = currentRow.getCell(APP_SUPPLIES_COL);

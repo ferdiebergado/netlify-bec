@@ -322,6 +322,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     let expenseData: ExpenseOptions = {
       prefix: prefixPax,
       releaseManner,
+      hasPPMP: false,
     };
 
     const tevPax = BudgetEstimate.getExpenseItems(
@@ -370,6 +371,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const expenseData: ExpenseOptions = {
       prefix,
       releaseManner,
+      hasPPMP: false,
     };
     const honorarium = BudgetEstimate.getExpenseItems(
       sheet,
@@ -392,6 +394,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const expenseData: ExpenseOptions = {
       prefix: '',
       releaseManner: ReleaseManner.CASH_ADVANCE,
+      hasPPMP: false,
     };
 
     const otherExpenses = BudgetEstimate.getExpenseItems(

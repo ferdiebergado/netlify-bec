@@ -5,7 +5,12 @@ import {
   YES,
   YES_NO_VALIDATION,
 } from './constants';
-import type { Activity, ExcelFile, ExpenseItem } from './types/globals';
+import type {
+  Activity,
+  ActivityInfo,
+  ExcelFile,
+  ExpenseItem,
+} from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
 import type { Row, Worksheet } from 'exceljs';
 
@@ -495,6 +500,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
      */
     const activityRows: number[] = [];
 
+    const paxTevsExpenses: ExpenseItem[] = [];
+
     this.activities.sort(this._orderByProgram).forEach(activity => {
       const {
         info: { program, month },
@@ -540,18 +547,67 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       this._duplicateExpenseItem(currentRowIndex, expenseItems.length);
 
       expenseItems.forEach(expense => {
-        this._createExpenseItemRow(
-          currentRowIndex,
-          expense,
-          month,
-          isFirstActivity,
-        );
-        currentRowIndex += 1;
+        const { expenseItem, unitCost } = expense;
+
+        if (expenseItem.includes('Participant')) {
+          const reg = paxTevsExpenses.find(ex => ex.expenseItem == expenseItem);
+
+          if (reg) {
+            reg.unitCost += unitCost;
+          } else {
+            paxTevsExpenses.push(expense);
+          }
+        } else {
+          this._createExpenseItemRow(
+            currentRowIndex,
+            expense,
+            month,
+            isFirstActivity,
+          );
+          currentRowIndex += 1;
+        }
       });
 
       if (isFirstActivity) currentRowIndex -= 1;
 
       isFirstActivity = false;
+    });
+    // activity
+    const tevPaxInfo: ActivityInfo = {
+      program: 'BEC',
+      output: 'Benefitted implementers',
+      outputIndicator: 'No. of implementers benefitted',
+      activityTitle:
+        'Program Support Funds for Travelling Expenses of Participants',
+      activityIndicator: 'No. of program support funds downloaded',
+      month: 1,
+      venue: '',
+      totalPax: 16,
+      outputPhysicalTarget: 16,
+      activityPhysicalTarget: 1,
+    };
+
+    const tevPaxActivity: Activity = {
+      info: tevPaxInfo,
+      expenseItems: paxTevsExpenses,
+    };
+
+    const activityRowIndex = this._createActivityRow(
+      currentRowIndex,
+      tevPaxActivity,
+      isFirstActivity,
+    );
+
+    activityRows.push(activityRowIndex);
+
+    // if (!isFirstActivity) currentRowIndex += 1;
+
+    // expense items
+    this._duplicateExpenseItem(currentRowIndex, paxTevsExpenses.length);
+
+    paxTevsExpenses.forEach(exp => {
+      this._createExpenseItemRow(currentRowIndex, exp, 1, isFirstActivity);
+      currentRowIndex += 1;
     });
 
     sheet.spliceRows(currentRowIndex, 2);

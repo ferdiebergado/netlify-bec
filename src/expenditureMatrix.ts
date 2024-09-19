@@ -574,7 +574,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     });
     // activity
     const tevPaxInfo: ActivityInfo = {
-      program: 'BEC',
+      program: 'Provision of Program Support Funds',
       output: 'Benefitted implementers',
       outputIndicator: 'No. of implementers benefitted',
       activityTitle:
@@ -591,6 +591,19 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       info: tevPaxInfo,
       expenseItems: paxTevsExpenses,
     };
+
+    currentRowIndex += 1;
+    this._duplicateProgram(currentRowIndex);
+    this.programs.push(tevPaxInfo.program);
+    currentRowIndex += 1;
+
+    const programRow = sheet.getRow(currentRowIndex);
+    programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = tevPaxInfo.program;
+
+    // output
+    this._createOutputRow(currentRowIndex, tevPaxActivity, rank, isFirstActivity);
+
+    rank += 1;
 
     const activityRowIndex = this._createActivityRow(
       currentRowIndex,

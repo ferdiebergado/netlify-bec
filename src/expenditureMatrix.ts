@@ -428,7 +428,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     // app supplies
     const appSuppliesCell = currentRow.getCell(APP_SUPPLIES_COL);
     appSuppliesCell.dataValidation = YES_NO_VALIDATION;
-    if (hasAPPSupplies) appSuppliesCell.value = YES;
+    appSuppliesCell.value = 'N';
+    if (hasAPPSupplies) appSuppliesCell.value = 'Y';
 
     // app ticket
     const appTicketCell = currentRow.getCell(APP_TICKET_COL);

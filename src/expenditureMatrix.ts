@@ -86,6 +86,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     for (let j = 0; j < numRows; j += 1) {
       const newRow = sheet.insertRow(currentRowIndex, []);
 
+      console.log('inserting row at index', currentRowIndex);
+
       srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         const targetCell = newRow.getCell(colNumber);
 
@@ -534,6 +536,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         // this.programs.push(program);
       } else {
         if (program !== currentProgram) {
+          console.log('duplicating program at index', programRowIndex);
+
           this._duplicateProgram(programRowIndex);
           currentRowIndex += 1;
           currentProgram = program;
@@ -550,6 +554,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       // output
       if (output !== currentOutput) {
+        console.log('creating output row at index', currentRowIndex);
+
         this._createOutputRow(currentRowIndex, activity, rank, isFirstActivity);
       }
 
@@ -568,33 +574,76 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       if (!isFirstActivity) currentRowIndex += 1;
 
+      console.log(
+        'isfirstactivity:',
+        isFirstActivity,
+        'current row index:',
+        currentRowIndex,
+      );
+
+      for (let index = 0; index < expenseItems.length; index++) {
+        const expense = expenseItems[index];
+
+        console.log(expense);
+        console.log(
+          'current expense item index:',
+          index,
+          'expenseitems.length:',
+          expenseItems.length,
+        );
+
+        console.log('duplicating expense item at row', currentRowIndex);
+
+        this._duplicateExpenseItem(currentRowIndex);
+        console.log('creating expense row at index', currentRowIndex);
+
+        this._createExpenseItemRow(
+          currentRowIndex,
+          expense,
+          month,
+          isFirstActivity,
+        );
+
+        currentRowIndex += 1;
+      }
       // expense items
-      expenseItems.forEach(expense => {
-        if (expense.releaseManner === ReleaseManner.FOR_DOWNLOAD_PSF) {
-          this._duplicateExpenseItem(currentRowIndex);
-          this._createExpenseItemRow(
-            currentRowIndex,
-            expense,
-            month,
-            isFirstActivity,
-          );
-          currentRowIndex += 1;
-        } else {
-          const act = currentActivity.expenseItems?.find(
-            exp => exp?.expenseItem === expense.expenseItem,
-          );
-          if (act) {
-            act.unitCost! += expense.unitCost;
-          }
+      // expenseItems.forEach(expense => {
+      //   console.table(expense);
+      //   // if (expense.releaseManner === ReleaseManner.FOR_DOWNLOAD_PSF) {
+      //   this._duplicateExpenseItem(currentRowIndex);
+      //   this._createExpenseItemRow(
+      //     currentRowIndex,
+      //     expense,
+      //     month,
+      //     isFirstActivity,
+      //   );
+      //   currentRowIndex += 1;
+
+      //   console.log('currentrowindex:', currentRowIndex);
+
+      // } else {
+      //   const act = currentActivity.expenseItems?.find(
+      //     exp => exp?.expenseItem === expense.expenseItem,
+      //   );
+      //   if (act) {
+      //     act.unitCost! += expense.unitCost;
+      //   }
+      // }
+      // });
+
+      if (isFirstActivity) {
+        isFirstActivity = false;
+        currentRowIndex -= 1;
+        if (expenseItems.length > 1) {
+          sheet.spliceRows(currentRowIndex, 1);
         }
-      });
+      }
 
-      if (isFirstActivity) currentRowIndex -= 1;
-
-      isFirstActivity = false;
+      console.log('removing row at index', currentRowIndex);
+      sheet.spliceRows(currentRowIndex, 1);
     });
 
-    sheet.spliceRows(currentRowIndex, 2);
+    // sheet.spliceRows(currentRowIndex, 1);
 
     const lastRowIndex = currentRowIndex + 1;
 

@@ -4,6 +4,7 @@
   padding: 20px;
   border-radius: 13px;
   margin-bottom: 2rem;
+  text-align: left;
 }
 
 .alert-success {
@@ -12,4 +13,8 @@
 
 .alert-error {
   background-color: mediumvioletred;
+}
+
+.alert a {
+  color: yellow;
 }

@@ -15,6 +15,7 @@ import type {
 } from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
 import type { Row, Worksheet } from 'exceljs';
+import { log } from 'console';
 
 /**
  * Represents a specialized workbook for managing expenditure matrices.
@@ -86,7 +87,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     for (let j = 0; j < numRows; j += 1) {
       const newRow = sheet.insertRow(currentRowIndex, []);
 
-      console.log('inserting row at index', currentRowIndex);
+      // console.log('inserting row at index', currentRowIndex);
 
       srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         const targetCell = newRow.getCell(colNumber);
@@ -505,10 +506,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     this.activities.sort(this._orderByProgramAndOutput);
 
     let currentRowIndex: number = EXPENDITURE_MATRIX.TARGET_ROW_INDEX;
+    // let currentRowIndex = 13;
     let isFirstActivity = true;
     let rank = 1;
-    let { program: currentProgram, output: currentOutput } =
-      this.activities[0].info;
+    let currentOutput = '';
+    let currentProgram = '';
+    // let { program: currentProgram } = this.activities[0].info;
     let currentActivity: DeepPartial<Activity> = {
       info: {
         program: currentProgram,
@@ -529,41 +532,83 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       } = activity;
 
       // program
-      let programRowIndex = currentRowIndex;
+      let programRowIndex;
 
       if (isFirstActivity) {
         programRowIndex = EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX;
+        console.log(
+          'writing program at row',
+          programRowIndex,
+          'program:',
+          program,
+        );
+
+        const programRow = sheet.getRow(programRowIndex);
+        programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
         // this.programs.push(program);
       } else {
+        // currentRowIndex += 1;
+        programRowIndex = currentRowIndex;
+
+        console.log('program:', program, 'currentProgram', currentProgram);
         if (program !== currentProgram) {
-          console.log('duplicating program at index', programRowIndex);
+          console.log('creating program at index', programRowIndex);
 
           this._duplicateProgram(programRowIndex);
-          currentRowIndex += 1;
-          currentProgram = program;
+
+          const programRow = sheet.getRow(programRowIndex);
+          programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
+          // currentRowIndex += 1;
+        } else {
+          currentRowIndex -= 1;
+          console.log('skipping program row');
         }
-        // if (!this.programs.includes(program)) {
-        //   this._duplicateProgram(programRowIndex);
-        //   this.programs.push(program);
-        //   currentRowIndex += 1;
-        // }
       }
 
-      const programRow = sheet.getRow(programRowIndex);
-      programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
+      currentProgram = program;
+
+      // if (!this.programs.includes(program)) {
+      //   this._duplicateProgram(programRowIndex);
+      //   this.programs.push(program);
+      //   currentRowIndex += 1;
+      // }
+
+      if (!isFirstActivity) {
+        currentRowIndex += 1;
+        console.log('moved current row to', currentRowIndex);
+      }
 
       // output
-      if (output !== currentOutput) {
-        console.log('creating output row at index', currentRowIndex);
+      console.log('output:', output, 'currentOutput:', currentOutput);
 
+      if (output !== currentOutput) {
+        // currentRowIndex += 1;
+
+        console.log(
+          'creating output row at index',
+          currentRowIndex,
+          'isfirstactivity',
+          isFirstActivity,
+          'output',
+          output,
+        );
         this._createOutputRow(currentRowIndex, activity, rank, isFirstActivity);
+        rank += 1;
+        console.log('moved current row to', currentRowIndex);
+      } else {
+        currentRowIndex -= 1;
+        console.log('skipping output row');
       }
 
-      rank += 1;
+      currentOutput = output;
 
-      if (!isFirstActivity) currentRowIndex += 1;
+      if (!isFirstActivity) {
+        currentRowIndex += 1;
+        console.log('moved current row to', currentRowIndex);
+      }
 
       // activity
+      console.log('creating activity row at index', currentRowIndex);
       const activityRowIndex = this._createActivityRow(
         currentRowIndex,
         activity,
@@ -572,7 +617,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       activityRows.push(activityRowIndex);
 
-      if (!isFirstActivity) currentRowIndex += 1;
+      if (!isFirstActivity) {
+        currentRowIndex += 1;
+        console.log('moved current row to', currentRowIndex);
+      }
 
       console.log(
         'isfirstactivity:',
@@ -593,10 +641,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         );
 
         console.log('duplicating expense item at row', currentRowIndex);
-
         this._duplicateExpenseItem(currentRowIndex);
-        console.log('creating expense row at index', currentRowIndex);
 
+        console.log('creating expense row at index', currentRowIndex);
         this._createExpenseItemRow(
           currentRowIndex,
           expense,
@@ -604,7 +651,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
           isFirstActivity,
         );
 
+        // if (index < expenseItems.length - 1)
         currentRowIndex += 1;
+        console.log('expenses item created.');
       }
       // expense items
       // expenseItems.forEach(expense => {
@@ -634,16 +683,18 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       if (isFirstActivity) {
         isFirstActivity = false;
         currentRowIndex -= 1;
-        if (expenseItems.length > 1) {
-          sheet.spliceRows(currentRowIndex, 1);
-        }
+        // } else {
+        //   currentRowIndex -= 1;
       }
 
-      console.log('removing row at index', currentRowIndex);
-      sheet.spliceRows(currentRowIndex, 1);
+      console.log('activity created');
+      console.log('currentrowindex', currentRowIndex);
+
+      // console.log('removing row at index', currentRowIndex);
+      // sheet.spliceRows(currentRowIndex, 1);
     });
 
-    // sheet.spliceRows(currentRowIndex, 1);
+    sheet.spliceRows(currentRowIndex, 2);
 
     const lastRowIndex = currentRowIndex + 1;
 

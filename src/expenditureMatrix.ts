@@ -9,7 +9,6 @@ import {
 import type {
   Activity,
   ActivityInfo,
-  DeepPartial,
   ExcelFile,
   ExpenseItem,
 } from './types/globals';
@@ -443,12 +442,14 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     // ppmp
     const ppmpCell = currentRow.getCell(PPMP_COL);
     ppmpCell.dataValidation = YES_NO_VALIDATION;
-    if (hasPPMP) ppmpCell.value = YES;
+    ppmpCell.value = 'N';
+    if (hasPPMP) ppmpCell.value = 'Y';
 
     // app supplies
     const appSuppliesCell = currentRow.getCell(APP_SUPPLIES_COL);
     appSuppliesCell.dataValidation = YES_NO_VALIDATION;
-    if (hasAPPSupplies) appSuppliesCell.value = YES;
+    appSuppliesCell.value = 'N';
+    if (hasAPPSupplies) appSuppliesCell.value = 'Y';
 
     // app ticket
     const appTicketCell = currentRow.getCell(APP_TICKET_COL);
@@ -525,7 +526,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
      */
     const activityRows: number[] = [];
 
-    this.activities.forEach(activity => {
+    this.activities.sort(this._orderByProgram).forEach(activity => {
       const {
         info: { program, month, output },
         expenseItems,

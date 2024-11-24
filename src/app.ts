@@ -116,8 +116,16 @@ function handleSubmit(event: SubmitEvent) {
 }
 
 function handleError(error: Error) {
-  const msg =
-    'ERROR:<br>An error occurred during conversion.<br>Please make sure that you are using the official Budget Estimate template and that the layout was not altered.';
+  const msg = `
+  <p><b>ERROR:</b></p>
+  <p>An error occurred during conversion. Please check the following:</p>
+    <ul>
+    <li>You are using the official Budget Estimate <a href="templates/BLD-BE-001 Budget Estimate template.xlsx">template</a>.</li>
+    <li>The activity details are filled up.</li>
+    <li>The layout of the template was not altered.</li>
+    </ul>
+    `;
+
   showAlert(msg, 'error');
   console.error(error);
 }

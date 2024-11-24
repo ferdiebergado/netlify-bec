@@ -2,19 +2,12 @@ import { Workbook } from './workbook';
 import {
   EXPENDITURE_MATRIX,
   MANNER_VALIDATION,
-  ReleaseManner,
   YES,
   YES_NO_VALIDATION,
 } from './constants';
-import type {
-  Activity,
-  ActivityInfo,
-  ExcelFile,
-  ExpenseItem,
-} from './types/globals';
+import type { Activity, ExcelFile, ExpenseItem } from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
 import type { Row, Worksheet } from 'exceljs';
-import { log } from 'console';
 
 /**
  * Represents a specialized workbook for managing expenditure matrices.
@@ -85,8 +78,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     for (let j = 0; j < numRows; j += 1) {
       const newRow = sheet.insertRow(currentRowIndex, []);
-
-      // console.log('inserting row at index', currentRowIndex);
 
       srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         const targetCell = newRow.getCell(colNumber);
@@ -507,18 +498,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     this.activities.sort(this._orderByProgramAndOutput);
 
     let currentRowIndex: number = EXPENDITURE_MATRIX.TARGET_ROW_INDEX;
-    // let currentRowIndex = 13;
     let isFirstActivity = true;
     let rank = 1;
     let currentOutput = '';
     let currentProgram = '';
-    // let { program: currentProgram } = this.activities[0].info;
-    let currentActivity: DeepPartial<Activity> = {
-      info: {
-        program: currentProgram,
-        output: currentOutput,
-      },
-    };
 
     /**
      * Records the indices of rows of each activity that contains the total unit cost
@@ -526,7 +509,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
      */
     const activityRows: number[] = [];
 
-    this.activities.sort(this._orderByProgram).forEach(activity => {
+    this.activities.forEach(activity => {
       const {
         info: { program, month, output },
         expenseItems,
@@ -548,7 +531,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
         // this.programs.push(program);
       } else {
-        // currentRowIndex += 1;
         programRowIndex = currentRowIndex;
 
         console.log('program:', program, 'currentProgram', currentProgram);
@@ -559,7 +541,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
           const programRow = sheet.getRow(programRowIndex);
           programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
-          // currentRowIndex += 1;
         } else {
           currentRowIndex -= 1;
           console.log('skipping program row');
@@ -567,12 +548,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       }
 
       currentProgram = program;
-
-      // if (!this.programs.includes(program)) {
-      //   this._duplicateProgram(programRowIndex);
-      //   this.programs.push(program);
-      //   currentRowIndex += 1;
-      // }
 
       if (!isFirstActivity) {
         currentRowIndex += 1;
@@ -583,8 +558,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       console.log('output:', output, 'currentOutput:', currentOutput);
 
       if (output !== currentOutput) {
-        // currentRowIndex += 1;
-
         console.log(
           'creating output row at index',
           currentRowIndex,
@@ -656,43 +629,14 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         currentRowIndex += 1;
         console.log('expenses item created.');
       }
-      // expense items
-      // expenseItems.forEach(expense => {
-      //   console.table(expense);
-      //   // if (expense.releaseManner === ReleaseManner.FOR_DOWNLOAD_PSF) {
-      //   this._duplicateExpenseItem(currentRowIndex);
-      //   this._createExpenseItemRow(
-      //     currentRowIndex,
-      //     expense,
-      //     month,
-      //     isFirstActivity,
-      //   );
-      //   currentRowIndex += 1;
-
-      //   console.log('currentrowindex:', currentRowIndex);
-
-      // } else {
-      //   const act = currentActivity.expenseItems?.find(
-      //     exp => exp?.expenseItem === expense.expenseItem,
-      //   );
-      //   if (act) {
-      //     act.unitCost! += expense.unitCost;
-      //   }
-      // }
-      // });
 
       if (isFirstActivity) {
         isFirstActivity = false;
         currentRowIndex -= 1;
-        // } else {
-        //   currentRowIndex -= 1;
       }
 
       console.log('activity created');
-      console.log('currentrowindex', currentRowIndex);
-
-      // console.log('removing row at index', currentRowIndex);
-      // sheet.spliceRows(currentRowIndex, 1);
+      console.log('currentrowindex:', currentRowIndex);
     });
 
     sheet.spliceRows(currentRowIndex, 2);

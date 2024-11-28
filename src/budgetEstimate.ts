@@ -323,11 +323,15 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
         if (error instanceof BudgetEstimateParseError) {
           throw error;
         } else {
-          throw new BudgetEstimateParseError((error as Error).message, {
-            file: this.activeFile,
-            sheet: name,
-            activity: 'Unavailable',
-          });
+          console.error(error);
+          throw new BudgetEstimateParseError(
+            'Please check the layout and details of the activity in the following sheet:',
+            {
+              file: this.activeFile,
+              sheet: name,
+              activity: '(Unavailable)',
+            },
+          );
         }
       }
     }

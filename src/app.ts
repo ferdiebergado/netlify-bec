@@ -95,30 +95,29 @@ async function processFiles(files: FileList): Promise<ArrayBuffer> {
   return buffer;
 }
 
-async function handleSubmit(event: SubmitEvent) {
+function handleSubmit(event: SubmitEvent) {
   event.preventDefault();
 
   hideAlert();
   isLoading = true;
   updateConvertBtn();
 
-  try {
-    const { files } = fileInput;
+  const { files } = fileInput;
 
-    if (!files) throw new Error('Missing file(s)!');
+  if (!files) throw new Error('Missing file(s)!');
 
-    const converted = await processFiles(files);
-
-    if (converted) {
-      initiateDownload(converted);
-      showAlert('Conversion successful. Download will start automatically.');
-    }
-  } catch (error) {
-    handleError(error);
-  } finally {
-    isLoading = false;
-    updateConvertBtn();
-  }
+  processFiles(files)
+    .then(converted => {
+      if (converted) {
+        initiateDownload(converted);
+        showAlert('Conversion successful. Download will start automatically.');
+      }
+    })
+    .catch((error: unknown) => handleError(error as Error))
+    .finally(() => {
+      isLoading = false;
+      updateConvertBtn();
+    });
 }
 
 function handleError(error: Error) {

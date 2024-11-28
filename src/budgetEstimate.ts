@@ -18,6 +18,7 @@ import {
 } from './constants';
 import { extractResult, getCellValueAsNumber } from './utils';
 import type { Worksheet } from 'exceljs';
+import { SheetParseError } from './parseError';
 
 /**
  * Represents a specialized workbook for managing budget estimates.
@@ -171,6 +172,20 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     );
     const venue = sheet.getCell(VENUE_CELL).text;
     const startDate = sheet.getCell(START_DATE_CELL).text;
+
+    console.log('startDate:', startDate);
+
+    if (!startDate) {
+      throw new SheetParseError(
+        'Please provide the "From" and "To" Date of the activity.',
+        {
+          file: this.activeFile,
+          sheet: sheet.name,
+          activity: activityTitle,
+        },
+      );
+    }
+
     const month = new Date(startDate).getMonth();
     const totalPax = extractResult(sheet.getCell(TOTAL_PAX_CELL).value);
 
@@ -278,13 +293,14 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
   getActivities(): Activity[] {
     const activities: Activity[] = [];
 
-    this.wb.eachSheet(sheet => {
+    for (const sheet of this.wb.worksheets) {
       const { name } = sheet;
 
       if (AUXILLIARY_SHEETS.includes(name)) {
         // eslint-disable-next-line no-console
         // console.log('skipping', name);
-        return;
+        // return;
+        continue;
       }
 
       // TODO: add more columns to check
@@ -293,18 +309,29 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       ) {
         // eslint-disable-next-line no-console
         // console.log('skipping non budget estimate sheet:', name);
-        return;
+        // return;
+        continue;
       }
 
-      // eslint-disable-next-line no-console
-      // console.log('processing sheet:', name);
-
+      console.log('parsing sheet', name);
       this.ws = sheet;
 
-      const activity = this._parseActivity();
+      try {
+        const activity = this._parseActivity();
+        if (activity) activities.push(activity);
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new SheetParseError(error.message, {
+            file: this.activeFile,
+            sheet: name,
+            activity: 'Unavailable',
+          });
+        }
+      }
+    }
+    // this.wb.eachSheet(sheet => {
 
-      if (activity) activities.push(activity);
-    });
+    // });
 
     return activities;
   }
@@ -459,6 +486,8 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @returns {ExpenseItem[]} An array of ExpenseItem objects representing other expenses.
    */
   getOtherExpenses(): ExpenseItem[] {
+    console.log('getting other expenses...');
+
     const sheet = this.getActiveSheet();
     const expenseData: ExpenseOptions = {
       prefix: '',
@@ -473,6 +502,8 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       3,
       expenseData,
     );
+
+    console.log('other expenses:', otherExpenses);
 
     return otherExpenses;
   }

@@ -3,6 +3,7 @@ import config from './config';
 import { ExpenditureMatrix } from './expenditureMatrix';
 import { ExcelFile } from './types/globals';
 import { createTimestamp } from './utils';
+import { SheetParseError } from './parseError';
 
 // Constants
 const ALERT_SUCCESS_CLASS = 'alert-success';
@@ -73,11 +74,15 @@ async function processFiles(files: FileList): Promise<ArrayBuffer> {
   const emTemplate = config.paths.emTemplate;
   const res = await fetch(emTemplate);
   const arrayBuffer = await res.arrayBuffer();
+  const em: ExcelFile = {
+    filename: emTemplate,
+    buffer: arrayBuffer,
+  };
   const expenditureMatrix =
-    await ExpenditureMatrix.createAsync<ExpenditureMatrix>(arrayBuffer);
+    await ExpenditureMatrix.createAsync<ExpenditureMatrix>(em);
   const excelFiles: ExcelFile[] = [];
 
-  await Promise.allSettled(
+  await Promise.all(
     [...files].map(async file => {
       excelFiles.push({
         filename: file.name,
@@ -87,47 +92,61 @@ async function processFiles(files: FileList): Promise<ArrayBuffer> {
   );
 
   const buffer = await expenditureMatrix.fromBudgetEstimates(excelFiles);
-
   return buffer;
 }
 
-function handleSubmit(event: SubmitEvent) {
+async function handleSubmit(event: SubmitEvent) {
   event.preventDefault();
 
   hideAlert();
   isLoading = true;
   updateConvertBtn();
 
-  const { files } = fileInput;
+  try {
+    const { files } = fileInput;
 
-  if (!files) throw new Error('Missing file(s)!');
+    if (!files) throw new Error('Missing file(s)!');
 
-  processFiles(files)
-    .then(buffer => {
+    const converted = await processFiles(files);
+
+    if (converted) {
+      initiateDownload(converted);
       showAlert('Conversion successful. Download will start automatically.');
-
-      initiateDownload(buffer);
-    })
-    .catch(handleError)
-    .finally(() => {
-      isLoading = false;
-      updateConvertBtn();
-    });
+    }
+  } catch (error) {
+    handleError(error);
+  } finally {
+    isLoading = false;
+    updateConvertBtn();
+  }
 }
 
 function handleError(error: Error) {
-  const msg = `
-  <p><b>ERROR:</b></p>
-  <p>An error occurred during conversion. Please check the following:</p>
-    <ul>
-    <li>You are using the official Budget Estimate <a href="templates/BLD-BE-001 Budget Estimate template.xlsx">template</a>.</li>
-    <li>The activity details are filled up.</li>
-    <li>The layout of the template was not altered.</li>
-    </ul>
-    `;
-
-  showAlert(msg, 'error');
   console.error(error);
+
+  const header = `<p><b>ERROR:</b></p>`;
+
+  let msg: string;
+
+  if (error instanceof SheetParseError) {
+    msg = `
+    <p>${error.message}</p>
+    <p><b>Activity Title:</b> ${error.details?.activity}</p>
+    <p><b>File:</b> ${error.details?.file}</p>
+    <p><b>Sheet:</b> ${error.details?.sheet}</p>
+    `;
+  } else {
+    msg = `
+    <p>An error occurred during conversion. Please check the following and try again:</p>
+  <ul>
+  <li>You are using the official Budget Estimate <a href="templates/BLD-BE-001 Budget Estimate template.xlsx">template</a>.</li>
+  <li>The activity details are filled up.</li>
+  <li>The layout of the template was not altered.</li>
+  </ul>
+  `;
+  }
+
+  showAlert(header + msg, 'error');
 }
 
 // Initialization
@@ -157,5 +176,5 @@ dropContainer.addEventListener('dragleave', () => {
 dropContainer.addEventListener('drop', e => {
   e.preventDefault();
   dropContainer.classList.remove('drag-active');
-  fileInput.files = e.dataTransfer.files;
+  fileInput.files = e.dataTransfer?.files || null;
 });

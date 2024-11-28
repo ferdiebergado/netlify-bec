@@ -318,8 +318,14 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     const { output, outputIndicator, outputPhysicalTarget, month } =
       activity.info;
 
+    console.table(activity.info);
+    console.log('outputrowindex:', outputRowIndex);
+
     // output
     const outputRow = sheet.getRow(outputRowIndex);
+
+    console.log('outputrow:', outputRow.number);
+
     outputRow.getCell(OUTPUT_COL).value = output;
     outputRow.getCell(RANK_COL).value = rank;
 
@@ -493,7 +499,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   async fromBudgetEstimates(files: ExcelFile[]): Promise<ArrayBuffer> {
     const sheet = this.getActiveSheet();
 
-    await Promise.allSettled(files.map(file => this._addToActivities(file)));
+    await Promise.all(files.map(file => this._addToActivities(file)));
 
     this.activities.sort(this._orderByProgramAndOutput);
 
@@ -535,7 +541,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
         console.log('program:', program, 'currentProgram', currentProgram);
         if (program !== currentProgram) {
-          console.log('creating program at index', programRowIndex);
+          console.log(
+            'creating program at index',
+            programRowIndex,
+            'program:',
+            program,
+          );
 
           this._duplicateProgram(programRowIndex);
 
@@ -582,7 +593,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       }
 
       // activity
-      console.log('creating activity row at index', currentRowIndex);
+      console.log(
+        'creating activity row at index',
+        currentRowIndex,
+        'activity:',
+        activity,
+      );
       const activityRowIndex = this._createActivityRow(
         currentRowIndex,
         activity,
@@ -606,7 +622,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       for (let index = 0; index < expenseItems.length; index++) {
         const expense = expenseItems[index];
 
-        console.log(expense);
+        console.dir(expense);
         console.log(
           'current expense item index:',
           index,
@@ -683,9 +699,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns void
    */
-  private async _addToActivities({ buffer }: ExcelFile): Promise<void> {
+  private async _addToActivities(file: ExcelFile): Promise<void> {
     const budgetEstimate =
-      await BudgetEstimate.createAsync<BudgetEstimate>(buffer);
+      await BudgetEstimate.createAsync<BudgetEstimate>(file);
     const activities = budgetEstimate.getActivities();
 
     this.activities.push(...activities);

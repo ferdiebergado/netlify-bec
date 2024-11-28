@@ -1,5 +1,5 @@
 import type { Worksheet } from 'exceljs';
-import { Convertible } from './types/globals';
+import { ExcelFile } from './types/globals';
 import ExcelJS from 'exceljs';
 
 /**
@@ -32,7 +32,8 @@ export abstract class Workbook<T extends Workbook<T>> {
    * @protected
    * @type {Convertible}
    */
-  protected source?: Convertible;
+  // protected source?: ExcelFile;
+  protected activeFile?: string;
 
   /**
    * Creates an instance of the concrete Workbook class.
@@ -50,15 +51,18 @@ export abstract class Workbook<T extends Workbook<T>> {
    * @param {string|Buffer} source - The source of the workbook data, either a file path (string) or a Buffer.
    * @returns {Promise<void>} - A Promise that resolves when the initialization is complete.
    */
-  async initializeAsync(source: Convertible): Promise<void> {
+  async initializeAsync({ filename, buffer }: ExcelFile): Promise<void> {
     // if (typeof source === 'string') {
     //   await this.wb.xlsx.readFile(source);
     // } else if (source instanceof Buffer || source instanceof ArrayBuffer) {
     //   await this.wb.xlsx.load(source);
     // }
 
-    await this.wb.xlsx.load(source);
-    this.source = source;
+    await this.wb.xlsx.load(buffer);
+    // this.source = source;
+    console.log('Processing', filename);
+
+    this.activeFile = filename;
   }
 
   /**
@@ -70,7 +74,7 @@ export abstract class Workbook<T extends Workbook<T>> {
    * @returns {Promise<T>} - A Promise that resolves with the created and initialized instance of the concrete Workbook class.
    */
   static async createAsync<T extends Workbook<T>>(
-    source: Convertible,
+    source: ExcelFile,
   ): Promise<T> {
     const instance = new (this as unknown as { new (): T })();
     await instance.initializeAsync(source);

@@ -18,7 +18,7 @@ import {
 } from './constants';
 import { extractResult, getCellValueAsNumber } from './utils';
 import type { Worksheet } from 'exceljs';
-import { SheetParseError } from './parseError';
+import { BudgetEstimateParseError } from './parseError';
 
 /**
  * Represents a specialized workbook for managing budget estimates.
@@ -176,7 +176,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     console.log('startDate:', startDate);
 
     if (!startDate) {
-      throw new SheetParseError(
+      throw new BudgetEstimateParseError(
         'Please provide the "From" and "To" Date of the activity.',
         {
           file: this.activeFile,
@@ -320,8 +320,10 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
         const activity = this._parseActivity();
         if (activity) activities.push(activity);
       } catch (error) {
-        if (error instanceof Error) {
-          throw new SheetParseError(error.message, {
+        if (error instanceof BudgetEstimateParseError) {
+          throw error;
+        } else {
+          throw new BudgetEstimateParseError((error as Error).message, {
             file: this.activeFile,
             sheet: name,
             activity: 'Unavailable',

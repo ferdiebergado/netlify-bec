@@ -3,7 +3,7 @@ import config from './config';
 import { ExpenditureMatrix } from './expenditureMatrix';
 import { ExcelFile } from './types/globals';
 import { createTimestamp } from './utils';
-import { SheetParseError } from './parseError';
+import { BudgetEstimateParseError } from './parseError';
 
 // Constants
 const ALERT_SUCCESS_CLASS = 'alert-success';
@@ -128,7 +128,7 @@ function handleError(error: Error) {
 
   let msg: string;
 
-  if (error instanceof SheetParseError) {
+  if (error instanceof BudgetEstimateParseError) {
     msg = `
     <p>${error.message}</p>
     <p><b>Activity Title:</b> ${error.details?.activity}</p>

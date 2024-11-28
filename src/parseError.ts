@@ -1,4 +1,4 @@
-export class SheetParseError extends Error {
+export class BudgetEstimateParseError extends Error {
   public details: Record<string, any> | undefined;
 
   constructor(message: string, details?: Record<string, any>) {

@@ -515,10 +515,28 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
      */
     const activityRows: number[] = [];
 
+    const psf: Activity = {
+      info: {
+        program: 'Programs Support Funds (PSF)',
+        output: 'Benefitted implementers',
+        outputIndicator: 'No. of implementers benefitted',
+        outputPhysicalTarget: 16,
+        activityTitle: 'Provision of Program Support Funds',
+        activityIndicator: 'No. of downloading activities conducted',
+        activityPhysicalTarget: 1,
+        month: 1,
+        venue: '',
+        totalPax: 16,
+      },
+      expenseItems: [],
+      tevPSF: [],
+    };
+
     this.activities.forEach(activity => {
       const {
         info: { program, month, output },
         expenseItems,
+        tevPSF,
       } = activity;
 
       // program
@@ -646,6 +664,16 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         console.log('expenses item created.');
       }
 
+      tevPSF.forEach(tev => {
+        const e = psf.expenseItems.find(i => i.expenseItem === tev.expenseItem);
+
+        if (e) {
+          e.unitCost += tev.unitCost;
+        } else {
+          psf.expenseItems.push(tev);
+        }
+      });
+
       if (isFirstActivity) {
         isFirstActivity = false;
         currentRowIndex -= 1;
@@ -654,6 +682,58 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       console.log('activity created');
       console.log('currentrowindex:', currentRowIndex);
     });
+
+    const { program } = psf.info;
+
+    this._duplicateProgram(currentRowIndex);
+
+    const programRow = sheet.getRow(currentRowIndex);
+    programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
+
+    currentRowIndex += 1;
+    console.log('moved current row to', currentRowIndex);
+    this._createOutputRow(currentRowIndex, psf, rank, isFirstActivity);
+
+    currentRowIndex += 1;
+    console.log('moved current row to', currentRowIndex);
+
+    const activityRowIndex = this._createActivityRow(
+      currentRowIndex,
+      psf,
+      isFirstActivity,
+    );
+
+    activityRows.push(activityRowIndex);
+
+    currentRowIndex += 1;
+    console.log('moved current row to', currentRowIndex);
+
+    for (let index = 0; index < psf.expenseItems.length; index++) {
+      const expense = psf.expenseItems[index];
+
+      console.dir(expense);
+      console.log(
+        'current expense item index:',
+        index,
+        'expenseitems.length:',
+        psf.expenseItems.length,
+      );
+
+      console.log('duplicating expense item at row', currentRowIndex);
+      this._duplicateExpenseItem(currentRowIndex);
+
+      console.log('creating expense row at index', currentRowIndex);
+      this._createExpenseItemRow(
+        currentRowIndex,
+        expense,
+        psf.info.month,
+        isFirstActivity,
+      );
+
+      // if (index < expenseItems.length - 1)
+      currentRowIndex += 1;
+      console.log('expenses item created.');
+    }
 
     sheet.spliceRows(currentRowIndex, 2);
 

@@ -9,6 +9,9 @@ import type { Activity, ExcelFile, ExpenseItem } from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
 import type { Row, Worksheet } from 'exceljs';
 
+// 0-based index of the last month in a year (December)
+const MAX_MONTH = 11;
+
 /**
  * Represents a specialized workbook for managing expenditure matrices.
  *
@@ -242,7 +245,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
 
     // activity physical target
-    activityRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + month).value =
+    const targetMonth = ExpenditureMatrix._incrementMonth(month);
+
+    activityRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + targetMonth).value =
       activityPhysicalTarget;
 
     // costing grand total
@@ -337,7 +342,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
 
     // output physical target
-    outputRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + month).value =
+    const targetMonth = ExpenditureMatrix._incrementMonth(month);
+
+    outputRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + targetMonth).value =
       outputPhysicalTarget;
 
     // physical target grand total
@@ -347,6 +354,17 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     outputRow.getCell(PHYSICAL_TARGET_TOTAL_COL).value = {
       formula: `SUM(${physicalTargetMonthStartCell}:${physicalTargetMonthEndCell})`,
     };
+  }
+
+  /**
+   * Increments the specified month by 1.
+   *
+   * @param month - The target month
+   * @returns The incremented month
+   */
+  private static _incrementMonth(month: number): number {
+    if (month < MAX_MONTH) return (month += 1);
+    return month;
   }
 
   /**

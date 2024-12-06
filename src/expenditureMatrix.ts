@@ -686,8 +686,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         const e = psf.expenseItems.find(i => i.expenseItem === tev.expenseItem);
 
         if (e) {
-          e.unitCost += tev.unitCost;
+          e.unitCost += tev.unitCost * tev.quantity;
         } else {
+          tev.unitCost = tev.quantity * tev.unitCost;
+          tev.quantity = 1;
           psf.expenseItems.push(tev);
         }
       });

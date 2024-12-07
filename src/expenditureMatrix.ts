@@ -703,56 +703,58 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       console.log('currentrowindex:', currentRowIndex);
     });
 
-    const { program } = psf.info;
+    if (psf.expenseItems.length > 0) {
+      const { program } = psf.info;
 
-    this._duplicateProgram(currentRowIndex);
+      this._duplicateProgram(currentRowIndex);
 
-    const programRow = sheet.getRow(currentRowIndex);
-    programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
+      const programRow = sheet.getRow(currentRowIndex);
+      programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
 
-    currentRowIndex += 1;
-    console.log('moved current row to', currentRowIndex);
-    this._createOutputRow(currentRowIndex, psf, rank, isFirstActivity);
+      currentRowIndex += 1;
+      console.log('moved current row to', currentRowIndex);
+      this._createOutputRow(currentRowIndex, psf, rank, isFirstActivity);
 
-    currentRowIndex += 1;
-    console.log('moved current row to', currentRowIndex);
+      currentRowIndex += 1;
+      console.log('moved current row to', currentRowIndex);
 
-    const activityRowIndex = this._createActivityRow(
-      currentRowIndex,
-      psf,
-      isFirstActivity,
-    );
-
-    activityRows.push(activityRowIndex);
-
-    currentRowIndex += 1;
-    console.log('moved current row to', currentRowIndex);
-
-    for (let index = 0; index < psf.expenseItems.length; index++) {
-      const expense = psf.expenseItems[index];
-
-      console.dir(expense);
-      console.log(
-        'current expense item index:',
-        index,
-        'expenseitems.length:',
-        psf.expenseItems.length,
-      );
-
-      console.log('duplicating expense item at row', currentRowIndex);
-      this._duplicateExpenseItem(currentRowIndex);
-
-      console.log('creating expense row at index', currentRowIndex);
-      this._createExpenseItemRow(
+      const activityRowIndex = this._createActivityRow(
         currentRowIndex,
-        expense,
-        psf.info.month,
+        psf,
         isFirstActivity,
       );
 
-      // if (index < expenseItems.length - 1)
+      activityRows.push(activityRowIndex);
+
       currentRowIndex += 1;
-      console.log('expenses item created.');
+      console.log('moved current row to', currentRowIndex);
+
+      for (let index = 0; index < psf.expenseItems.length; index++) {
+        const expense = psf.expenseItems[index];
+
+        console.dir(expense);
+        console.log(
+          'current expense item index:',
+          index,
+          'expenseitems.length:',
+          psf.expenseItems.length,
+        );
+
+        console.log('duplicating expense item at row', currentRowIndex);
+        this._duplicateExpenseItem(currentRowIndex);
+
+        console.log('creating expense row at index', currentRowIndex);
+        this._createExpenseItemRow(
+          currentRowIndex,
+          expense,
+          psf.info.month,
+          isFirstActivity,
+        );
+
+        // if (index < expenseItems.length - 1)
+        currentRowIndex += 1;
+        console.log('expenses item created.');
+      }
     }
 
     sheet.spliceRows(currentRowIndex, 2);

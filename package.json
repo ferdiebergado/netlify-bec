@@ -1,9 +1,10 @@
 {
   "name": "netlify-bec",
-  "version": "1.0.0",
-  "description": "",
+  "version": "5.0.0",
+  "description": "Converts Budget Estimates to an Expenditure Matrix",
   "main": "index.js",
   "browserslist": "> 0.5%, last 4 versions, Firefox ESR, not dead",
+  "type": "module",
   "scripts": {
     "build": "node build.js",
     "build:watch": "node build.dev.js",
@@ -12,8 +13,8 @@
     "lint": "eslint src/"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Ferdinand Saporas Bergado <ferdiebergado@gmail.com>",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.8",
     "@types/node": "^20.9.0",

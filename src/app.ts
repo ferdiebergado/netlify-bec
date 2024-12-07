@@ -1,5 +1,5 @@
 import './sass/app.scss';
-import config from './config';
+import { config } from './config';
 import { ExpenditureMatrix } from './expenditureMatrix';
 import { ExcelFile } from './types/globals';
 import { createTimestamp } from './utils';

@@ -68,3 +68,14 @@ type BEParseErrDetail = {
   file: string;
   sheet: string;
 };
+
+interface Paths {
+  public: string;
+  data: string;
+  emTemplate: string;
+  beTemplate: string;
+}
+
+interface Config {
+  paths: Paths;
+}

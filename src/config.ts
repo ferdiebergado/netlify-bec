@@ -1,4 +1,6 @@
-const config = {
+import { Config } from './types/globals';
+
+export const config: Readonly<Config> = {
   paths: {
     public: '/public',
     data: '/data',
@@ -6,5 +8,3 @@ const config = {
     beTemplate: 'BLD-BE-001 Budget Estimate template.xlsx',
   },
 };
-
-export default config;

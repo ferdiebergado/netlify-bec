@@ -1,12 +1,13 @@
+import { BEParseErrDetail } from './types/globals';
+
 export class BudgetEstimateParseError extends Error {
-  public details: Record<string, any> | undefined;
-
-  constructor(message: string, details?: Record<string, any>) {
+  constructor(
+    message: string,
+    public details: BEParseErrDetail,
+  ) {
     super(message);
-    this.name = this.constructor.name; // Set the error name to the class name
-    this.details = details;
+    this.name = this.constructor.name;
 
-    // Maintain proper stack trace (only on V8 engines)
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
     }

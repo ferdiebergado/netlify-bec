@@ -21,7 +21,6 @@ const overlay = document.getElementById('overlay') as HTMLDivElement;
 
 let isLoading = false;
 
-// Utility Functions
 function hideAlert() {
   divAlert.style.display = 'none';
 }
@@ -130,9 +129,9 @@ function handleError(error: Error) {
   if (error instanceof BudgetEstimateParseError) {
     msg = `
     <p>${error.message}</p>
-    <p><b>Activity Title:</b> ${error.details?.activity}</p>
-    <p><b>File:</b> ${error.details?.file}</p>
-    <p><b>Sheet:</b> ${error.details?.sheet}</p>
+    <p><b>Activity Title:</b> ${error.details.activity}</p>
+    <p><b>File:</b> ${error.details.file}</p>
+    <p><b>Sheet:</b> ${error.details.sheet}</p>
     `;
   } else {
     msg = `

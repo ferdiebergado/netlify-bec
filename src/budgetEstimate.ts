@@ -43,7 +43,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @protected
    * @returns {BudgetEstimate} The created instance of ExpenditureMatrix.
    */
-
   protected createInstance(): BudgetEstimate {
     return this;
   }
@@ -179,7 +178,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       throw new BudgetEstimateParseError(
         'Please provide the "From" and "To" Date of the activity.',
         {
-          file: this.activeFile,
+          file: this.activeFile as string,
           sheet: sheet.name,
           activity: activityTitle,
         },
@@ -297,9 +296,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const { name } = sheet;
 
       if (AUXILLIARY_SHEETS.includes(name)) {
-        // eslint-disable-next-line no-console
-        // console.log('skipping', name);
-        // return;
         continue;
       }
 
@@ -307,9 +303,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       if (
         sheet.getCell(BUDGET_ESTIMATE.PROGRAM_HEADING_CELL).text !== 'PROGRAM:'
       ) {
-        // eslint-disable-next-line no-console
-        // console.log('skipping non budget estimate sheet:', name);
-        // return;
         continue;
       }
 
@@ -327,7 +320,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
           throw new BudgetEstimateParseError(
             'Please check the layout and details of the activity in the following sheet:',
             {
-              file: this.activeFile,
+              file: this.activeFile as string,
               sheet: name,
               activity: '(Unavailable)',
             },
@@ -335,9 +328,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
         }
       }
     }
-    // this.wb.eachSheet(sheet => {
-
-    // });
 
     return activities;
   }
@@ -392,6 +382,11 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     return [...lodging, ...lodgingOthers];
   }
 
+  /**
+   * Reads and parses travel expenses of participants.
+   *
+   * @returns {ExpenseItem[]}
+   */
   getTevPSF(): ExpenseItem[] {
     const sheet = this.getActiveSheet();
 

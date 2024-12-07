@@ -5,6 +5,6 @@ export const config: Readonly<Config> = {
     public: '/public',
     data: '/data',
     emTemplate: 'templates/em.xlsx',
-    beTemplate: 'BLD-BE-001 Budget Estimate template.xlsx',
+    beTemplate: 'templates/BLD-BE-001 Budget Estimate template.xlsx',
   },
 };

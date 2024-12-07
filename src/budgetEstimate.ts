@@ -50,6 +50,8 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
   /**
    * Gets an array of ExpenseItem objects from a budget estimate based on provided parameters.
    *
+   * @private
+   * @static
    * @param {number} startRowIndex The starting row index for reading expense data.
    * @param {number} startColIndex The starting column index for reading expense data.
    * @param {number} numRows The number of rows to read.
@@ -57,7 +59,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    *
    * @returns {ExpenseItem[]} An array of ExpenseItem objects.
    */
-  static getExpenseItems(
+  private static _getExpenseItems(
     sheet: Worksheet,
     startRowIndex: number,
     startColIndex: number,
@@ -85,9 +87,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const freq = getCellValueAsNumber(
         row.getCell(FREQ_CELL_INDEX).text || '1',
       );
-
-      // eslint-disable-next-line no-continue
-      // if (quantity === 0 || unitCost === 0) continue;
 
       if (quantity > 0 && freq > 0) {
         const item = row.getCell(startColIndex).text.trim();
@@ -208,6 +207,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * Parses activity information and organizes it into an Activity object.
    *
    * @private
+   *
    * @returns {Activity | undefined} An object representing the parsed activity information,
    * or undefined if activity information is not available.
    */
@@ -364,7 +364,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       hasPPMP,
     };
 
-    const lodging = BudgetEstimate.getExpenseItems(
+    const lodging = BudgetEstimate._getExpenseItems(
       sheet,
       BOARD_LODGING_START_ROW_INDEX,
       EXPENSE_ITEM_FIRST_COL_INDEX,
@@ -372,7 +372,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       expenseData,
     );
 
-    const lodgingOthers = BudgetEstimate.getExpenseItems(
+    const lodgingOthers = BudgetEstimate._getExpenseItems(
       sheet,
       BOARD_LODGING_OTHER_ROW_INDEX,
       EXPENSE_ITEM_FIRST_COL_INDEX,
@@ -403,7 +403,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       hasPPMP: false,
     };
 
-    const tevPax = BudgetEstimate.getExpenseItems(
+    const tevPax = BudgetEstimate._getExpenseItems(
       sheet,
       TRAVEL_REGION_ROW_INDEX,
       EXPENSE_ITEM_SECOND_COL_INDEX,
@@ -437,7 +437,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       venue,
     };
 
-    const tevNonPax = BudgetEstimate.getExpenseItems(
+    const tevNonPax = BudgetEstimate._getExpenseItems(
       sheet,
       TRAVEL_CO_ROW_INDEX,
       EXPENSE_ITEM_SECOND_COL_INDEX,
@@ -445,7 +445,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       expenseData,
     );
 
-    const tevNonPaxOther = BudgetEstimate.getExpenseItems(
+    const tevNonPaxOther = BudgetEstimate._getExpenseItems(
       sheet,
       TRAVEL_OTHER_ROW_INDEX,
       EXPENSE_ITEM_SECOND_COL_INDEX,
@@ -471,7 +471,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       releaseManner,
       hasPPMP: false,
     };
-    const honorarium = BudgetEstimate.getExpenseItems(
+    const honorarium = BudgetEstimate._getExpenseItems(
       sheet,
       BUDGET_ESTIMATE.HONORARIUM_ROW_INDEX,
       BUDGET_ESTIMATE.EXPENSE_ITEM_FIRST_COL_INDEX,
@@ -497,7 +497,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       hasPPMP: false,
     };
 
-    const otherExpenses = BudgetEstimate.getExpenseItems(
+    const otherExpenses = BudgetEstimate._getExpenseItems(
       sheet,
       BUDGET_ESTIMATE.MEAL_EXPENSES_ROW_INDEX,
       BUDGET_ESTIMATE.EXPENSE_ITEM_COL_INDEX,

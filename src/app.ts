@@ -69,8 +69,10 @@ function initiateDownload(buffer: ArrayBuffer) {
   URL.revokeObjectURL(blobUrl);
 }
 
-async function processFiles(files: FileList): Promise<ArrayBuffer> {
-  const emTemplate = config.paths.emTemplate;
+async function processFiles(
+  files: FileList,
+  emTemplate: string,
+): Promise<ArrayBuffer> {
   const res = await fetch(emTemplate);
   const arrayBuffer = await res.arrayBuffer();
   const em: ExcelFile = {
@@ -99,10 +101,13 @@ function handleSubmit(event: SubmitEvent) {
   updateConvertBtn();
 
   const { files } = fileInput;
+  const {
+    paths: { emTemplate },
+  } = config;
 
   if (!files) throw new Error('Missing file(s)!');
 
-  processFiles(files)
+  processFiles(files, emTemplate)
     .then(converted => {
       if (converted) {
         initiateDownload(converted);

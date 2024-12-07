@@ -79,15 +79,12 @@ async function processFiles(files: FileList): Promise<ArrayBuffer> {
   };
   const expenditureMatrix =
     await ExpenditureMatrix.createAsync<ExpenditureMatrix>(em);
-  const excelFiles: ExcelFile[] = [];
 
-  await Promise.all(
-    [...files].map(async file => {
-      excelFiles.push({
-        filename: file.name,
-        buffer: await file.arrayBuffer(),
-      });
-    }),
+  const excelFiles: ExcelFile[] = await Promise.all(
+    [...files].map(async file => ({
+      filename: file.name,
+      buffer: await file.arrayBuffer(),
+    })),
   );
 
   const buffer = await expenditureMatrix.fromBudgetEstimates(excelFiles);

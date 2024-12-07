@@ -20,7 +20,7 @@ type ActivityInfo = {
   activityIndicator: string;
   month: number;
   venue: string;
-  totalPax: number;
+  totalPax?: number;
   outputPhysicalTarget: number;
   activityPhysicalTarget: number;
 };

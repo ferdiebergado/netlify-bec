@@ -16,7 +16,7 @@ import {
   TRAVEL_EXPENSE_PREFIX,
   VENUES_BY_AIR,
 } from './constants';
-import { extractResult, getCellValueAsNumber } from './utils';
+import { getCellValueAsNumber } from './utils';
 import type { Worksheet } from 'exceljs';
 import { BudgetEstimateParseError } from './parseError';
 
@@ -153,7 +153,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       OUTPUT_INDICATOR_CELL,
       ACTIVITY_CELL,
       ACTIVITY_INDICATOR_CELL,
-      TOTAL_PAX_CELL,
+      // TOTAL_PAX_CELL,
       OUTPUT_PHYSICAL_TARGET_CELL,
       ACTIVITY_PHYSICAL_TARGET_CELL,
     } = BUDGET_ESTIMATE;
@@ -186,7 +186,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     }
 
     const month = new Date(startDate).getMonth();
-    const totalPax = extractResult(sheet.getCell(TOTAL_PAX_CELL).value);
+    // const totalPax = extractResult(sheet.getCell(TOTAL_PAX_CELL).value);
 
     const info: ActivityInfo = {
       program,
@@ -196,7 +196,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       activityIndicator,
       month,
       venue,
-      totalPax,
+      // totalPax,
       outputPhysicalTarget,
       activityPhysicalTarget,
     };
@@ -292,6 +292,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
   getActivities(): Activity[] {
     const activities: Activity[] = [];
 
+    // TODO: Use functional programming with this.wb.eachSheet()
     for (const sheet of this.wb.worksheets) {
       const { name } = sheet;
 

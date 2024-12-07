@@ -6,8 +6,13 @@ import { CellFormulaValue, CellValue } from 'exceljs';
  * @param {any} obj The object to check.
  * @returns {obj is CellFormulaValue} Returns true if the object is a CellFormulaValue, otherwise false.
  */
-function isCellFormulaValue(obj: any): obj is CellFormulaValue {
-  return 'result' in obj;
+export function isCellFormulaValue(obj: unknown): obj is CellFormulaValue {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'formula' in obj &&
+    typeof (obj as { formula: unknown }).formula === 'string'
+  );
 }
 
 /**
@@ -16,14 +21,14 @@ function isCellFormulaValue(obj: any): obj is CellFormulaValue {
  * @param {CellValue} value The CellValue to extract the numeric result from.
  * @returns {number} The extracted numeric result, or 0 if not found.
  */
-function extractResult(value: CellValue): number {
+export function extractResult(value: CellValue): number {
   if (value) {
     if (typeof value === 'number') return value;
 
     if (isCellFormulaValue(value)) {
       const { result } = value;
 
-      if (result && typeof result === 'number') {
+      if (typeof result === 'number') {
         return result;
       }
     }
@@ -37,7 +42,7 @@ function extractResult(value: CellValue): number {
  *
  * @returns {number} The timestamp representing the current time.
  */
-function createTimestamp(): number {
+export function createTimestamp(): number {
   return new Date().getTime();
 }
 
@@ -47,14 +52,7 @@ function createTimestamp(): number {
  * @param {string} cellValue The string representation of the cell value.
  * @returns {number} The numeric representation of the cell value, or 0 if conversion fails.
  */
-function getCellValueAsNumber(cellValue: string): number {
+export function getCellValueAsNumber(cellValue: string): number {
   const numericValue = +cellValue;
   return Number.isNaN(numericValue) ? 0 : numericValue;
 }
-
-export {
-  isCellFormulaValue,
-  extractResult,
-  createTimestamp,
-  getCellValueAsNumber,
-};

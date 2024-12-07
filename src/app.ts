@@ -109,7 +109,14 @@ function handleSubmit(event: SubmitEvent) {
         showAlert('Conversion successful. Download will start automatically.');
       }
     })
-    .catch((error: unknown) => handleError(error as Error))
+    .catch((error: unknown) => {
+      if (error instanceof Error) {
+        handleError(error);
+      } else {
+        console.error('Unknown error occurred:', error);
+        showAlert('An unknown error occurred.', 'error');
+      }
+    })
     .finally(() => {
       isLoading = false;
       updateConvertBtn();

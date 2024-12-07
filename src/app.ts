@@ -105,7 +105,7 @@ function handleSubmit(event: SubmitEvent) {
     paths: { emTemplate },
   } = config;
 
-  if (!files) throw new Error('Missing file(s)!');
+  if (!files || files.length === 0) throw new Error('No files provided!');
 
   processFiles(files, emTemplate)
     .then(converted => {

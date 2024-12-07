@@ -68,7 +68,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @param srcRowIndex {number} Index of the row that will be duplicated
    * @param numRows {number} Number of rows to be duplicated
    *
-   * @returns void
+   * @returns {void}
    */
   static duplicateRow(
     sheet: Worksheet,
@@ -94,7 +94,17 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
   }
 
-  static clearPreviousPhysicalTargets(row: Row) {
+  /**
+   * Clears all entries in the physical target columns.
+   *
+   * @private
+   * @static
+   *
+   * @param row {Row} - The target row   *
+   *
+   * @returns {void}
+   */
+  private static _clearPreviousPhysicalTargets(row: Row): void {
     for (let i = 0; i < 12; i += 1) {
       row.getCell(
         EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_COL_INDEX + i,
@@ -102,7 +112,16 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
   }
 
-  static clearPreviousFinancialPrograms(row: Row) {
+  /**
+   * Clears all entries in the obligation and disbursement columns.
+   *
+   * @private
+   * @static
+   * @param row {Row} - The target row
+   *
+   * @returns {void}
+   */
+  private static _clearPreviousFinancialPrograms(row: Row): void {
     const { OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX } =
       EXPENDITURE_MATRIX;
 
@@ -115,9 +134,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Duplicates the program row in the expenditure matrix.
    *
+   * @private
    * @param targetRowIndex {number} The index where the duplicate program row will be inserted.
    *
-   * @returns void
+   * @returns {void}
    */
   private _duplicateProgram(targetRowIndex: number): void {
     ExpenditureMatrix.duplicateRow(
@@ -130,9 +150,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Duplicates the output row in the expenditure matrix.
    *
+   * @private
    * @param targetRowIndex {number} The index where the duplicate output row will be inserted.
    *
-   * @returns void
+   * @returns {void}
    */
   private _duplicateOutput(targetRowIndex: number): void {
     ExpenditureMatrix.duplicateRow(
@@ -145,9 +166,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Duplicates the activity row in a worksheet.
    *
+   * @private
    * @param targetRowIndex {number} The index where the duplicate activity row will be inserted.
    *
-   * @returns void
+   * @returns {void}
    */
   private _duplicateActivity(targetRowIndex: number): void {
     ExpenditureMatrix.duplicateRow(
@@ -163,6 +185,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @private
    * @param {number} targetRowIndex - The row index where the expense item is to be duplicated.
    * @param {number|undefined} copies - The number of copies to create (default is 1).
+   *
    * @returns {void}
    */
   private _duplicateExpenseItem(targetRowIndex: number, copies?: number): void {
@@ -241,7 +264,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     activityRow.getCell(PERFORMANCE_INDICATOR_COL).value = activityIndicator;
 
     if (!isFirstActivity) {
-      ExpenditureMatrix.clearPreviousPhysicalTargets(activityRow);
+      ExpenditureMatrix._clearPreviousPhysicalTargets(activityRow);
     }
 
     // activity physical target
@@ -291,7 +314,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @param rank {number} The rank of the output.
    * @param isFirstActivity {boolean} A flag indicating if the activity is the first activity to be created. Default is `false`.
    *
-   * @returns void
+   * @returns {void}
    */
   private _createOutputRow(
     targetRowIndex: number,
@@ -338,7 +361,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     outputRow.getCell(PERFORMANCE_INDICATOR_COL).value = outputIndicator;
 
     if (!isFirstActivity) {
-      ExpenditureMatrix.clearPreviousPhysicalTargets(outputRow);
+      ExpenditureMatrix._clearPreviousPhysicalTargets(outputRow);
     }
 
     // output physical target
@@ -359,8 +382,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Increments the specified month by 1.
    *
-   * @param month - The target month
-   * @returns The incremented month
+   * @private
+   * @param month The target month
+   *
+   * @returns {number} The incremented month
    */
   private static _incrementMonth(month: number): number {
     if (month < MAX_MONTH) return (month += 1);
@@ -370,12 +395,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Creates an expense item row in the expenditure matrix.
    *
+   * @private
    * @param targetRowIndex {number} The index where the expense item row will be inserted.
    * @param expense {ExpenseItem} The expense item information.
    * @param month {number} The month index.
    * @param isFirstActivity {boolean} A flag indicating if the activity being created is the very first activity. Default is `false`.
    *
-   * @returns void
+   * @returns {void}
    */
   private _createExpenseItemRow(
     targetRowIndex: number,
@@ -489,7 +515,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     };
 
     if (!isFirstActivity) {
-      ExpenditureMatrix.clearPreviousFinancialPrograms(currentRow);
+      ExpenditureMatrix._clearPreviousFinancialPrograms(currentRow);
     }
 
     // obligation month
@@ -552,8 +578,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     this.activities.forEach(activity => {
       const {
-        info: { program, month, output },
-        expenseItems,
+        info: { program, output },
         tevPSF,
       } = activity;
 
@@ -571,7 +596,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
         const programRow = sheet.getRow(programRowIndex);
         programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
-        // this.programs.push(program);
       } else {
         programRowIndex = currentRowIndex;
 
@@ -635,6 +659,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         'activity:',
         activity,
       );
+
       const activityRowIndex = this._createActivityRow(
         currentRowIndex,
         activity,
@@ -655,32 +680,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         currentRowIndex,
       );
 
-      for (let index = 0; index < expenseItems.length; index++) {
-        const expense = expenseItems[index];
-
-        console.dir(expense);
-        console.log(
-          'current expense item index:',
-          index,
-          'expenseitems.length:',
-          expenseItems.length,
-        );
-
-        console.log('duplicating expense item at row', currentRowIndex);
-        this._duplicateExpenseItem(currentRowIndex);
-
-        console.log('creating expense row at index', currentRowIndex);
-        this._createExpenseItemRow(
-          currentRowIndex,
-          expense,
-          month,
-          isFirstActivity,
-        );
-
-        // if (index < expenseItems.length - 1)
-        currentRowIndex += 1;
-        console.log('expenses item created.');
-      }
+      currentRowIndex = this._createExpenseItems(
+        activity,
+        currentRowIndex,
+        isFirstActivity,
+      );
 
       tevPSF.forEach(tev => {
         const e = psf.expenseItems.find(i => i.expenseItem === tev.expenseItem);
@@ -729,32 +733,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       currentRowIndex += 1;
       console.log('moved current row to', currentRowIndex);
 
-      for (let index = 0; index < psf.expenseItems.length; index++) {
-        const expense = psf.expenseItems[index];
-
-        console.dir(expense);
-        console.log(
-          'current expense item index:',
-          index,
-          'expenseitems.length:',
-          psf.expenseItems.length,
-        );
-
-        console.log('duplicating expense item at row', currentRowIndex);
-        this._duplicateExpenseItem(currentRowIndex);
-
-        console.log('creating expense row at index', currentRowIndex);
-        this._createExpenseItemRow(
-          currentRowIndex,
-          expense,
-          psf.info.month,
-          isFirstActivity,
-        );
-
-        // if (index < expenseItems.length - 1)
-        currentRowIndex += 1;
-        console.log('expenses item created.');
-      }
+      currentRowIndex = this._createExpenseItems(
+        psf,
+        currentRowIndex,
+        isFirstActivity,
+      );
     }
 
     sheet.spliceRows(currentRowIndex, 2);
@@ -792,6 +775,50 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     const buffer = await this.wb.xlsx.writeBuffer();
 
     return buffer;
+  }
+
+  /**
+   * Creates the expense items at the specified row on the active sheet.
+   *
+   * @private
+   * @param activity {Activity} The activity being processed
+   * @param rowIndex {number} The current row index
+   * @param isFirstActivity {boolean} Tells if the activity is the first activity to be written to the active sheet.
+   *
+   * @returns {number} - The new index for the current row
+   */
+  private _createExpenseItems(
+    activity: Activity,
+    rowIndex: number,
+    isFirstActivity: boolean,
+  ): number {
+    const { expenseItems } = activity;
+
+    const finalRowIndex = expenseItems.reduce((rowIndex, expense, index) => {
+      console.dir(expense);
+      console.log(
+        'current expense item index:',
+        index,
+        'expenseitems.length:',
+        expenseItems.length,
+      );
+
+      console.log('duplicating expense item at row', rowIndex);
+      this._duplicateExpenseItem(rowIndex);
+
+      console.log('creating expense row at index', rowIndex);
+      this._createExpenseItemRow(
+        rowIndex,
+        expense,
+        activity.info.month,
+        isFirstActivity,
+      );
+
+      console.log('expenses item created.');
+      return rowIndex + 1;
+    }, rowIndex);
+
+    return finalRowIndex;
   }
 
   /**

@@ -27,12 +27,11 @@ export abstract class Workbook<T extends Workbook<T>> {
   protected ws?: Worksheet;
 
   /**
-   * The source of the workbook, which can be either a file path (string) or a Buffer containing workbook data.
+   * Filename of the excel file being processed.
    *
    * @protected
-   * @type {Convertible}
+   * @type {string}
    */
-  // protected source?: ExcelFile;
   protected activeFile?: string;
 
   /**
@@ -59,7 +58,6 @@ export abstract class Workbook<T extends Workbook<T>> {
     // }
 
     await this.wb.xlsx.load(buffer);
-    // this.source = source;
     console.log('Processing', filename);
 
     this.activeFile = filename;

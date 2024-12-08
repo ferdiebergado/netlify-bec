@@ -7,8 +7,10 @@ import {
 } from './constants';
 import type {
   Activity,
+  ActivityContext,
   ExcelFile,
   ExpenseItem,
+  ExpenseItemRowContext,
   RowCopyMap,
 } from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
@@ -397,19 +399,16 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * Creates an expense item row in the expenditure matrix.
    *
    * @private
-   * @param targetRowIndex {number} The index where the expense item row will be inserted.
-   * @param expense {ExpenseItem} The expense item information.
-   * @param month {number} The month index.
-   * @param isFirstActivity {boolean} A flag indicating if the activity being created is the very first activity. Default is `false`.
+   * @param context {ExpenseItemRowContext} The context of the expense item row will be inserted.
    *
    * @returns {void}
    */
-  private _createExpenseItemRow(
-    targetRowIndex: number,
-    expense: ExpenseItem,
-    month: number,
-    isFirstActivity: boolean = false,
-  ): void {
+  private _createExpenseItemRow({
+    targetRowIndex,
+    expense,
+    month,
+    isFirstActivity,
+  }: ExpenseItemRowContext): void {
     const sheet = this.getActiveSheet();
 
     const {
@@ -683,12 +682,16 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         currentRowIndex,
       );
 
-      currentRowIndex = this._createExpenseItems(
+      // Expense Items
+      const context: ActivityContext = {
         activity,
-        currentRowIndex,
+        rowIndex: currentRowIndex,
         isFirstActivity,
-      );
+      };
 
+      currentRowIndex = this._createExpenseItems(context);
+
+      // Aggregate TEVs of participants for PSF
       tevPSF.forEach(tev => {
         const existingPSF = psf.expenseItems.find(
           i => i.expenseItem === tev.expenseItem,
@@ -714,7 +717,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       console.log('currentrowindex:', currentRowIndex);
     });
 
+    // PSF
     if (psf.expenseItems.length > 0) {
+      console.log('Creating PSF Activity...');
+
+      // program
       const { program } = psf.info;
 
       this._duplicateProgram(currentRowIndex);
@@ -724,11 +731,14 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       currentRowIndex += 1;
       console.log('moved current row to', currentRowIndex);
+
+      // output
       this._createOutputRow(currentRowIndex, psf, rank, isFirstActivity);
 
       currentRowIndex += 1;
       console.log('moved current row to', currentRowIndex);
 
+      // activity
       const activityRowIndex = this._createActivityRow(
         currentRowIndex,
         psf,
@@ -740,17 +750,21 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       currentRowIndex += 1;
       console.log('moved current row to', currentRowIndex);
 
-      currentRowIndex = this._createExpenseItems(
-        psf,
-        currentRowIndex,
+      const context: ActivityContext = {
+        activity: psf,
+        rowIndex: currentRowIndex,
         isFirstActivity,
-      );
+      };
+
+      // expense items
+      currentRowIndex = this._createExpenseItems(context);
     }
 
     sheet.spliceRows(currentRowIndex, 2);
 
     const lastRowIndex = currentRowIndex + 1;
 
+    // GRAND TOTAL
     const { TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL } =
       EXPENDITURE_MATRIX;
     const grandTotalRow = sheet.getRow(lastRowIndex);
@@ -788,17 +802,15 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * Creates the expense items at the specified row on the active sheet.
    *
    * @private
-   * @param activity {Activity} The activity being processed
-   * @param rowIndex {number} The current row index
-   * @param isFirstActivity {boolean} Tells if the activity is the first activity to be written to the active sheet.
+   * @param context {ActivityContext} The context of the Activity
    *
    * @returns {number} - The new index for the current row
    */
-  private _createExpenseItems(
-    activity: Activity,
-    rowIndex: number,
-    isFirstActivity: boolean,
-  ): number {
+  private _createExpenseItems({
+    activity,
+    rowIndex,
+    isFirstActivity,
+  }: ActivityContext): number {
     const { expenseItems } = activity;
 
     const finalRowIndex = expenseItems.reduce((rowIndex, expense, index) => {
@@ -814,12 +826,15 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       this._duplicateExpenseItem(rowIndex);
 
       console.log('creating expense row at index', rowIndex);
-      this._createExpenseItemRow(
-        rowIndex,
+
+      const context: ExpenseItemRowContext = {
+        targetRowIndex: rowIndex,
         expense,
-        activity.info.month,
+        month: activity.info.month,
         isFirstActivity,
-      );
+      };
+
+      this._createExpenseItemRow(context);
 
       console.log('expenses item created.');
       return rowIndex + 1;

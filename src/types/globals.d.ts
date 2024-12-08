@@ -51,7 +51,6 @@ type ExpenseOptions = {
 };
 
 type Buffers = Buffer | ArrayBuffer;
-type Convertible = string | Buffers;
 
 type ExcelFile = {
   filename: string;
@@ -92,4 +91,60 @@ interface RowCopyMap {
   targetRowIndex: number;
   srcRowIndex: number;
   numRows: number;
+}
+
+/**
+ * Represents the context of an expense item row.
+ *
+ * @interface ExpenseItemRowContext
+ */
+interface ExpenseItemRowContext {
+  /**
+   * The row number where the expense item row will be inserted.
+   * @type {number}
+   */
+  targetRowIndex: number;
+
+  /**
+   * The expense item data.
+   * @type {ExpenseItem}
+   */
+  expense: ExpenseItem;
+
+  /**
+   * The month index.
+   * @type {number}
+   */
+  month: number;
+
+  /**
+   * Flag indicating if the activity being created is the very first activity. Default is `false`.
+   * @type {boolean}
+   */
+  isFirstActivity: boolean;
+}
+
+/**
+ * Represents the context of an Activity.
+ *
+ * @interface ActivityContext
+ */
+interface ActivityContext {
+  /**
+   * The activity being processed
+   * @type {Activity}
+   */
+  activity: Activity;
+
+  /**
+   * The current row index
+   * @type {number}
+   */
+  rowIndex: number;
+
+  /**
+   * Indicates if the activity is the first activity to be written to the active sheet.
+   * @type {boolean}
+   */
+  isFirstActivity: boolean;
 }

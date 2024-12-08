@@ -79,21 +79,20 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     numRows: number = 1,
   ): void {
     const srcRow = sheet.getRow(srcRowIndex);
-    let currentRowIndex = targetRowIndex;
 
-    for (let j = 0; j < numRows; j += 1) {
-      const newRow = sheet.insertRow(currentRowIndex, []);
+    Array.from({ length: numRows }).forEach((_, j) => {
+      const newRow = sheet.insertRow(targetRowIndex + j, []);
 
       srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         const targetCell = newRow.getCell(colNumber);
 
-        targetCell.value = cell.value;
-        targetCell.style = cell.style;
-        targetCell.dataValidation = cell.dataValidation;
+        Object.assign(targetCell, {
+          value: cell.value,
+          style: cell.style,
+          dataValidation: cell.dataValidation,
+        });
       });
-
-      currentRowIndex += 1;
-    }
+    });
   }
 
   /**

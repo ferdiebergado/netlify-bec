@@ -1,9 +1,9 @@
 import './sass/app.scss';
-import { config } from './config';
-import { ExpenditureMatrix } from './expenditureMatrix';
-import { ExcelFile } from './types/globals';
-import { createTimestamp } from './utils';
-import { BudgetEstimateParseError } from './parseError';
+import { config } from './config.js';
+import { ExpenditureMatrix } from './expenditureMatrix.js';
+import type { ExcelFile } from './types/globals.js';
+import { createTimestamp } from './utils.js';
+import { BudgetEstimateParseError } from './parseError.js';
 
 // Constants
 const ALERT_SUCCESS_CLASS = 'alert-success';

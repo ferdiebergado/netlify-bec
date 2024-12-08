@@ -1,18 +1,18 @@
-import { Workbook } from './workbook';
+import { Workbook } from './workbook.js';
 import {
   EXPENDITURE_MATRIX,
   MANNER_VALIDATION,
   YES,
   YES_NO_VALIDATION,
-} from './constants';
+} from './constants.js';
 import type {
   Activity,
   ActivityRowMap,
   ExcelFile,
   ExpenseItemRowContext,
   RowCopyMap,
-} from './types/globals';
-import { BudgetEstimate } from './budgetEstimate';
+} from './types/globals.js';
+import { BudgetEstimate } from './budgetEstimate.js';
 import type { Row } from 'exceljs';
 
 // 0-based index of the last month in a year (December)

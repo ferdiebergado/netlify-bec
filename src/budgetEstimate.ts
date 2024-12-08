@@ -1,11 +1,11 @@
-import { Workbook } from './workbook';
+import { Workbook } from './workbook.js';
 import type {
   ExpenseItem,
   ExpenseOptions,
   ActivityInfo,
   Activity,
   SheetConfig,
-} from './types/globals';
+} from './types/globals.js';
 import {
   AUXILLIARY_SHEETS,
   BOARD_LODGING_EXPENSE_PREFIX,
@@ -16,9 +16,9 @@ import {
   ReleaseManner,
   TRAVEL_EXPENSE_PREFIX,
   VENUES_BY_AIR,
-} from './constants';
-import { getCellValueAsNumber } from './utils';
-import { BudgetEstimateParseError } from './parseError';
+} from './constants.js';
+import { getCellValueAsNumber } from './utils.js';
+import { BudgetEstimateParseError } from './parseError.js';
 
 /**
  * Represents a specialized workbook for managing budget estimates.

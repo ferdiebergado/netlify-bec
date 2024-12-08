@@ -1,4 +1,4 @@
-import { Config } from './types/globals';
+import type { Config } from './types/globals.js';
 
 export const config: Readonly<Config> = {
   paths: {

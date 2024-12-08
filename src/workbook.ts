@@ -1,5 +1,5 @@
 import type { Worksheet } from 'exceljs';
-import { ExcelFile } from './types/globals';
+import type { ExcelFile } from './types/globals.d.ts';
 import ExcelJS from 'exceljs';
 
 /**
@@ -91,7 +91,7 @@ export abstract class Workbook<T extends Workbook<T>> {
    *
    * @param indexOrName {number|string} The index or name of the worksheet
    */
-  setActiveSheet(indexOrName: number | string): void {
+  protected setActiveSheet(indexOrName: number | string): void {
     this.ws = this.wb.getWorksheet(indexOrName);
   }
 }

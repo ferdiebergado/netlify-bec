@@ -1,4 +1,4 @@
-import { BEParseErrDetail } from './types/globals';
+import type { BEParseErrDetail } from './types/globals.js';
 
 export class BudgetEstimateParseError extends Error {
   constructor(

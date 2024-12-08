@@ -66,16 +66,13 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     numRows: number,
     options: ExpenseOptions,
   ): ExpenseItem[] {
-    const expenseItems: ExpenseItem[] = [];
     const { QUANTITY_CELL_INDEX, FREQ_CELL_INDEX, UNIT_COST_CELL_INDEX } =
       BUDGET_ESTIMATE;
     const { prefix, releaseManner, venue, hasPPMP } = options;
-    let currentRowIndex = startRowIndex;
 
-    for (let i = 0; i < numRows; i += 1) {
-      const row = sheet.getRow(currentRowIndex);
-
-      currentRowIndex += 1;
+    return Array.from({ length: numRows }, (_, i) => {
+      const rowIndex = startRowIndex + i;
+      const row = sheet.getRow(rowIndex);
 
       const unitCost = Number.parseFloat(
         row.getCell(UNIT_COST_CELL_INDEX).text,
@@ -83,7 +80,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const quantity = getCellValueAsNumber(
         row.getCell(QUANTITY_CELL_INDEX).text,
       );
-
       const freq = getCellValueAsNumber(
         row.getCell(FREQ_CELL_INDEX).text || '1',
       );
@@ -115,7 +111,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
 
         if (venue && VENUES_BY_AIR.includes(venue)) hasAPPTicket = true;
 
-        const newExpenseItem: ExpenseItem = {
+        return {
           expenseGroup,
           gaaObject,
           expenseItem,
@@ -127,13 +123,11 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
           hasPPMP,
           hasAPPSupplies,
           hasAPPTicket,
-        };
-
-        expenseItems.push(newExpenseItem);
+        } as ExpenseItem;
       }
-    }
 
-    return expenseItems;
+      return null;
+    }).filter(Boolean) as ExpenseItem[];
   }
 
   /**

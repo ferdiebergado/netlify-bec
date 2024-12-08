@@ -5,7 +5,12 @@ import {
   YES,
   YES_NO_VALIDATION,
 } from './constants';
-import type { Activity, ExcelFile, ExpenseItem } from './types/globals';
+import type {
+  Activity,
+  ExcelFile,
+  ExpenseItem,
+  RowCopyMap,
+} from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
 import type { Row, Worksheet } from 'exceljs';
 
@@ -64,20 +69,16 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * Duplicates a specified row.
    *
    * @private
-   * @static
-   * @param ws {Worksheet} Sheet were the rows will be duplicated
-   * @param targetRowIndex {number} Index where the duplicate rows will be inserted
-   * @param srcRowIndex {number} Index of the row that will be duplicated
-   * @param numRows {number} Number of rows to be duplicated
+   * @param range {RowCopyMap} Contains the indices of the target and source rows that will be duplicated
    *
    * @returns {void}
    */
-  private static _duplicateRow(
-    sheet: Worksheet,
-    targetRowIndex: number,
-    srcRowIndex: number,
-    numRows: number = 1,
-  ): void {
+  private _duplicateRow({
+    targetRowIndex,
+    srcRowIndex,
+    numRows,
+  }: RowCopyMap): void {
+    const sheet = this.getActiveSheet();
     const srcRow = sheet.getRow(srcRowIndex);
 
     Array.from({ length: numRows }).forEach((_, j) => {
@@ -141,11 +142,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateProgram(targetRowIndex: number): void {
-    ExpenditureMatrix._duplicateRow(
-      this.getActiveSheet(),
+    const range: RowCopyMap = {
       targetRowIndex,
-      EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX,
-    );
+      srcRowIndex: EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX,
+      numRows: 1,
+    };
+
+    this._duplicateRow(range);
   }
 
   /**
@@ -157,11 +160,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateOutput(targetRowIndex: number): void {
-    ExpenditureMatrix._duplicateRow(
-      this.getActiveSheet(),
+    const range: RowCopyMap = {
       targetRowIndex,
-      EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX,
-    );
+      srcRowIndex: EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX,
+      numRows: 1,
+    };
+
+    this._duplicateRow(range);
   }
 
   /**
@@ -173,11 +178,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateActivity(targetRowIndex: number): void {
-    ExpenditureMatrix._duplicateRow(
-      this.getActiveSheet(),
+    const range: RowCopyMap = {
       targetRowIndex,
-      EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX,
-    );
+      srcRowIndex: EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX,
+      numRows: 1,
+    };
+
+    this._duplicateRow(range);
   }
 
   /**
@@ -190,21 +197,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateExpenseItem(targetRowIndex: number, copies?: number): void {
-    /**
-     * Duplicates a row in the expenditure matrix.
-     *
-     * @param {object} sheet - The active sheet where the duplication will occur.
-     * @param {number} targetIndex - The row index to duplicate.
-     * @param {number} sourceIndex - The row index from which to copy the data.
-     * @param {number} [numCopies=1] - The number of copies to create (default is 1).
-     * @returns {void}
-     */
-    ExpenditureMatrix._duplicateRow(
-      this.getActiveSheet(),
+    const range: RowCopyMap = {
       targetRowIndex,
-      EXPENDITURE_MATRIX.EXPENSE_ITEM_ROW_INDEX,
-      copies,
-    );
+      srcRowIndex: EXPENDITURE_MATRIX.EXPENSE_ITEM_ROW_INDEX,
+      numRows: copies || 1,
+    };
+
+    this._duplicateRow(range);
   }
 
   /**

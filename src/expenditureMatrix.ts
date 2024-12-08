@@ -63,6 +63,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Duplicates a specified row.
    *
+   * @private
+   * @static
    * @param ws {Worksheet} Sheet were the rows will be duplicated
    * @param targetRowIndex {number} Index where the duplicate rows will be inserted
    * @param srcRowIndex {number} Index of the row that will be duplicated
@@ -70,7 +72,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns {void}
    */
-  static duplicateRow(
+  private static _duplicateRow(
     sheet: Worksheet,
     targetRowIndex: number,
     srcRowIndex: number,
@@ -140,7 +142,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateProgram(targetRowIndex: number): void {
-    ExpenditureMatrix.duplicateRow(
+    ExpenditureMatrix._duplicateRow(
       this.getActiveSheet(),
       targetRowIndex,
       EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX,
@@ -156,7 +158,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateOutput(targetRowIndex: number): void {
-    ExpenditureMatrix.duplicateRow(
+    ExpenditureMatrix._duplicateRow(
       this.getActiveSheet(),
       targetRowIndex,
       EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX,
@@ -172,7 +174,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateActivity(targetRowIndex: number): void {
-    ExpenditureMatrix.duplicateRow(
+    ExpenditureMatrix._duplicateRow(
       this.getActiveSheet(),
       targetRowIndex,
       EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX,
@@ -198,7 +200,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
      * @param {number} [numCopies=1] - The number of copies to create (default is 1).
      * @returns {void}
      */
-    ExpenditureMatrix.duplicateRow(
+    ExpenditureMatrix._duplicateRow(
       this.getActiveSheet(),
       targetRowIndex,
       EXPENDITURE_MATRIX.EXPENSE_ITEM_ROW_INDEX,

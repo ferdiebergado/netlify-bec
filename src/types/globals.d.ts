@@ -66,7 +66,7 @@ type DeepPartial<T> = T extends object
 type BEParseErrDetail = {
   activity?: string;
   file: string;
-  sheet: string;
+  sheet?: string;
 };
 
 interface Paths {

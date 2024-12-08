@@ -323,7 +323,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
               {
                 file: this.activeFile as string,
                 sheet: sheet.name,
-                activity: '(Unavailable)',
               },
             );
           }

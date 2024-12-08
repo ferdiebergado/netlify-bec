@@ -136,12 +136,15 @@ function handleError(error: Error) {
   let msg: string;
 
   if (error instanceof BudgetEstimateParseError) {
-    msg = `
-    <p>${error.message}</p>
-    <p><b>Activity Title:</b> ${error.details.activity}</p>
-    <p><b>File:</b> ${error.details.file}</p>
-    <p><b>Sheet:</b> ${error.details.sheet}</p>
-    `;
+    msg = `<p>${error.message}</p>`;
+
+    const { activity, file, sheet } = error.details;
+
+    if (activity) msg += `<p><b>Activity Title:</b> ${activity}</p>`;
+
+    msg += `<p><b>File:</b> ${file}</p>`;
+
+    if (sheet) msg += `<p><b>Sheet:</b> ${sheet}</p>`;
   } else {
     msg = `
     <p>An error occurred during conversion. Please check the following and try again:</p>

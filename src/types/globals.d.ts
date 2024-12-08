@@ -116,12 +116,6 @@ interface ExpenseItemRowContext {
    * @type {number}
    */
   month: number;
-
-  /**
-   * Flag indicating if the activity being created is the very first activity. Default is `false`.
-   * @type {boolean}
-   */
-  isFirstActivity: boolean;
 }
 
 /**
@@ -141,10 +135,4 @@ interface ActivityContext {
    * @type {number}
    */
   rowIndex: number;
-
-  /**
-   * Indicates if the activity is the first activity to be written to the active sheet.
-   * @type {boolean}
-   */
-  isFirstActivity: boolean;
 }

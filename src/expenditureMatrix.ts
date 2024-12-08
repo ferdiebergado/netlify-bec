@@ -9,12 +9,11 @@ import type {
   Activity,
   ActivityContext,
   ExcelFile,
-  ExpenseItem,
   ExpenseItemRowContext,
   RowCopyMap,
 } from './types/globals';
 import { BudgetEstimate } from './budgetEstimate';
-import type { Row, Worksheet } from 'exceljs';
+import type { Row } from 'exceljs';
 
 // 0-based index of the last month in a year (December)
 const MAX_MONTH = 11;
@@ -27,20 +26,28 @@ const MAX_MONTH = 11;
  */
 export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
-   * An array to store program names.
+   * An array that stores the parsed activities.
    *
-   * @public
-   * @type {string[]}
-   */
-  programs: string[] = [];
-
-  /**
-   * An array to store activity information.
-   *
-   * @public
+   * @protected
    * @type {Activity[]}
    */
-  activities: Activity[] = [];
+  protected activities: Activity[] = [];
+
+  /**
+   * The index of the activity being processed.
+   *
+   * @protected
+   * @type {number}
+   */
+  protected activityIndex: number = 0;
+
+  /**
+   * The current output rank.
+   *
+   * @protected
+   * @type {number}
+   */
+  protected rank: number = 1;
 
   /**
    * Creates an instance of the ExpenditureMatrix class.
@@ -209,19 +216,23 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }
 
   /**
+   * Checks if the array of activities is empty.
+   *
+   * @returns {boolean}
+   */
+  private _hasFirstActivity(): boolean {
+    return this.activityIndex === 0;
+  }
+
+  /**
    * Creates or duplicates an activity row in the expenditure matrix.
    *
    * @param targetRow {number} The index where the activity row will be inserted.
    * @param activity {Activity} The activity information.
-   * @param isFirstActivity {boolean} A flag indicating if the activity being created is the very first activity. Default is `false`.
    *
    * @returns number - The index of the activity row
    */
-  private _createActivityRow(
-    targetRow: number,
-    activity: Activity,
-    isFirstActivity: boolean = false,
-  ): number {
+  private _createActivityRow(targetRow: number, activity: Activity): number {
     const sheet = this.getActiveSheet();
     let activityRowIndex = targetRow;
 
@@ -240,7 +251,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       TOTAL_DISBURSEMENT_COL,
     } = EXPENDITURE_MATRIX;
 
-    if (isFirstActivity) {
+    if (this._hasFirstActivity()) {
       activityRowIndex = ACTIVITY_ROW_INDEX;
     } else {
       this._duplicateActivity(activityRowIndex);
@@ -265,7 +276,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     // activity indicator
     activityRow.getCell(PERFORMANCE_INDICATOR_COL).value = activityIndicator;
 
-    if (!isFirstActivity) {
+    if (!this._hasFirstActivity()) {
       ExpenditureMatrix._clearPreviousPhysicalTargets(activityRow);
     }
 
@@ -314,16 +325,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @param targetRowIndex {number} The index where the output row will be inserted.
    * @param activity {Activity} The activity information.
    * @param rank {number} The rank of the output.
-   * @param isFirstActivity {boolean} A flag indicating if the activity is the first activity to be created. Default is `false`.
    *
    * @returns {void}
    */
-  private _createOutputRow(
-    targetRowIndex: number,
-    activity: Activity,
-    rank: number,
-    isFirstActivity: boolean = false,
-  ): void {
+  private _createOutputRow(targetRowIndex: number, activity: Activity): void {
     const sheet = this.getActiveSheet();
 
     const {
@@ -339,7 +344,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     let outputRowIndex = targetRowIndex;
 
-    if (isFirstActivity) {
+    if (this._hasFirstActivity()) {
       outputRowIndex = OUTPUT_ROW_INDEX;
     } else {
       this._duplicateOutput(outputRowIndex);
@@ -357,12 +362,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     console.log('outputrow:', outputRow.number);
 
     outputRow.getCell(OUTPUT_COL).value = output;
-    outputRow.getCell(RANK_COL).value = rank;
+    outputRow.getCell(RANK_COL).value = this.rank;
 
     // output indicator
     outputRow.getCell(PERFORMANCE_INDICATOR_COL).value = outputIndicator;
 
-    if (!isFirstActivity) {
+    if (!this._hasFirstActivity()) {
       ExpenditureMatrix._clearPreviousPhysicalTargets(outputRow);
     }
 
@@ -407,7 +412,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     targetRowIndex,
     expense,
     month,
-    isFirstActivity,
   }: ExpenseItemRowContext): void {
     const sheet = this.getActiveSheet();
 
@@ -436,7 +440,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     let currentRowIndex = targetRowIndex;
 
-    if (isFirstActivity) currentRowIndex -= 1;
+    if (this._hasFirstActivity()) currentRowIndex -= 1;
 
     const currentRow = sheet.getRow(currentRowIndex);
 
@@ -514,7 +518,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       formula: `${TOTAL_COST_COL}${currentRowIndex}`,
     };
 
-    if (!isFirstActivity) {
+    if (!this._hasFirstActivity()) {
       ExpenditureMatrix._clearPreviousFinancialPrograms(currentRow);
     }
 
@@ -547,11 +551,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     if (this.activities.length === 0) throw new Error('No activities found.');
 
-    this.activities.sort(this._orderByProgramAndOutput);
+    this.activities.sort(ExpenditureMatrix._orderByProgramAndOutput);
 
     let currentRowIndex: number = EXPENDITURE_MATRIX.TARGET_ROW_INDEX;
-    let isFirstActivity = true;
-    let rank = 1;
     let currentOutput = '';
     let currentProgram = '';
 
@@ -587,7 +589,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       // program
       let programRowIndex;
 
-      if (isFirstActivity) {
+      if (this._hasFirstActivity()) {
         programRowIndex = EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX;
         console.log(
           'writing program at row',
@@ -622,7 +624,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       currentProgram = program;
 
-      if (!isFirstActivity) {
+      if (!this._hasFirstActivity()) {
         currentRowIndex += 1;
         console.log('moved current row to', currentRowIndex);
       }
@@ -634,13 +636,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         console.log(
           'creating output row at index',
           currentRowIndex,
-          'isfirstactivity',
-          isFirstActivity,
+          'hasEmptyActivities',
+          this._hasFirstActivity(),
           'output',
           output,
         );
-        this._createOutputRow(currentRowIndex, activity, rank, isFirstActivity);
-        rank += 1;
+        this._createOutputRow(currentRowIndex, activity);
+        this.rank += 1;
         console.log('moved current row to', currentRowIndex);
       } else {
         currentRowIndex -= 1;
@@ -649,7 +651,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       currentOutput = output;
 
-      if (!isFirstActivity) {
+      if (!this._hasFirstActivity()) {
         currentRowIndex += 1;
         console.log('moved current row to', currentRowIndex);
       }
@@ -665,19 +667,18 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       const activityRowIndex = this._createActivityRow(
         currentRowIndex,
         activity,
-        isFirstActivity,
       );
 
       activityRows.push(activityRowIndex);
 
-      if (!isFirstActivity) {
+      if (!this._hasFirstActivity()) {
         currentRowIndex += 1;
         console.log('moved current row to', currentRowIndex);
       }
 
       console.log(
-        'isfirstactivity:',
-        isFirstActivity,
+        'hasFirstActivity:',
+        this._hasFirstActivity(),
         'current row index:',
         currentRowIndex,
       );
@@ -686,7 +687,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       const context: ActivityContext = {
         activity,
         rowIndex: currentRowIndex,
-        isFirstActivity,
       };
 
       currentRowIndex = this._createExpenseItems(context);
@@ -708,10 +708,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         }
       });
 
-      if (isFirstActivity) {
-        isFirstActivity = false;
+      if (this._hasFirstActivity()) {
         currentRowIndex -= 1;
       }
+
+      this.activityIndex += 1;
 
       console.log('activity created');
       console.log('currentrowindex:', currentRowIndex);
@@ -733,17 +734,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       console.log('moved current row to', currentRowIndex);
 
       // output
-      this._createOutputRow(currentRowIndex, psf, rank, isFirstActivity);
+      this._createOutputRow(currentRowIndex, psf);
 
       currentRowIndex += 1;
       console.log('moved current row to', currentRowIndex);
 
       // activity
-      const activityRowIndex = this._createActivityRow(
-        currentRowIndex,
-        psf,
-        isFirstActivity,
-      );
+      const activityRowIndex = this._createActivityRow(currentRowIndex, psf);
 
       activityRows.push(activityRowIndex);
 
@@ -753,7 +750,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       const context: ActivityContext = {
         activity: psf,
         rowIndex: currentRowIndex,
-        isFirstActivity,
       };
 
       // expense items
@@ -806,11 +802,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns {number} - The new index for the current row
    */
-  private _createExpenseItems({
-    activity,
-    rowIndex,
-    isFirstActivity,
-  }: ActivityContext): number {
+  private _createExpenseItems({ activity, rowIndex }: ActivityContext): number {
     const { expenseItems } = activity;
 
     const finalRowIndex = expenseItems.reduce((rowIndex, expense, index) => {
@@ -831,7 +823,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         targetRowIndex: rowIndex,
         expense,
         month: activity.info.month,
-        isFirstActivity,
       };
 
       this._createExpenseItemRow(context);
@@ -861,12 +852,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Orders activities based on program and output.
    *
+   * @static
    * @param a {Activity} The first activity.
    * @param b {Activity} The other activity.
    *
    * @returns A number indicating the order.
    */
-  private _orderByProgramAndOutput(
+  private static _orderByProgramAndOutput(
     this: void,
     a: Activity,
     b: Activity,

@@ -384,12 +384,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * Increments the specified month by 1.
    *
    * @private
+   * @static
    * @param month The target month
    *
    * @returns {number} The incremented month
    */
   private static _incrementMonth(month: number): number {
-    if (month < MAX_MONTH) return (month += 1);
+    if (month < MAX_MONTH) return month + 1;
     return month;
   }
 

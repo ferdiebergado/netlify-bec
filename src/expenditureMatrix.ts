@@ -690,14 +690,18 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       );
 
       tevPSF.forEach(tev => {
-        const e = psf.expenseItems.find(i => i.expenseItem === tev.expenseItem);
+        const existingPSF = psf.expenseItems.find(
+          i => i.expenseItem === tev.expenseItem,
+        );
 
-        if (e) {
-          e.unitCost += tev.unitCost * tev.quantity;
+        if (existingPSF) {
+          existingPSF.unitCost += tev.unitCost * tev.quantity;
         } else {
-          tev.unitCost = tev.quantity * tev.unitCost;
-          tev.quantity = 1;
-          psf.expenseItems.push(tev);
+          psf.expenseItems.push({
+            ...tev,
+            quantity: 1,
+            unitCost: tev.unitCost * tev.quantity,
+          });
         }
       });
 

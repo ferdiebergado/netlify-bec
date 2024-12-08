@@ -545,6 +545,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     await Promise.all(files.map(file => this._addToActivities(file)));
 
+    if (this.activities.length === 0) throw new Error('No activities found.');
+
     this.activities.sort(this._orderByProgramAndOutput);
 
     let currentRowIndex: number = EXPENDITURE_MATRIX.TARGET_ROW_INDEX;

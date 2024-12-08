@@ -7,7 +7,7 @@ import {
 } from './constants';
 import type {
   Activity,
-  ActivityContext,
+  ActivityRowMap,
   ExcelFile,
   ExpenseItemRowContext,
   RowCopyMap,
@@ -216,7 +216,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }
 
   /**
-   * Checks if the array of activities is empty.
+   * Checks if the current activity is the first activity.
    *
    * @returns {boolean}
    */
@@ -684,12 +684,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       );
 
       // Expense Items
-      const context: ActivityContext = {
+      const activityRowMap: ActivityRowMap = {
         activity,
         rowIndex: currentRowIndex,
       };
 
-      currentRowIndex = this._createExpenseItems(context);
+      currentRowIndex = this._createExpenseItems(activityRowMap);
 
       // Aggregate TEVs of participants for PSF
       tevPSF.forEach(tev => {
@@ -747,13 +747,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       currentRowIndex += 1;
       console.log('moved current row to', currentRowIndex);
 
-      const context: ActivityContext = {
+      const activityRowMap: ActivityRowMap = {
         activity: psf,
         rowIndex: currentRowIndex,
       };
 
       // expense items
-      currentRowIndex = this._createExpenseItems(context);
+      currentRowIndex = this._createExpenseItems(activityRowMap);
     }
 
     sheet.spliceRows(currentRowIndex, 2);
@@ -802,7 +802,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns {number} - The new index for the current row
    */
-  private _createExpenseItems({ activity, rowIndex }: ActivityContext): number {
+  private _createExpenseItems({ activity, rowIndex }: ActivityRowMap): number {
     const { expenseItems } = activity;
 
     const finalRowIndex = expenseItems.reduce((rowIndex, expense, index) => {

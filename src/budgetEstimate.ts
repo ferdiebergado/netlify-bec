@@ -290,47 +290,46 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @returns Activity[]
    */
   getActivities(): Activity[] {
-    const activities: Activity[] = [];
+    return this.wb.worksheets
+      .filter(sheet => {
+        const { name } = sheet;
 
-    // TODO: Use functional programming with this.wb.eachSheet()
-    for (const sheet of this.wb.worksheets) {
-      const { name } = sheet;
+        // Skip auxiliary sheets
+        if (AUXILLIARY_SHEETS.includes(name)) return false;
 
-      if (AUXILLIARY_SHEETS.includes(name)) {
-        continue;
-      }
-
-      // TODO: add more columns to check
-      if (
-        sheet.getCell(BUDGET_ESTIMATE.PROGRAM_HEADING_CELL).text !== 'PROGRAM:'
-      ) {
-        continue;
-      }
-
-      console.log('parsing sheet', name);
-      this.ws = sheet;
-
-      try {
-        const activity = this._parseActivity();
-        if (activity) activities.push(activity);
-      } catch (error) {
-        if (error instanceof BudgetEstimateParseError) {
-          throw error;
-        } else {
-          console.error(error);
-          throw new BudgetEstimateParseError(
-            'Please check the layout and details of the activity in the following sheet:',
-            {
-              file: this.activeFile as string,
-              sheet: name,
-              activity: '(Unavailable)',
-            },
-          );
+        // Skip sheets without the required program heading
+        if (
+          sheet.getCell(BUDGET_ESTIMATE.PROGRAM_HEADING_CELL).text !==
+          'PROGRAM:'
+        ) {
+          return false;
         }
-      }
-    }
 
-    return activities;
+        return true;
+      })
+      .map(sheet => {
+        console.log('parsing sheet', sheet.name);
+        this.ws = sheet;
+
+        try {
+          return this._parseActivity();
+        } catch (error) {
+          if (error instanceof BudgetEstimateParseError) {
+            throw error;
+          } else {
+            console.error(error);
+            throw new BudgetEstimateParseError(
+              'Please check the layout and details of the activity in the following sheet:',
+              {
+                file: this.activeFile as string,
+                sheet: sheet.name,
+                activity: '(Unavailable)',
+              },
+            );
+          }
+        }
+      })
+      .filter(activity => activity !== undefined);
   }
 
   /**

@@ -51,14 +51,8 @@ export abstract class Workbook<T extends Workbook<T>> {
    * @returns {Promise<void>} - A Promise that resolves when the initialization is complete.
    */
   async initializeAsync({ filename, buffer }: ExcelFile): Promise<void> {
-    // if (typeof source === 'string') {
-    //   await this.wb.xlsx.readFile(source);
-    // } else if (source instanceof Buffer || source instanceof ArrayBuffer) {
-    //   await this.wb.xlsx.load(source);
-    // }
-
-    await this.wb.xlsx.load(buffer);
     console.log('Processing', filename);
+    await this.wb.xlsx.load(buffer);
 
     this.activeFile = filename;
   }

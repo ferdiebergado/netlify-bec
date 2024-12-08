@@ -1,3 +1,4 @@
+import { Worksheet } from 'exceljs';
 import { ReleaseManner, GAAObject, ExpenseGroup } from '../constants';
 
 /**
@@ -78,4 +79,17 @@ interface Paths {
 
 interface Config {
   paths: Paths;
+}
+
+interface SheetConfig {
+  startRowIndex: number;
+  startColIndex: number;
+  numRows: number;
+  options: ExpenseOptions;
+}
+
+interface RowCopyMap {
+  targetRowIndex: number;
+  srcRowIndex: number;
+  numRows: number;
 }

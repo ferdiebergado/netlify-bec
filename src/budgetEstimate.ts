@@ -4,6 +4,7 @@ import type {
   ExpenseOptions,
   ActivityInfo,
   Activity,
+  SheetConfig,
 } from './types/globals';
 import {
   AUXILLIARY_SHEETS,
@@ -17,7 +18,6 @@ import {
   VENUES_BY_AIR,
 } from './constants';
 import { getCellValueAsNumber } from './utils';
-import type { Worksheet } from 'exceljs';
 import { BudgetEstimateParseError } from './parseError';
 
 /**
@@ -51,24 +51,20 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * Gets an array of ExpenseItem objects from a budget estimate based on provided parameters.
    *
    * @private
-   * @static
-   * @param {number} startRowIndex The starting row index for reading expense data.
-   * @param {number} startColIndex The starting column index for reading expense data.
-   * @param {number} numRows The number of rows to read.
-   * @param {ExpenseOptions} options The data to be stored to the expense item.
+   * @param {SheetConfig} sheetConfig The config for the sheet for reading expense data.
    *
    * @returns {ExpenseItem[]} An array of ExpenseItem objects.
    */
-  private static _getExpenseItems(
-    sheet: Worksheet,
-    startRowIndex: number,
-    startColIndex: number,
-    numRows: number,
-    options: ExpenseOptions,
-  ): ExpenseItem[] {
+  private _getExpenseItems({
+    startRowIndex,
+    startColIndex,
+    numRows,
+    options,
+  }: SheetConfig): ExpenseItem[] {
     const { QUANTITY_CELL_INDEX, FREQ_CELL_INDEX, UNIT_COST_CELL_INDEX } =
       BUDGET_ESTIMATE;
     const { prefix, releaseManner, venue, hasPPMP } = options;
+    const sheet = this.getActiveSheet();
 
     return Array.from({ length: numRows }, (_, i) => {
       const rowIndex = startRowIndex + i;
@@ -350,27 +346,29 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       hasPPMP = true;
     }
 
-    const expenseData: ExpenseOptions = {
+    const options: ExpenseOptions = {
       prefix,
       releaseManner,
       hasPPMP,
     };
 
-    const lodging = BudgetEstimate._getExpenseItems(
-      sheet,
-      BOARD_LODGING_START_ROW_INDEX,
-      EXPENSE_ITEM_FIRST_COL_INDEX,
-      4,
-      expenseData,
-    );
+    const lodgingConfig: SheetConfig = {
+      startRowIndex: BOARD_LODGING_START_ROW_INDEX,
+      startColIndex: EXPENSE_ITEM_FIRST_COL_INDEX,
+      numRows: 4,
+      options: options,
+    };
 
-    const lodgingOthers = BudgetEstimate._getExpenseItems(
-      sheet,
-      BOARD_LODGING_OTHER_ROW_INDEX,
-      EXPENSE_ITEM_FIRST_COL_INDEX,
-      1,
-      expenseData,
-    );
+    const lodging = this._getExpenseItems(lodgingConfig);
+
+    const lodgingOthersConfig: SheetConfig = {
+      startRowIndex: BOARD_LODGING_OTHER_ROW_INDEX,
+      startColIndex: EXPENSE_ITEM_FIRST_COL_INDEX,
+      numRows: 1,
+      options: options,
+    };
+
+    const lodgingOthers = this._getExpenseItems(lodgingOthersConfig);
 
     return [...lodging, ...lodgingOthers];
   }
@@ -381,27 +379,26 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @returns {ExpenseItem[]}
    */
   getTevPSF(): ExpenseItem[] {
-    const sheet = this.getActiveSheet();
-
     const basePrefix = TRAVEL_EXPENSE_PREFIX;
     const prefixPax = `${basePrefix} Participants from`;
     const releaseManner = ReleaseManner.FOR_DOWNLOAD_PSF;
     const { TRAVEL_REGION_ROW_INDEX, EXPENSE_ITEM_SECOND_COL_INDEX } =
       BUDGET_ESTIMATE;
 
-    const expenseData: ExpenseOptions = {
+    const options: ExpenseOptions = {
       prefix: prefixPax,
       releaseManner,
       hasPPMP: false,
     };
 
-    const tevPax = BudgetEstimate._getExpenseItems(
-      sheet,
-      TRAVEL_REGION_ROW_INDEX,
-      EXPENSE_ITEM_SECOND_COL_INDEX,
-      18,
-      expenseData,
-    );
+    const tevConfig: SheetConfig = {
+      startRowIndex: TRAVEL_REGION_ROW_INDEX,
+      startColIndex: EXPENSE_ITEM_SECOND_COL_INDEX,
+      numRows: 18,
+      options,
+    };
+
+    const tevPax = this._getExpenseItems(tevConfig);
 
     return tevPax;
   }
@@ -414,8 +411,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @returns {ExpenseItem[]} An array of ExpenseItem objects representing travel expenses.
    */
   getTravelExpenses(venue: string): ExpenseItem[] {
-    const sheet = this.getActiveSheet();
-
     const basePrefix = TRAVEL_EXPENSE_PREFIX;
     const {
       EXPENSE_ITEM_SECOND_COL_INDEX,
@@ -423,27 +418,27 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       TRAVEL_OTHER_ROW_INDEX,
     } = BUDGET_ESTIMATE;
 
-    const expenseData = {
+    const options = {
       prefix: basePrefix,
       releaseManner: ReleaseManner.DIRECT_PAYMENT,
       venue,
     };
 
-    const tevNonPax = BudgetEstimate._getExpenseItems(
-      sheet,
-      TRAVEL_CO_ROW_INDEX,
-      EXPENSE_ITEM_SECOND_COL_INDEX,
-      3,
-      expenseData,
-    );
+    const tevNonPaxConfig: SheetConfig = {
+      startRowIndex: TRAVEL_CO_ROW_INDEX,
+      startColIndex: EXPENSE_ITEM_SECOND_COL_INDEX,
+      numRows: 3,
+      options,
+    };
+    const tevNonPax = this._getExpenseItems(tevNonPaxConfig);
 
-    const tevNonPaxOther = BudgetEstimate._getExpenseItems(
-      sheet,
-      TRAVEL_OTHER_ROW_INDEX,
-      EXPENSE_ITEM_SECOND_COL_INDEX,
-      1,
-      expenseData,
-    );
+    const tevNonPaxOtherConfig: SheetConfig = {
+      startRowIndex: TRAVEL_OTHER_ROW_INDEX,
+      startColIndex: EXPENSE_ITEM_SECOND_COL_INDEX,
+      numRows: 1,
+      options,
+    };
+    const tevNonPaxOther = this._getExpenseItems(tevNonPaxOtherConfig);
 
     return [...tevNonPax, ...tevNonPaxOther];
   }
@@ -454,22 +449,22 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @returns {ExpenseItem[]} An array of ExpenseItem objects representing honorarium expenses.
    */
   getHonorarium(): ExpenseItem[] {
-    const sheet = this.getActiveSheet();
-
     const prefix = HONORARIUM_EXPENSE_PREFIX;
     const releaseManner = ReleaseManner.DIRECT_PAYMENT;
-    const expenseData: ExpenseOptions = {
+    const options: ExpenseOptions = {
       prefix,
       releaseManner,
       hasPPMP: false,
     };
-    const honorarium = BudgetEstimate._getExpenseItems(
-      sheet,
-      BUDGET_ESTIMATE.HONORARIUM_ROW_INDEX,
-      BUDGET_ESTIMATE.EXPENSE_ITEM_FIRST_COL_INDEX,
-      2,
-      expenseData,
-    );
+
+    const honorariumConfig: SheetConfig = {
+      startRowIndex: BUDGET_ESTIMATE.HONORARIUM_ROW_INDEX,
+      startColIndex: BUDGET_ESTIMATE.EXPENSE_ITEM_FIRST_COL_INDEX,
+      numRows: 2,
+      options,
+    };
+
+    const honorarium = this._getExpenseItems(honorariumConfig);
 
     return honorarium;
   }
@@ -482,20 +477,20 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
   getOtherExpenses(): ExpenseItem[] {
     console.log('getting other expenses...');
 
-    const sheet = this.getActiveSheet();
-    const expenseData: ExpenseOptions = {
+    const options: ExpenseOptions = {
       prefix: '',
       releaseManner: ReleaseManner.CASH_ADVANCE,
       hasPPMP: false,
     };
 
-    const otherExpenses = BudgetEstimate._getExpenseItems(
-      sheet,
-      BUDGET_ESTIMATE.MEAL_EXPENSES_ROW_INDEX,
-      BUDGET_ESTIMATE.EXPENSE_ITEM_COL_INDEX,
-      3,
-      expenseData,
-    );
+    const otherExpensesConfig: SheetConfig = {
+      startRowIndex: BUDGET_ESTIMATE.MEAL_EXPENSES_ROW_INDEX,
+      startColIndex: BUDGET_ESTIMATE.EXPENSE_ITEM_COL_INDEX,
+      numRows: 3,
+      options,
+    };
+
+    const otherExpenses = this._getExpenseItems(otherExpensesConfig);
 
     console.log('other expenses:', otherExpenses);
 

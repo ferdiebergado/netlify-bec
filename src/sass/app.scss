@@ -1,2 +1,13 @@
 @use 'base';
 @use 'components';
+
+.em-container {
+  margin: 2rem;
+}
+
+.em-label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  font-size: 1.2rem;
+}

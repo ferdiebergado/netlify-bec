@@ -867,7 +867,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     sheet.spliceRows(currentRowIndex, 2);
 
-    const lastRowIndex = currentRowIndex + 1;
+    const lastRowIndex = currentRowIndex + 32;
 
     // GRAND TOTAL
     const { TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL } =
@@ -877,9 +877,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     const setGrandTotalCell = (cell: string) => {
       const cellsWithTotals = activityRows.map(row => cell + row);
 
-      grandTotalRow.getCell(cell).value = {
+      const grandTotalCell = grandTotalRow.getCell(cell);
+      grandTotalCell.value = {
         formula: `SUM(${cellsWithTotals.toString()})`,
       };
+      grandTotalCell.font.italic = false;
+      grandTotalCell.font.strike = false;
     };
 
     [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(

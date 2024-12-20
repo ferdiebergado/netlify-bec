@@ -8,7 +8,6 @@ import type {
 } from './types/globals.js';
 import {
   AUXILLIARY_SHEETS,
-  BOARD_LODGING_EXPENSE_PREFIX,
   BUDGET_ESTIMATE,
   ExpenseGroup,
   GAAObject,
@@ -327,50 +326,29 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @returns {ExpenseItem[]} An array of ExpenseItem objects representing board and lodging expenses.
    */
   getBoardAndLodging(): ExpenseItem[] {
-    const sheet = this.getActiveSheet();
-
-    const prefix = BOARD_LODGING_EXPENSE_PREFIX;
-    const { FOR_DOWNLOAD_BOARD, DIRECT_PAYMENT } = ReleaseManner;
+    const { DIRECT_PAYMENT } = ReleaseManner;
     const {
-      BOARD_LODGING_DIRECT_PAYMENT_CELL,
-      BOARD_LODGING_START_ROW_INDEX,
-      EXPENSE_ITEM_FIRST_COL_INDEX,
-      BOARD_LODGING_OTHER_ROW_INDEX,
+      NUM_DAYS_CELL,
+      BOARD_LODGING_TOTAL_PAX_CELL,
+      BOARD_LODGING_UNIT_COST_CELL,
     } = BUDGET_ESTIMATE;
+    const sheet = this.getActiveSheet();
+    const quantity = Number(sheet.getCell(BOARD_LODGING_TOTAL_PAX_CELL).text);
+    const unitCost = Number(sheet.getCell(BOARD_LODGING_UNIT_COST_CELL).text);
+    const freq = Number(sheet.getCell(NUM_DAYS_CELL).text);
 
-    let releaseManner: ReleaseManner = FOR_DOWNLOAD_BOARD;
-    let hasPPMP = false;
-
-    if (sheet.getCell(BOARD_LODGING_DIRECT_PAYMENT_CELL).value) {
-      releaseManner = DIRECT_PAYMENT;
-      hasPPMP = true;
-    }
-
-    const options: ExpenseOptions = {
-      prefix,
-      releaseManner,
-      hasPPMP,
+    const expenseItem: ExpenseItem = {
+      expenseGroup: ExpenseGroup.TRAINING_SCHOLARSHIPS_EXPENSES,
+      gaaObject: GAAObject.TRAINING_EXPENSES,
+      expenseItem: 'Board and Lodging of Participants',
+      quantity,
+      unitCost,
+      freq,
+      hasPPMP: true,
+      releaseManner: DIRECT_PAYMENT,
     };
 
-    const lodgingConfig: SheetConfig = {
-      startRowIndex: BOARD_LODGING_START_ROW_INDEX,
-      startColIndex: EXPENSE_ITEM_FIRST_COL_INDEX,
-      numRows: 4,
-      options: options,
-    };
-
-    const lodging = this._getExpenseItems(lodgingConfig);
-
-    const lodgingOthersConfig: SheetConfig = {
-      startRowIndex: BOARD_LODGING_OTHER_ROW_INDEX,
-      startColIndex: EXPENSE_ITEM_FIRST_COL_INDEX,
-      numRows: 1,
-      options: options,
-    };
-
-    const lodgingOthers = this._getExpenseItems(lodgingOthersConfig);
-
-    return [...lodging, ...lodgingOthers];
+    return [expenseItem];
   }
 
   /**

@@ -867,7 +867,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     sheet.spliceRows(currentRowIndex, 2);
 
-    const lastRowIndex = currentRowIndex + 32;
+    const lastRowIndex = currentRowIndex + EXPENDITURE_MATRIX.OVERHEAD_NUM_ROWS;
 
     // GRAND TOTAL
     const { TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL } =
@@ -899,6 +899,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       cell.value = {
         formula: `SUM(${cellsWithTotals.toString()})`,
       };
+    }
+
+    for (let j = 0; j < EXPENDITURE_MATRIX.OVERHEAD_NUM_ROWS - 1; j++) {
+      this._setIsBlankFormula(currentRowIndex + j);
     }
 
     const buffer = await this.wb.xlsx.writeBuffer();

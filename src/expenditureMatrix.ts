@@ -13,7 +13,8 @@ import type {
   RowCopyMap,
 } from './types/globals.js';
 import { BudgetEstimate } from './budgetEstimate.js';
-import type { Row } from 'exceljs';
+import type { Cell, Row } from 'exceljs';
+import { isCellFormulaValue } from './utils.js';
 
 // 0-based index of the last month in a year (December)
 const MAX_MONTH = 11;
@@ -89,19 +90,35 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }: RowCopyMap): void {
     const sheet = this.getActiveSheet();
     const srcRow = sheet.getRow(srcRowIndex);
+    srcRow.font = {
+      bold: false,
+      italic: false,
+      strike: false,
+      underline: 'none',
+      size: 11,
+      color: {
+        argb: 'FF000000',
+      },
+      name: 'Calibri',
+    };
 
     Array.from({ length: numRows }).forEach((_, j) => {
       const newRow = sheet.insertRow(targetRowIndex + j, []);
 
-      srcRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      srcRow.eachCell({ includeEmpty: true }, (sourceCell, colNumber) => {
         const targetCell = newRow.getCell(colNumber);
-
-        Object.assign(targetCell, {
-          value: cell.value,
-          style: cell.style,
-          dataValidation: cell.dataValidation,
-        });
+        ExpenditureMatrix._duplicateCell(sourceCell, targetCell);
       });
+    });
+  }
+
+  private static _duplicateCell(sourceCell: Cell, targetCell: Cell) {
+    Object.assign(targetCell, {
+      value: isCellFormulaValue(sourceCell.value)
+        ? { sharedFormula: sourceCell.address }
+        : sourceCell.value,
+      style: sourceCell.style,
+      dataValidation: sourceCell.dataValidation,
     });
   }
 
@@ -139,6 +156,24 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     for (let i = 0; i < 12; i += 1) {
       row.getCell(OBLIGATION_MONTH_COL_INDEX + i).value = '';
       row.getCell(DISBURSEMENT_MONTH_COL_INDEX + i).value = '';
+    }
+  }
+
+  private _fixFonts() {
+    for (let i = 1; i <= 12; i++) {
+      const row = this.getActiveSheet().getRow(i);
+
+      row.font = {
+        size: row.getCell(1).font.size,
+        bold: true,
+        italic: false,
+        strike: false,
+        underline: 'none',
+        color: {
+          argb: 'FF000000',
+        },
+        name: 'Calibri',
+      };
     }
   }
 
@@ -224,6 +259,34 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     return this.activityIndex === 0;
   }
 
+  private _setIsBlankFormula(rowIndex: number) {
+    const sheet = this.getActiveSheet();
+
+    interface FormulaCells {
+      formulaCell: string;
+      count: number;
+    }
+
+    const formulaCells: FormulaCells[] = [
+      { formulaCell: EXPENDITURE_MATRIX.IS_BLANK_FORMULA_CELL1, count: 2 },
+      { formulaCell: EXPENDITURE_MATRIX.IS_BLANK_FORMULA_CELL2, count: 2 },
+      { formulaCell: EXPENDITURE_MATRIX.IS_BLANK_FORMULA_CELL3, count: 1 },
+    ];
+
+    let colNum = EXPENDITURE_MATRIX.IS_BLANK_FORMULA_START_COL;
+    formulaCells.forEach(cell => {
+      const sourceCell = sheet.getCell(cell.formulaCell);
+
+      for (let i = 0; i < cell.count; i++) {
+        const targetCell = sheet.getRow(rowIndex).getCell(colNum);
+
+        ExpenditureMatrix._duplicateCell(sourceCell, targetCell);
+
+        colNum += 1;
+      }
+    });
+  }
+
   /**
    * Creates or duplicates an activity row in the expenditure matrix.
    *
@@ -253,6 +316,20 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     if (this._hasFirstActivity()) {
       activityRowIndex = ACTIVITY_ROW_INDEX;
+      const activityRow = sheet.getRow(activityRowIndex);
+
+      // Expense object formula
+      let targetCell = activityRow.getCell(
+        EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_COL,
+      );
+
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_CELL),
+        targetCell,
+      );
+
+      // Isblank formula
+      this._setIsBlankFormula(activityRowIndex);
     } else {
       this._duplicateActivity(activityRowIndex);
     }
@@ -287,7 +364,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       activityPhysicalTarget;
 
     // costing grand total
-    activityRow.getCell(TOTAL_COST_COL).value = sumFormula(TOTAL_COST_COL);
+    const totalCostCell = activityRow.getCell(TOTAL_COST_COL);
+    totalCostCell.value = sumFormula(TOTAL_COST_COL);
+    totalCostCell.font.bold = true;
 
     // physical target grand total
     const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${activityRowIndex}`;
@@ -440,7 +519,34 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     let currentRowIndex = targetRowIndex;
 
-    if (this._hasFirstActivity()) currentRowIndex -= 1;
+    if (this._hasFirstActivity()) {
+      currentRowIndex -= 1;
+      const currentRow = sheet.getRow(currentRowIndex);
+
+      // Expense object formula
+      let targetCell = currentRow.getCell(
+        Number(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_COL),
+      );
+
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_CELL),
+        targetCell,
+      );
+
+      // GAA Object formula
+      targetCell = currentRow.getCell(
+        Number(EXPENDITURE_MATRIX.GAA_OBJECT_FORMULA_COL),
+      );
+
+      Object.assign(targetCell, {
+        value: {
+          formula: `VLOOKUP(L${currentRowIndex},'links'!K$2:L$222,2,FALSE())`,
+        },
+      });
+
+      // Is blank formulas
+      this._setIsBlankFormula(currentRowIndex);
+    }
 
     const currentRow = sheet.getRow(currentRowIndex);
 
@@ -545,6 +651,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {Promise<ArrayBuffer>} A promise that resolves to the array buffer of the Expenditure Matrix
    */
   async fromBudgetEstimates(files: ExcelFile[]): Promise<ArrayBuffer> {
+    this._removeExtraRows();
+    this._fixFonts();
+
     const sheet = this.getActiveSheet();
 
     await Promise.all(files.map(file => this._addToActivities(file)));
@@ -873,5 +982,17 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
 
     return programComparison;
+  }
+
+  private _removeExtraRows() {
+    const {
+      SPLICE_START_ROW,
+      SPLICE_NUM_ROWS,
+      MILESTONES_START_ROW,
+      MILESTONES_NUM_ROWS,
+    } = EXPENDITURE_MATRIX;
+    const sheet = this.getActiveSheet();
+    sheet.spliceRows(SPLICE_START_ROW, SPLICE_NUM_ROWS);
+    sheet.spliceRows(MILESTONES_START_ROW, MILESTONES_NUM_ROWS);
   }
 }

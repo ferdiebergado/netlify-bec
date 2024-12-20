@@ -4,7 +4,7 @@ export const config: Readonly<Config> = {
   paths: {
     public: '/public',
     data: '/data',
-    emTemplate: 'templates/em.xlsx',
+    emTemplate: 'templates/em.xls',
     beTemplate: 'templates/BLD-BE-001 Budget Estimate template.xlsx',
   },
 };

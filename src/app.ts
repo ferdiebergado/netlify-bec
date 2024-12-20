@@ -11,7 +11,10 @@ const ALERT_ERROR_CLASS = 'alert-error';
 
 // Elements
 const excelForm = document.forms.namedItem('excelForm');
-const fileInput = document.getElementById('excelFile') as HTMLInputElement;
+const emFileInput = document.getElementById('emFile') as HTMLInputElement;
+const beFilesInput = document.getElementById(
+  'budgetEstimates',
+) as HTMLInputElement;
 const divAlert = document.getElementById('alert') as HTMLDivElement;
 const btnConvert = document.getElementById('convert') as HTMLButtonElement;
 const dropContainer = document.getElementById(
@@ -70,20 +73,27 @@ function initiateDownload(buffer: ArrayBuffer) {
 }
 
 async function processFiles(
-  files: FileList,
+  filelist: FileList,
   emTemplate: string,
 ): Promise<ArrayBuffer> {
-  const res = await fetch(emTemplate);
-  const arrayBuffer = await res.arrayBuffer();
+  // const res = await fetch(emTemplate);
+  const { files } = emFileInput;
+  if (!files) throw new Error('em is required');
+
+  const emFile = files[0];
+
+  if (!emFile) throw new Error('em is required');
+
+  const emArrayBuffer = await emFile.arrayBuffer();
   const em: ExcelFile = {
     filename: emTemplate,
-    buffer: arrayBuffer,
+    buffer: emArrayBuffer,
   };
   const expenditureMatrix =
     await ExpenditureMatrix.createAsync<ExpenditureMatrix>(em);
 
   const excelFiles: ExcelFile[] = await Promise.all(
-    [...files].map(async file => ({
+    [...filelist].map(async file => ({
       filename: file.name,
       buffer: await file.arrayBuffer(),
     })),
@@ -100,7 +110,7 @@ function handleSubmit(event: SubmitEvent) {
   isLoading = true;
   updateConvertBtn();
 
-  const { files } = fileInput;
+  const { files } = beFilesInput;
   const {
     paths: { emTemplate },
   } = config;
@@ -186,5 +196,5 @@ dropContainer.addEventListener('dragleave', () => {
 dropContainer.addEventListener('drop', e => {
   e.preventDefault();
   dropContainer.classList.remove('drag-active');
-  fileInput.files = e.dataTransfer?.files || null;
+  beFilesInput.files = e.dataTransfer?.files || null;
 });

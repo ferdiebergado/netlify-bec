@@ -6,12 +6,14 @@ import { CellFormulaValue, CellValue } from 'exceljs';
  * @param {any} obj The object to check.
  * @returns {obj is CellFormulaValue} Returns true if the object is a CellFormulaValue, otherwise false.
  */
-export function isCellFormulaValue(obj: unknown): obj is CellFormulaValue {
+export function isCellFormulaValue(
+  value: CellValue,
+): value is CellFormulaValue {
   return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'formula' in obj &&
-    typeof (obj as { formula: unknown }).formula === 'string'
+    typeof value === 'object' &&
+    value !== null &&
+    'formula' in value &&
+    typeof (value as CellFormulaValue).formula === 'string'
   );
 }
 

@@ -36,12 +36,29 @@
       <div class="card">
         <div id="alert" class="alert"></div>
         <form id="excelForm">
-          <label for="excelFile" class="drop-container" id="dropcontainer">
-            <span class="drop-title">Drop files here</span>
+          <div style="margin: 2rem">
+            <label
+              for="emFile"
+              style="
+                display: block;
+                margin-bottom: 1rem;
+                font-weight: bold;
+                font-size: 1.2rem;
+              "
+              >Upload Expenditure Matrix from PMIS</label
+            >
+            <input type="file" id="emFile" accept=".xls" required />
+          </div>
+          <label
+            for="budgetEstimates"
+            class="drop-container"
+            id="dropcontainer"
+          >
+            <span class="drop-title">Drop Budget Estimates here</span>
             or
             <input
               type="file"
-              id="excelFile"
+              id="budgetEstimates"
               accept=".xlsx"
               multiple
               required

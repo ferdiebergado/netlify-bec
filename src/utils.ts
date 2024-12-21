@@ -1,4 +1,4 @@
-import { CellFormulaValue, CellValue } from 'exceljs';
+import { Cell, CellFormulaValue, CellValue } from 'exceljs';
 
 /**
  * Checks if the given object is a CellFormulaValue.
@@ -51,11 +51,11 @@ export function createTimestamp(): number {
 /**
  * Converts a cell value represented as a string to a number.
  *
- * @param {string} cellValue The string representation of the cell value.
+ * @param {Cell} cell The cell to process.
  * @returns {number} The numeric representation of the cell value, or 0 if conversion fails.
  */
-export function getCellValueAsNumber(cellValue: string): number {
-  const numericValue = +cellValue;
+export function getCellValueAsNumber(cell: Cell): number {
+  const numericValue = +cell.text;
   return Number.isNaN(numericValue) ? 0 : numericValue;
 }
 

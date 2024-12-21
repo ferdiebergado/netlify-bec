@@ -72,12 +72,8 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const unitCost = Number.parseFloat(
         row.getCell(UNIT_COST_CELL_INDEX).text,
       );
-      const quantity = getCellValueAsNumber(
-        row.getCell(QUANTITY_CELL_INDEX).text,
-      );
-      const freq = getCellValueAsNumber(
-        row.getCell(FREQ_CELL_INDEX).text || '1',
-      );
+      const quantity = getCellValueAsNumber(row.getCell(QUANTITY_CELL_INDEX));
+      const freq = getCellValueAsNumber(row.getCell(FREQ_CELL_INDEX)) || 1;
 
       if (quantity > 0 && freq > 0) {
         const item = row.getCell(startColIndex).text.trim();
@@ -333,9 +329,13 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       BOARD_LODGING_UNIT_COST_CELL,
     } = BUDGET_ESTIMATE;
     const sheet = this.getActiveSheet();
-    const quantity = Number(sheet.getCell(BOARD_LODGING_TOTAL_PAX_CELL).text);
-    const unitCost = Number(sheet.getCell(BOARD_LODGING_UNIT_COST_CELL).text);
-    const freq = Number(sheet.getCell(NUM_DAYS_CELL).text);
+    const quantity = getCellValueAsNumber(
+      sheet.getCell(BOARD_LODGING_TOTAL_PAX_CELL),
+    );
+    const unitCost = getCellValueAsNumber(
+      sheet.getCell(BOARD_LODGING_UNIT_COST_CELL),
+    );
+    const freq = getCellValueAsNumber(sheet.getCell(NUM_DAYS_CELL));
 
     const expenseItem: ExpenseItem = {
       expenseGroup: ExpenseGroup.TRAINING_SCHOLARSHIPS_EXPENSES,

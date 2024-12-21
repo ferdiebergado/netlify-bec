@@ -72,34 +72,32 @@ function initiateDownload(buffer: ArrayBuffer) {
   URL.revokeObjectURL(blobUrl);
 }
 
-async function processFiles(
-  filelist: FileList,
-  emTemplate: string,
-): Promise<ArrayBuffer> {
-  // const res = await fetch(emTemplate);
+async function processFiles(filelist: FileList): Promise<ArrayBuffer> {
+  const emError = 'em is required';
   const { files } = emFileInput;
-  if (!files) throw new Error('em is required');
+
+  if (!files) throw new Error(emError);
 
   const emFile = files[0];
 
-  if (!emFile) throw new Error('em is required');
+  if (!emFile) throw new Error(emError);
 
   const emArrayBuffer = await emFile.arrayBuffer();
   const em: ExcelFile = {
-    filename: emTemplate,
+    filename: emFile.name,
     buffer: emArrayBuffer,
   };
   const expenditureMatrix =
     await ExpenditureMatrix.createAsync<ExpenditureMatrix>(em);
 
-  const excelFiles: ExcelFile[] = await Promise.all(
+  const budgetEstimates: ExcelFile[] = await Promise.all(
     [...filelist].map(async file => ({
       filename: file.name,
       buffer: await file.arrayBuffer(),
     })),
   );
 
-  const buffer = await expenditureMatrix.fromBudgetEstimates(excelFiles);
+  const buffer = await expenditureMatrix.fromBudgetEstimates(budgetEstimates);
   return buffer;
 }
 
@@ -111,13 +109,10 @@ function handleSubmit(event: SubmitEvent) {
   updateConvertBtn();
 
   const { files } = beFilesInput;
-  const {
-    paths: { emTemplate },
-  } = config;
 
   if (!files || files.length === 0) throw new Error('No files provided!');
 
-  processFiles(files, emTemplate)
+  processFiles(files)
     .then(converted => {
       if (converted) {
         initiateDownload(converted);

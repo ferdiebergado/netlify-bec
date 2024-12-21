@@ -133,19 +133,9 @@ interface BEParseErrDetail {
  */
 interface Paths {
   /**
-   * Path to the public directory.
-   */
-  public: string;
-
-  /**
    * Path to the data directory.
    */
   data: string;
-
-  /**
-   * Path to the Expenditure Matrix template.
-   */
-  emTemplate: string;
 
   /**
    * Path to the Budget Estimate template.

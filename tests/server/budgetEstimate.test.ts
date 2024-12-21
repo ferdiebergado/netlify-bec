@@ -1,6 +1,6 @@
 import path from 'path';
 import { BudgetEstimate } from '../../src/budgetEstimate';
-import config from '../../src/config';
+import { config } from '../../src/config';
 import type { ActivityInfo, ExpenseItem } from '../../src/types/globals';
 
 describe('BudgetEstimate class', () => {

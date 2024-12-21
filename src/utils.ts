@@ -58,3 +58,11 @@ export function getCellValueAsNumber(cellValue: string): number {
   const numericValue = +cellValue;
   return Number.isNaN(numericValue) ? 0 : numericValue;
 }
+
+// Sequence generator function (commonly referred to as "range", cf. Python, Clojure, etc.)
+export function range(start: number, stop: number, step: number): number[] {
+  return Array.from(
+    { length: Math.ceil((stop - start) / step) },
+    (_, i) => start + i * step,
+  );
+}

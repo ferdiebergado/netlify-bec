@@ -257,3 +257,8 @@ interface ActivityRowMap {
    */
   rowIndex: number;
 }
+
+interface OverheadTotalRowMap {
+  rowsToAdd: number;
+  expenseItemsCount?: number;
+}

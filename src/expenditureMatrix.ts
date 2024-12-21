@@ -2,6 +2,7 @@ import { Workbook } from './workbook.js';
 import {
   EXPENDITURE_MATRIX,
   MANNER_VALIDATION,
+  MONTHS_IN_A_YEAR,
   YES,
   YES_NO_VALIDATION,
 } from './constants.js';
@@ -133,11 +134,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private static _clearPreviousPhysicalTargets(row: Row): void {
-    for (let i = 0; i < 12; i += 1) {
+    Array.from({ length: MONTHS_IN_A_YEAR }, (_, i) => {
       row.getCell(
         EXPENDITURE_MATRIX.PHYSICAL_TARGET_MONTH_COL_INDEX + i,
       ).value = '';
-    }
+    });
   }
 
   /**
@@ -153,15 +154,15 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     const { OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX } =
       EXPENDITURE_MATRIX;
 
-    for (let i = 0; i < 12; i += 1) {
+    Array.from({ length: MONTHS_IN_A_YEAR }, (_, i) => {
       row.getCell(OBLIGATION_MONTH_COL_INDEX + i).value = '';
       row.getCell(DISBURSEMENT_MONTH_COL_INDEX + i).value = '';
-    }
+    });
   }
 
-  private _fixFonts() {
-    for (let i = 1; i <= 12; i++) {
-      const row = this.getActiveSheet().getRow(i);
+  private _fixFonts(startRowIndex: number, count: number) {
+    Array.from({ length: count }, (_, i) => {
+      const row = this.getActiveSheet().getRow(startRowIndex + i);
 
       row.font = {
         size: row.getCell(1).font.size,
@@ -174,7 +175,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         },
         name: 'Calibri',
       };
-    }
+    });
   }
 
   /**
@@ -260,6 +261,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }
 
   private _setIsBlankFormula(rowIndex: number) {
+    const {
+      IS_BLANK_FORMULA_CELL1,
+      IS_BLANK_FORMULA_CELL2,
+      IS_BLANK_FORMULA_CELL3,
+      IS_BLANK_FORMULA_START_COL,
+    } = EXPENDITURE_MATRIX;
     const sheet = this.getActiveSheet();
 
     interface FormulaCells {
@@ -268,23 +275,36 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
 
     const formulaCells: FormulaCells[] = [
-      { formulaCell: EXPENDITURE_MATRIX.IS_BLANK_FORMULA_CELL1, count: 2 },
-      { formulaCell: EXPENDITURE_MATRIX.IS_BLANK_FORMULA_CELL2, count: 2 },
-      { formulaCell: EXPENDITURE_MATRIX.IS_BLANK_FORMULA_CELL3, count: 1 },
+      { formulaCell: IS_BLANK_FORMULA_CELL1, count: 2 },
+      { formulaCell: IS_BLANK_FORMULA_CELL2, count: 2 },
+      { formulaCell: IS_BLANK_FORMULA_CELL3, count: 1 },
     ];
 
-    let colNum = EXPENDITURE_MATRIX.IS_BLANK_FORMULA_START_COL;
+    let colIndex = IS_BLANK_FORMULA_START_COL;
+
     formulaCells.forEach(cell => {
       const sourceCell = sheet.getCell(cell.formulaCell);
 
-      for (let i = 0; i < cell.count; i++) {
-        const targetCell = sheet.getRow(rowIndex).getCell(colNum);
+      Array.from({ length: cell.count }, () => {
+        const targetCell = sheet.getRow(rowIndex).getCell(colIndex);
 
         ExpenditureMatrix._duplicateCell(sourceCell, targetCell);
-
-        colNum += 1;
-      }
+        colIndex += 1;
+      });
     });
+  }
+
+  private _setExpenseObjectFormula(rowIndex: number) {
+    const sheet = this.getActiveSheet();
+
+    const targetCell = sheet
+      .getRow(rowIndex)
+      .getCell(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_COL);
+
+    ExpenditureMatrix._duplicateCell(
+      sheet.getCell(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_CELL),
+      targetCell,
+    );
   }
 
   /**
@@ -316,19 +336,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     if (this._hasFirstActivity()) {
       activityRowIndex = ACTIVITY_ROW_INDEX;
-      const activityRow = sheet.getRow(activityRowIndex);
 
-      // Expense object formula
-      let targetCell = activityRow.getCell(
-        EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_COL,
-      );
-
-      ExpenditureMatrix._duplicateCell(
-        sheet.getCell(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_CELL),
-        targetCell,
-      );
-
-      // Isblank formula
+      this._setExpenseObjectFormula(activityRowIndex);
       this._setIsBlankFormula(activityRowIndex);
     } else {
       this._duplicateActivity(activityRowIndex);
@@ -377,14 +386,16 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     };
 
     // obligation and disbursement grand total per month
-    [OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX].forEach(c => {
-      for (let i = 0; i < 12; i += 1) {
-        const cell = activityRow.getCell(c + i);
-        const col = cell.address.replace(/\d+/, '');
+    [OBLIGATION_MONTH_COL_INDEX, DISBURSEMENT_MONTH_COL_INDEX].forEach(
+      programIndex => {
+        Array.from({ length: MONTHS_IN_A_YEAR }, (_, monthPointer) => {
+          const monthCell = activityRow.getCell(programIndex + monthPointer);
+          const cellLetterPart = ExpenditureMatrix._getCellCol(monthCell);
 
-        cell.value = sumFormula(col);
-      }
-    });
+          monthCell.value = sumFormula(cellLetterPart);
+        });
+      },
+    );
 
     // obligation grand total
     activityRow.getCell(TOTAL_OBLIGATION_COL).value =
@@ -479,6 +490,18 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     return month;
   }
 
+  private _setGAAObjFormula(rowIndex: number) {
+    const targetCell = this.getActiveSheet()
+      .getRow(rowIndex)
+      .getCell(Number(EXPENDITURE_MATRIX.GAA_OBJECT_FORMULA_COL));
+
+    Object.assign(targetCell, {
+      value: {
+        formula: `VLOOKUP(L${rowIndex},'links'!K$2:L$222,2,FALSE())`,
+      },
+    });
+  }
+
   /**
    * Creates an expense item row in the expenditure matrix.
    *
@@ -521,28 +544,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     if (this._hasFirstActivity()) {
       currentRowIndex -= 1;
-      const currentRow = sheet.getRow(currentRowIndex);
 
-      // Expense object formula
-      let targetCell = currentRow.getCell(
-        Number(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_COL),
-      );
-
-      ExpenditureMatrix._duplicateCell(
-        sheet.getCell(EXPENDITURE_MATRIX.EXPENSE_OBJECT_FORMULA_CELL),
-        targetCell,
-      );
+      // Expense Object formula
+      this._setExpenseObjectFormula(currentRowIndex);
 
       // GAA Object formula
-      targetCell = currentRow.getCell(
-        Number(EXPENDITURE_MATRIX.GAA_OBJECT_FORMULA_COL),
-      );
-
-      Object.assign(targetCell, {
-        value: {
-          formula: `VLOOKUP(L${currentRowIndex},'links'!K$2:L$222,2,FALSE())`,
-        },
-      });
+      this._setGAAObjFormula(currentRowIndex);
 
       // Is blank formulas
       this._setIsBlankFormula(currentRowIndex);
@@ -651,8 +658,28 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {Promise<ArrayBuffer>} A promise that resolves to the array buffer of the Expenditure Matrix
    */
   async fromBudgetEstimates(files: ExcelFile[]): Promise<ArrayBuffer> {
+    const {
+      HEADER_FIRST_ROW_INDEX,
+      HEADER_LAST_ROW_INDEX,
+      GAA_OBJECT_FORMULA_COL,
+      GAA_OBJECT_FORMULA_CELL,
+      TOTAL_COST_COL,
+      TOTAL_OBLIGATION_COL,
+      TOTAL_DISBURSEMENT_COL,
+      MONTHLY_PROGRAM_NUM_ROWS,
+      TOTAL_OBLIGATION_COL_INDEX,
+      OVERHEAD_NUM_ROWS,
+      PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL,
+      PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX,
+      CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL,
+      CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX,
+      OVERHEAD_TOTAL_ROW_MAPPINGS,
+      EXPENSE_ITEM_ROW_INDEX,
+      OBLIGATION_MONTH_COL_INDEX,
+    } = EXPENDITURE_MATRIX;
+
     this._removeExtraRows();
-    this._fixFonts();
+    this._fixFonts(HEADER_FIRST_ROW_INDEX, HEADER_LAST_ROW_INDEX);
 
     const sheet = this.getActiveSheet();
 
@@ -867,13 +894,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     sheet.spliceRows(currentRowIndex, 2);
 
-    const lastRowIndex = currentRowIndex + EXPENDITURE_MATRIX.OVERHEAD_NUM_ROWS;
+    console.log('last row index:', currentRowIndex);
 
-    // GRAND TOTAL
-    const { TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL } =
-      EXPENDITURE_MATRIX;
+    const lastRowIndex = currentRowIndex + OVERHEAD_NUM_ROWS + 1;
+
+    // Costing Grand Total
     const grandTotalRow = sheet.getRow(lastRowIndex);
-
     const setGrandTotalCell = (cell: string) => {
       const cellsWithTotals = activityRows.map(row => cell + row);
 
@@ -889,9 +915,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       total => setGrandTotalCell(total),
     );
 
-    for (let i = 0; i < 26; i += 1) {
-      const col = i + 44;
-      const cell = grandTotalRow.getCell(col);
+    // Monthly Program Grand Totals
+    Array.from({ length: MONTHLY_PROGRAM_NUM_ROWS }, (_, i) => {
+      const colIndex = TOTAL_OBLIGATION_COL_INDEX + i;
+      const cell = grandTotalRow.getCell(colIndex);
       const cellsWithTotals = activityRows.map(
         row => cell.address.replace(/\d+/, '') + row,
       );
@@ -899,15 +926,91 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       cell.value = {
         formula: `SUM(${cellsWithTotals.toString()})`,
       };
-    }
+    });
 
-    for (let j = 0; j < EXPENDITURE_MATRIX.OVERHEAD_NUM_ROWS - 1; j++) {
-      this._setIsBlankFormula(currentRowIndex + j);
-    }
+    // Overhead hidden columns formulas
+    Array.from({ length: OVERHEAD_NUM_ROWS }, (_, i) => {
+      const currentRow = currentRowIndex + i;
+
+      // Expense Object
+      this._setExpenseObjectFormula(currentRow);
+
+      // GAA Object
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(GAA_OBJECT_FORMULA_CELL),
+        sheet.getRow(currentRow).getCell(GAA_OBJECT_FORMULA_COL),
+      );
+
+      // ISBLANK formulas
+      this._setIsBlankFormula(currentRow);
+    });
+
+    // Overhead Totals
+    OVERHEAD_TOTAL_ROW_MAPPINGS.forEach(rowMap => {
+      const { rowsToAdd, expenseItemsCount } = rowMap;
+      const rowIndex = currentRowIndex + rowsToAdd;
+      const currentRow = sheet.getRow(rowIndex);
+
+      if (expenseItemsCount) {
+        [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
+          col => {
+            currentRow.getCell(col).value = {
+              formula: `SUM(${col}${rowIndex + 1}:${col}${
+                rowIndex + expenseItemsCount
+              })`,
+            };
+          },
+        );
+
+        Array.from({ length: MONTHLY_PROGRAM_NUM_ROWS }, (_, i) => {
+          const targetCell = currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + i);
+          // const col = targetCell.address.replace(/\d+/, '');
+          const col = ExpenditureMatrix._getCellCol(targetCell);
+
+          targetCell.value = {
+            formula: `SUM(${col}${rowIndex + 1}:${col}${
+              rowIndex + expenseItemsCount
+            })`,
+          };
+        });
+      }
+
+      // Expense items
+      if (expenseItemsCount) {
+        [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
+          col => {
+            Array.from({ length: expenseItemsCount }, (_, count) => {
+              const targetRowIndex = rowIndex + 1 + count;
+
+              ExpenditureMatrix._duplicateCell(
+                sheet.getCell(col + EXPENSE_ITEM_ROW_INDEX),
+                sheet.getRow(targetRowIndex).getCell(col),
+              );
+            });
+          },
+        );
+      }
+
+      // Previous Year Physical Target
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
+        currentRow.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
+      );
+
+      // Current Year Physical Target
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
+        currentRow.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
+      );
+    });
 
     const buffer = await this.wb.xlsx.writeBuffer();
 
     return buffer;
+  }
+
+  private static _getCellCol(cell: Cell): string {
+    return cell.address.replace(/\d+/, '');
   }
 
   /**
@@ -993,13 +1096,14 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
   private _removeExtraRows() {
     const {
-      SPLICE_START_ROW,
-      SPLICE_NUM_ROWS,
+      EXTRA_ROWS_START_INDEX,
+      EXTRA_ROWS_NUM_ROWS,
       MILESTONES_START_ROW,
       MILESTONES_NUM_ROWS,
     } = EXPENDITURE_MATRIX;
     const sheet = this.getActiveSheet();
-    sheet.spliceRows(SPLICE_START_ROW, SPLICE_NUM_ROWS);
+
+    sheet.spliceRows(EXTRA_ROWS_START_INDEX, EXTRA_ROWS_NUM_ROWS);
     sheet.spliceRows(MILESTONES_START_ROW, MILESTONES_NUM_ROWS);
   }
 }

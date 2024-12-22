@@ -8,8 +8,9 @@ import {
 } from './constants.js';
 import type {
   Activity,
-  ActivityRowMap,
+  ActivityInfo,
   ExcelFile,
+  ExpenseItem,
   ExpenseItemRowContext,
   RowCopyMap,
 } from './types/globals.js';
@@ -52,6 +53,34 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   protected rank: number = 1;
 
   /**
+   * The current row index being processed.
+   */
+  protected currentRowIndex = 0;
+
+  private currentProgram = '';
+
+  private currentOutput = '';
+
+  private isFirstActivity = true;
+
+  protected PSF: Activity = {
+    info: {
+      program: 'Programs Support Funds (PSF)',
+      output: 'Benefitted implementers',
+      outputIndicator: 'No. of implementers benefitted',
+      outputPhysicalTarget: 16,
+      activityTitle: 'Provision of Program Support Funds',
+      activityIndicator: 'No. of downloading activities conducted',
+      activityPhysicalTarget: 1,
+      month: 1,
+      venue: '',
+      totalPax: 16,
+    },
+    expenseItems: [],
+    tevPSF: [],
+  };
+
+  /**
    * Creates an instance of the ExpenditureMatrix class.
    *
    * @public
@@ -84,11 +113,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns {void}
    */
-  private _duplicateRow({
-    targetRowIndex,
-    srcRowIndex,
-    numRows,
-  }: RowCopyMap): void {
+  private _duplicateRow({ srcRowIndex, numRows }: RowCopyMap): void {
     const sheet = this.getActiveSheet();
     const srcRow = sheet.getRow(srcRowIndex);
     srcRow.font = {
@@ -104,13 +129,22 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     };
 
     Array.from({ length: numRows }).forEach((_, j) => {
-      const newRow = sheet.insertRow(targetRowIndex + j, []);
+      const newRow = sheet.insertRow(this.currentRowIndex + j, []);
 
       srcRow.eachCell({ includeEmpty: true }, (sourceCell, colNumber) => {
         const targetCell = newRow.getCell(colNumber);
         ExpenditureMatrix._duplicateCell(sourceCell, targetCell);
       });
+
+      console.log(
+        'duplicated row at index:',
+        this.currentRowIndex,
+        'source row index:',
+        srcRowIndex,
+      );
     });
+    // move to the next row
+    this.currentRowIndex += numRows;
   }
 
   private static _duplicateCell(sourceCell: Cell, targetCell: Cell) {
@@ -186,9 +220,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns {void}
    */
-  private _duplicateProgram(targetRowIndex: number): void {
+  private _duplicateProgram(): void {
     const range: RowCopyMap = {
-      targetRowIndex,
       srcRowIndex: EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX,
       numRows: 1,
     };
@@ -200,13 +233,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * Duplicates the output row in the expenditure matrix.
    *
    * @private
-   * @param targetRowIndex {number} The index where the duplicate output row will be inserted.
    *
    * @returns {void}
    */
-  private _duplicateOutput(targetRowIndex: number): void {
+  private _duplicateOutput(): void {
     const range: RowCopyMap = {
-      targetRowIndex,
       srcRowIndex: EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX,
       numRows: 1,
     };
@@ -218,13 +249,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * Duplicates the activity row in a worksheet.
    *
    * @private
-   * @param targetRowIndex {number} The index where the duplicate activity row will be inserted.
    *
    * @returns {void}
    */
-  private _duplicateActivity(targetRowIndex: number): void {
+  private _duplicateActivity(): void {
     const range: RowCopyMap = {
-      targetRowIndex,
       srcRowIndex: EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX,
       numRows: 1,
     };
@@ -241,23 +270,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns {void}
    */
-  private _duplicateExpenseItem(targetRowIndex: number, copies?: number): void {
+  private _duplicateExpenseItem(): void {
     const range: RowCopyMap = {
-      targetRowIndex,
       srcRowIndex: EXPENDITURE_MATRIX.EXPENSE_ITEM_ROW_INDEX,
-      numRows: copies || 1,
+      numRows: 1,
     };
 
     this._duplicateRow(range);
-  }
-
-  /**
-   * Checks if the current activity is the first activity.
-   *
-   * @returns {boolean}
-   */
-  private _hasFirstActivity(): boolean {
-    return this.activityIndex === 0;
   }
 
   private _setIsBlankFormula(rowIndex: number) {
@@ -310,17 +329,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   /**
    * Creates or duplicates an activity row in the expenditure matrix.
    *
-   * @param targetRow {number} The index where the activity row will be inserted.
+   * @param targetRowIndex {number} The index where the activity row will be inserted.
    * @param activity {Activity} The activity information.
    *
    * @returns number - The index of the activity row
    */
-  private _createActivityRow(targetRow: number, activity: Activity): number {
-    const sheet = this.getActiveSheet();
-    let activityRowIndex = targetRow;
-
+  private _createActivityRow(targetRowIndex: number, activity: Activity): void {
     const {
-      ACTIVITY_ROW_INDEX,
       ACTIVITIES_COL,
       PERFORMANCE_INDICATOR_COL,
       PHYSICAL_TARGET_MONTH_COL_INDEX,
@@ -334,41 +349,29 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       TOTAL_DISBURSEMENT_COL,
     } = EXPENDITURE_MATRIX;
 
-    if (this._hasFirstActivity()) {
-      activityRowIndex = ACTIVITY_ROW_INDEX;
-
-      this._setExpenseObjectFormula(activityRowIndex);
-      this._setIsBlankFormula(activityRowIndex);
-    } else {
-      this._duplicateActivity(activityRowIndex);
-    }
-
     const {
       info: { activityTitle, activityIndicator, activityPhysicalTarget, month },
       expenseItems,
     } = activity;
 
     const sumFormula = (cell: string) => ({
-      formula: `SUM(${cell}${activityRowIndex + 1}:${cell}${
-        activityRowIndex + expenseItems.length
+      formula: `SUM(${cell}${targetRowIndex + 1}:${cell}${
+        targetRowIndex + expenseItems.length
       })`,
     });
 
-    const activityRow = sheet.getRow(activityRowIndex);
+    const activityRow = this.getActiveSheet().getRow(targetRowIndex);
 
-    // activity
+    // activity title
     activityRow.getCell(ACTIVITIES_COL).value = activityTitle;
 
     // activity indicator
     activityRow.getCell(PERFORMANCE_INDICATOR_COL).value = activityIndicator;
 
-    if (!this._hasFirstActivity()) {
-      ExpenditureMatrix._clearPreviousPhysicalTargets(activityRow);
-    }
+    ExpenditureMatrix._clearPreviousPhysicalTargets(activityRow);
 
     // activity physical target
     const targetMonth = ExpenditureMatrix._incrementMonth(month);
-
     activityRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + targetMonth).value =
       activityPhysicalTarget;
 
@@ -378,9 +381,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     totalCostCell.font.bold = true;
 
     // physical target grand total
-    const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${activityRowIndex}`;
-    const physicalTargetMonthEndCell = `${PHYSICAL_TARGET_MONTH_END_COL_INDEX}${activityRowIndex}`;
-
+    const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${targetRowIndex}`;
+    const physicalTargetMonthEndCell = `${PHYSICAL_TARGET_MONTH_END_COL_INDEX}${targetRowIndex}`;
     activityRow.getCell(PHYSICAL_TARGET_TOTAL_COL).value = {
       formula: `SUM(${physicalTargetMonthStartCell}:${physicalTargetMonthEndCell})`,
     };
@@ -406,25 +408,31 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       TOTAL_DISBURSEMENT_COL,
     );
 
-    return activityRowIndex;
+    // VERIFY:
+    // this.currentRowIndex += 1;
+  }
+
+  private _setOutputRank(row: Row) {
+    row.getCell(EXPENDITURE_MATRIX.RANK_COL).value = this.rank;
   }
 
   /**
    * Creates or duplicates an output row in the expenditure matrix.
    *
    * @param targetRowIndex {number} The index where the output row will be inserted.
-   * @param activity {Activity} The activity information.
+   * @param activityInfo {Activity} The activity information.
    * @param rank {number} The rank of the output.
    *
    * @returns {void}
    */
-  private _createOutputRow(targetRowIndex: number, activity: Activity): void {
+  private _createOutputRow(
+    targetRowIndex: number,
+    activityInfo: ActivityInfo,
+  ): void {
     const sheet = this.getActiveSheet();
 
     const {
-      OUTPUT_ROW_INDEX,
       OUTPUT_COL,
-      RANK_COL,
       PERFORMANCE_INDICATOR_COL,
       PHYSICAL_TARGET_MONTH_COL_INDEX,
       PHYSICAL_TARGET_TOTAL_COL,
@@ -432,32 +440,26 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       PHYSICAL_TARGET_MONTH_END_COL_INDEX,
     } = EXPENDITURE_MATRIX;
 
-    let outputRowIndex = targetRowIndex;
-
-    if (this._hasFirstActivity()) {
-      outputRowIndex = OUTPUT_ROW_INDEX;
-    } else {
-      this._duplicateOutput(outputRowIndex);
-    }
-
     const { output, outputIndicator, outputPhysicalTarget, month } =
-      activity.info;
+      activityInfo;
 
-    console.table(activity.info);
-    console.log('outputrowindex:', outputRowIndex);
+    console.table(activityInfo);
+    console.log('rowindex:', targetRowIndex);
 
     // output
-    const outputRow = sheet.getRow(outputRowIndex);
+    const outputRow = sheet.getRow(targetRowIndex);
 
     console.log('outputrow:', outputRow.number);
 
     outputRow.getCell(OUTPUT_COL).value = output;
-    outputRow.getCell(RANK_COL).value = this.rank;
+
+    // output rank
+    this._setOutputRank(outputRow);
 
     // output indicator
     outputRow.getCell(PERFORMANCE_INDICATOR_COL).value = outputIndicator;
 
-    if (!this._hasFirstActivity()) {
+    if (!this.isFirstActivity) {
       ExpenditureMatrix._clearPreviousPhysicalTargets(outputRow);
     }
 
@@ -468,8 +470,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       outputPhysicalTarget;
 
     // physical target grand total
-    const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${outputRowIndex}`;
-    const physicalTargetMonthEndCell = `${PHYSICAL_TARGET_MONTH_END_COL_INDEX}${outputRowIndex}`;
+    const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${targetRowIndex}`;
+    const physicalTargetMonthEndCell = `${PHYSICAL_TARGET_MONTH_END_COL_INDEX}${targetRowIndex}`;
 
     outputRow.getCell(PHYSICAL_TARGET_TOTAL_COL).value = {
       formula: `SUM(${physicalTargetMonthStartCell}:${physicalTargetMonthEndCell})`,
@@ -510,11 +512,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    *
    * @returns {void}
    */
-  private _createExpenseItemRow({
-    targetRowIndex,
-    expense,
-    month,
-  }: ExpenseItemRowContext): void {
+  private _createExpenseItemRow(
+    rowIndex: number,
+    { expense, month }: ExpenseItemRowContext,
+  ): void {
+    console.log('creating expense item row at index', rowIndex);
     const sheet = this.getActiveSheet();
 
     const {
@@ -540,22 +542,18 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       DISBURSEMENT_MONTH_COL_INDEX,
     } = EXPENDITURE_MATRIX;
 
-    let currentRowIndex = targetRowIndex;
+    // Expense Object formula
+    this._setExpenseObjectFormula(rowIndex);
 
-    if (this._hasFirstActivity()) {
-      currentRowIndex -= 1;
+    // GAA Object formula
+    this._setGAAObjFormula(rowIndex);
 
-      // Expense Object formula
-      this._setExpenseObjectFormula(currentRowIndex);
+    // Is blank formulas
+    this._setIsBlankFormula(rowIndex);
 
-      // GAA Object formula
-      this._setGAAObjFormula(currentRowIndex);
+    console.log('currentrowindex:', rowIndex);
 
-      // Is blank formulas
-      this._setIsBlankFormula(currentRowIndex);
-    }
-
-    const currentRow = sheet.getRow(currentRowIndex);
+    const currentRow = sheet.getRow(rowIndex);
 
     const {
       expenseGroup,
@@ -591,7 +589,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     // total amount
     currentRow.getCell(TOTAL_COST_COL).value = {
-      formula: `${QUANTITY_COL}${currentRowIndex}*${UNIT_COST_COL}${currentRowIndex}*${FREQUENCY_COL}${currentRowIndex}`,
+      formula: `${QUANTITY_COL}${rowIndex}*${UNIT_COST_COL}${rowIndex}*${FREQUENCY_COL}${rowIndex}`,
     };
 
     // tev location
@@ -620,18 +618,18 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     mannerOfReleaseCell.dataValidation = MANNER_VALIDATION;
 
     // total obligation
-    const obligationMonthStartCell = `${OBLIGATION_MONTH_START_COL}${currentRowIndex}`;
-    const obligationMonthEndCell = `${OBLIGATION_MONTH_END_COL}${currentRowIndex}`;
+    const obligationMonthStartCell = `${OBLIGATION_MONTH_START_COL}${rowIndex}`;
+    const obligationMonthEndCell = `${OBLIGATION_MONTH_END_COL}${rowIndex}`;
 
     currentRow.getCell(TOTAL_OBLIGATION_COL).value = {
       formula: `SUM(${obligationMonthStartCell}:${obligationMonthEndCell})`,
     };
 
     const totalRef = {
-      formula: `${TOTAL_COST_COL}${currentRowIndex}`,
+      formula: `${TOTAL_COST_COL}${rowIndex}`,
     };
 
-    if (!this._hasFirstActivity()) {
+    if (!this.isFirstActivity) {
       ExpenditureMatrix._clearPreviousFinancialPrograms(currentRow);
     }
 
@@ -639,8 +637,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + month).value = totalRef;
 
     // total disbursement
-    const disbursementMonthStartCell = `${DISBURSEMENT_MONTH_START_COL}${currentRowIndex}`;
-    const disbursementMonthEndCell = `${DISBURSEMENT_MONTH_END_COL}${currentRowIndex}`;
+    const disbursementMonthStartCell = `${DISBURSEMENT_MONTH_START_COL}${rowIndex}`;
+    const disbursementMonthEndCell = `${DISBURSEMENT_MONTH_END_COL}${rowIndex}`;
 
     currentRow.getCell(TOTAL_DISBURSEMENT_COL).value = {
       formula: `SUM(${disbursementMonthStartCell}:${disbursementMonthEndCell})`,
@@ -650,17 +648,124 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     currentRow.getCell(DISBURSEMENT_MONTH_COL_INDEX + month).value = totalRef;
   }
 
+  private _createProgram(program: string, rowIndex?: number): void {
+    if (program !== this.currentProgram) {
+      let programIndex: number;
+
+      if (rowIndex) {
+        programIndex = rowIndex;
+        this.currentRowIndex = programIndex;
+      } else {
+        programIndex = this.currentRowIndex;
+        this._duplicateProgram();
+      }
+
+      this.getActiveSheet()
+        .getRow(programIndex)
+        .getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
+      this.currentProgram = program;
+
+      console.log(`created program at row ${rowIndex}, program: ${program}`);
+    }
+  }
+
+  private _createOutput(
+    output: string,
+    activityInfo: ActivityInfo,
+    rowIndex?: number,
+  ): void {
+    if (output !== this.currentOutput) {
+      let outputIndex: number;
+
+      if (rowIndex) {
+        outputIndex = rowIndex;
+        this.currentRowIndex = outputIndex;
+      } else {
+        outputIndex = this.currentRowIndex;
+        this._duplicateOutput();
+      }
+
+      this._createOutputRow(outputIndex, activityInfo);
+      this.currentOutput = output;
+      this.rank += 1;
+
+      console.log(`created output at row ${outputIndex}, output: ${output}`);
+    }
+  }
+
+  private _createActivity(activity: Activity, rowIndex?: number): void {
+    let activityIndex: number;
+
+    if (rowIndex) {
+      activityIndex = rowIndex;
+      this._setExpenseObjectFormula(activityIndex);
+      this._setIsBlankFormula(activityIndex);
+      this.currentRowIndex = activityIndex;
+    } else {
+      activityIndex = this.currentRowIndex;
+      this._duplicateActivity();
+    }
+
+    this._createActivityRow(activityIndex, activity);
+
+    console.log(
+      `created activity at row ${activityIndex}, activity title: ${activity.info.activityTitle}`,
+    );
+  }
+
+  private async _loadActivities(budgetEstimates: ExcelFile[]) {
+    await Promise.all(
+      budgetEstimates.map(budgetEstimate =>
+        this._addToActivities(budgetEstimate),
+      ),
+    );
+
+    if (this.activities.length === 0) throw new Error('No activities found.');
+  }
+
+  private _prepareEM() {
+    const { HEADER_FIRST_ROW_INDEX, HEADER_LAST_ROW_INDEX } =
+      EXPENDITURE_MATRIX;
+
+    this._removeExtraRows();
+    this._fixFonts(HEADER_FIRST_ROW_INDEX, HEADER_LAST_ROW_INDEX);
+  }
+
+  private _aggregatePSF(TEVs: ExpenseItem[]) {
+    TEVs.forEach(tev => {
+      const existingPSF = this.PSF.expenseItems.find(
+        i => i.expenseItem === tev.expenseItem,
+      );
+
+      if (existingPSF) {
+        existingPSF.unitCost += tev.unitCost * tev.quantity;
+      } else {
+        this.PSF.expenseItems.push({
+          ...tev,
+          quantity: 1,
+          unitCost: tev.unitCost * tev.quantity,
+        });
+      }
+    });
+  }
+
   /**
    * Converts an array of budget estimates to an expenditure matrix.
    *
-   * @param files {ExcelFile[]} The array of files to be converted.
+   * @param budgetEstimates {ExcelFile[]} The array of files to be converted.
    *
    * @returns {Promise<ArrayBuffer>} A promise that resolves to the array buffer of the Expenditure Matrix
    */
-  async fromBudgetEstimates(files: ExcelFile[]): Promise<ArrayBuffer> {
+  async fromBudgetEstimates(
+    budgetEstimates: ExcelFile[],
+  ): Promise<ArrayBuffer> {
+    await this._loadActivities(budgetEstimates);
+    this._prepareEM();
+
     const {
-      HEADER_FIRST_ROW_INDEX,
-      HEADER_LAST_ROW_INDEX,
+      PROGRAM_ROW_INDEX,
+      OUTPUT_ROW_INDEX,
+      ACTIVITY_ROW_INDEX,
       GAA_OBJECT_FORMULA_COL,
       GAA_OBJECT_FORMULA_CELL,
       TOTAL_COST_COL,
@@ -678,225 +783,88 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       OBLIGATION_MONTH_COL_INDEX,
     } = EXPENDITURE_MATRIX;
 
-    this._removeExtraRows();
-    this._fixFonts(HEADER_FIRST_ROW_INDEX, HEADER_LAST_ROW_INDEX);
-
-    const sheet = this.getActiveSheet();
-
-    await Promise.all(files.map(file => this._addToActivities(file)));
-
-    if (this.activities.length === 0) throw new Error('No activities found.');
-
-    this.activities.sort(ExpenditureMatrix._orderByProgramAndOutput);
-
-    let currentRowIndex: number = EXPENDITURE_MATRIX.TARGET_ROW_INDEX;
-    let currentOutput = '';
-    let currentProgram = '';
-
     /**
      * Records the indices of rows of each activity that contains the total unit cost
      * to be used later to compute the grand total
      */
     const activityRows: number[] = [];
 
-    const psf: Activity = {
-      info: {
-        program: 'Programs Support Funds (PSF)',
-        output: 'Benefitted implementers',
-        outputIndicator: 'No. of implementers benefitted',
-        outputPhysicalTarget: 16,
-        activityTitle: 'Provision of Program Support Funds',
-        activityIndicator: 'No. of downloading activities conducted',
-        activityPhysicalTarget: 1,
-        month: 1,
-        venue: '',
-        totalPax: 16,
-      },
-      expenseItems: [],
-      tevPSF: [],
-    };
+    const sheet = this.getActiveSheet();
 
-    this.activities.forEach(activity => {
-      const {
-        info: { program, output },
-        tevPSF,
-      } = activity;
+    this.activities.sort(ExpenditureMatrix._orderByProgramAndOutput);
+
+    // first activity needs special treatment because it will not duplicate rows
+    // but instead overwrite the sample rows in the template
+    const firstActivity = this.activities[0];
+
+    if (!firstActivity) throw new Error('No activities found.');
+
+    const { info, tevPSF } = firstActivity;
+    const { program, output } = info;
+
+    this._createProgram(program, PROGRAM_ROW_INDEX);
+    this._createOutput(output, info, OUTPUT_ROW_INDEX);
+    activityRows.push(ACTIVITY_ROW_INDEX);
+    this._createActivity(firstActivity, ACTIVITY_ROW_INDEX);
+    this._createExpenseItems(firstActivity, EXPENSE_ITEM_ROW_INDEX);
+    this._aggregatePSF(tevPSF);
+
+    // process the rest of the activities
+    this.activities.slice(1).forEach(activity => {
+      console.log('sliced');
+
+      const { info, tevPSF } = activity;
+      const { program, output } = info;
 
       // program
-      let programRowIndex;
-
-      if (this._hasFirstActivity()) {
-        programRowIndex = EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX;
-        console.log(
-          'writing program at row',
-          programRowIndex,
-          'program:',
-          program,
-        );
-
-        const programRow = sheet.getRow(programRowIndex);
-        programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
-      } else {
-        programRowIndex = currentRowIndex;
-
-        console.log('program:', program, 'currentProgram', currentProgram);
-        if (program !== currentProgram) {
-          console.log(
-            'creating program at index',
-            programRowIndex,
-            'program:',
-            program,
-          );
-
-          this._duplicateProgram(programRowIndex);
-
-          const programRow = sheet.getRow(programRowIndex);
-          programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
-        } else {
-          currentRowIndex -= 1;
-          console.log('skipping program row');
-        }
-      }
-
-      currentProgram = program;
-
-      if (!this._hasFirstActivity()) {
-        currentRowIndex += 1;
-        console.log('moved current row to', currentRowIndex);
-      }
+      this._createProgram(program);
 
       // output
-      console.log('output:', output, 'currentOutput:', currentOutput);
-
-      if (output !== currentOutput) {
-        console.log(
-          'creating output row at index',
-          currentRowIndex,
-          'hasEmptyActivities',
-          this._hasFirstActivity(),
-          'output',
-          output,
-        );
-        this._createOutputRow(currentRowIndex, activity);
-        this.rank += 1;
-        console.log('moved current row to', currentRowIndex);
-      } else {
-        currentRowIndex -= 1;
-        console.log('skipping output row');
-      }
-
-      currentOutput = output;
-
-      if (!this._hasFirstActivity()) {
-        currentRowIndex += 1;
-        console.log('moved current row to', currentRowIndex);
-      }
+      this._createOutput(output, info);
 
       // activity
-      console.log(
-        'creating activity row at index',
-        currentRowIndex,
-        'activity:',
-        activity,
-      );
-
-      const activityRowIndex = this._createActivityRow(
-        currentRowIndex,
-        activity,
-      );
-
-      activityRows.push(activityRowIndex);
-
-      if (!this._hasFirstActivity()) {
-        currentRowIndex += 1;
-        console.log('moved current row to', currentRowIndex);
-      }
-
-      console.log(
-        'hasFirstActivity:',
-        this._hasFirstActivity(),
-        'current row index:',
-        currentRowIndex,
-      );
+      activityRows.push(this.currentRowIndex);
+      this._createActivity(activity);
 
       // Expense Items
-      const activityRowMap: ActivityRowMap = {
-        activity,
-        rowIndex: currentRowIndex,
-      };
-
-      currentRowIndex = this._createExpenseItems(activityRowMap);
+      this._createExpenseItems(activity);
 
       // Aggregate TEVs of participants for PSF
-      tevPSF.forEach(tev => {
-        const existingPSF = psf.expenseItems.find(
-          i => i.expenseItem === tev.expenseItem,
-        );
-
-        if (existingPSF) {
-          existingPSF.unitCost += tev.unitCost * tev.quantity;
-        } else {
-          psf.expenseItems.push({
-            ...tev,
-            quantity: 1,
-            unitCost: tev.unitCost * tev.quantity,
-          });
-        }
-      });
-
-      if (this._hasFirstActivity()) {
-        currentRowIndex -= 1;
-      }
-
-      this.activityIndex += 1;
+      this._aggregatePSF(tevPSF);
 
       console.log('activity created');
-      console.log('currentrowindex:', currentRowIndex);
+      console.log('currentrowindex:', this.currentRowIndex);
+
+      this.isFirstActivity = false;
     });
 
     // PSF
-    if (psf.expenseItems.length > 0) {
+    if (this.PSF.expenseItems.length > 0) {
       console.log('Creating PSF Activity...');
+      console.log('psf.expensitems.length', this.PSF.expenseItems.length);
+      console.table(this.PSF.expenseItems);
 
       // program
-      const { program } = psf.info;
-
-      this._duplicateProgram(currentRowIndex);
-
-      const programRow = sheet.getRow(currentRowIndex);
-      programRow.getCell(EXPENDITURE_MATRIX.PROGRAM_COL).value = program;
-
-      currentRowIndex += 1;
-      console.log('moved current row to', currentRowIndex);
+      const { info } = this.PSF;
+      const { program, output } = info;
+      this._createProgram(program);
 
       // output
-      this._createOutputRow(currentRowIndex, psf);
-
-      currentRowIndex += 1;
-      console.log('moved current row to', currentRowIndex);
+      this._createOutput(output, info);
 
       // activity
-      const activityRowIndex = this._createActivityRow(currentRowIndex, psf);
-
-      activityRows.push(activityRowIndex);
-
-      currentRowIndex += 1;
-      console.log('moved current row to', currentRowIndex);
-
-      const activityRowMap: ActivityRowMap = {
-        activity: psf,
-        rowIndex: currentRowIndex,
-      };
+      activityRows.push(this.currentRowIndex);
+      this._createActivity(this.PSF);
 
       // expense items
-      currentRowIndex = this._createExpenseItems(activityRowMap);
+      this._createExpenseItems(this.PSF);
     }
 
-    sheet.spliceRows(currentRowIndex, 2);
+    sheet.spliceRows(this.currentRowIndex, 1);
 
-    console.log('last row index:', currentRowIndex);
+    console.log('last row index:', this.currentRowIndex);
 
-    const lastRowIndex = currentRowIndex + OVERHEAD_NUM_ROWS + 1;
+    const lastRowIndex = this.currentRowIndex + OVERHEAD_NUM_ROWS + 1;
 
     // Costing Grand Total
     const grandTotalRow = sheet.getRow(lastRowIndex);
@@ -928,32 +896,44 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       };
     });
 
+    // Overhead output rank
+    this._setOutputRank(sheet.getRow(this.currentRowIndex + 1));
+
     // Overhead hidden columns formulas
     Array.from({ length: OVERHEAD_NUM_ROWS }, (_, i) => {
-      const currentRow = currentRowIndex + i;
+      const currentRow = this.currentRowIndex + i;
 
       // Expense Object
+      // console.log(
+      //   'setting overhead expense object formula at row:',
+      //   currentRow,
+      // );
+
       this._setExpenseObjectFormula(currentRow);
 
       // GAA Object
+      // console.log('setting overhead gaa object formula at row:', currentRow);
       ExpenditureMatrix._duplicateCell(
         sheet.getCell(GAA_OBJECT_FORMULA_CELL),
         sheet.getRow(currentRow).getCell(GAA_OBJECT_FORMULA_COL),
       );
 
       // ISBLANK formulas
+      // console.log('setting overhead isblank formula at row:', currentRow);
       this._setIsBlankFormula(currentRow);
     });
 
     // Overhead Totals
     OVERHEAD_TOTAL_ROW_MAPPINGS.forEach(rowMap => {
       const { rowsToAdd, expenseItemsCount } = rowMap;
-      const rowIndex = currentRowIndex + rowsToAdd;
+      const rowIndex = this.currentRowIndex + rowsToAdd;
       const currentRow = sheet.getRow(rowIndex);
 
       if (expenseItemsCount) {
         [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
           col => {
+            // console.log('setting overhead total formula at row:', rowIndex);
+
             currentRow.getCell(col).value = {
               formula: `SUM(${col}${rowIndex + 1}:${col}${
                 rowIndex + expenseItemsCount
@@ -962,9 +942,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
           },
         );
 
+        // console.log(
+        //   'setting overhead monthly program totals at row:',
+        //   rowIndex,
+        // );
         Array.from({ length: MONTHLY_PROGRAM_NUM_ROWS }, (_, i) => {
           const targetCell = currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + i);
-          // const col = targetCell.address.replace(/\d+/, '');
           const col = ExpenditureMatrix._getCellCol(targetCell);
 
           targetCell.value = {
@@ -982,6 +965,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
             Array.from({ length: expenseItemsCount }, (_, count) => {
               const targetRowIndex = rowIndex + 1 + count;
 
+              // console.log(
+              //   'setting overhead expense items total at row:',
+              //   targetRowIndex,
+              // );
               ExpenditureMatrix._duplicateCell(
                 sheet.getCell(col + EXPENSE_ITEM_ROW_INDEX),
                 sheet.getRow(targetRowIndex).getCell(col),
@@ -992,12 +979,20 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       }
 
       // Previous Year Physical Target
+      // console.log(
+      //   'setting overhead previous year physical target object at row:',
+      //   currentRow,
+      // );
       ExpenditureMatrix._duplicateCell(
         sheet.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
         currentRow.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
       );
 
       // Current Year Physical Target
+      // console.log(
+      //   'setting overhead current year physical target object at row:',
+      //   currentRow,
+      // );
       ExpenditureMatrix._duplicateCell(
         sheet.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
         currentRow.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
@@ -1019,38 +1014,36 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @private
    * @param context {ActivityContext} The context of the Activity
    *
-   * @returns {number} - The new index for the current row
    */
-  private _createExpenseItems({ activity, rowIndex }: ActivityRowMap): number {
-    const { expenseItems } = activity;
+  private _createExpenseItems(activity: Activity, rowIndex?: number): void {
+    const { info, expenseItems } = activity;
+    const { month } = info;
 
-    const finalRowIndex = expenseItems.reduce((rowIndex, expense, index) => {
+    let items = expenseItems;
+
+    if (rowIndex) {
+      this.currentRowIndex = rowIndex;
+
+      const firstItem = expenseItems[0];
+
+      if (firstItem && this.isFirstActivity) {
+        this._createExpenseItemRow(rowIndex, { expense: firstItem, month });
+        this.currentRowIndex += 1;
+        items = expenseItems.slice(1);
+      }
+    }
+
+    items.forEach(expense => {
       console.dir(expense);
-      console.log(
-        'current expense item index:',
-        index,
-        'expenseitems.length:',
-        expenseItems.length,
-      );
 
-      console.log('duplicating expense item at row', rowIndex);
-      this._duplicateExpenseItem(rowIndex);
+      const expenseIndex = this.currentRowIndex;
 
-      console.log('creating expense row at index', rowIndex);
+      console.log('duplicating expense item at row', expenseIndex);
+      this._duplicateExpenseItem();
 
-      const context: ExpenseItemRowContext = {
-        targetRowIndex: rowIndex,
-        expense,
-        month: activity.info.month,
-      };
-
-      this._createExpenseItemRow(context);
-
-      console.log('expenses item created.');
-      return rowIndex + 1;
-    }, rowIndex);
-
-    return finalRowIndex;
+      this._createExpenseItemRow(expenseIndex, { expense, month });
+      console.log('created expense item at row', expenseIndex);
+    });
   }
 
   /**

@@ -189,11 +189,6 @@ interface SheetConfig {
  */
 interface RowCopyMap {
   /**
-   * The index of the target row.
-   */
-  targetRowIndex: number;
-
-  /**
    * The index of the source row.
    */
   srcRowIndex: number;
@@ -210,12 +205,6 @@ interface RowCopyMap {
  * @interface ExpenseItemRowContext
  */
 interface ExpenseItemRowContext {
-  /**
-   * The row number where the expense item row will be inserted.
-   * @type {number}
-   */
-  targetRowIndex: number;
-
   /**
    * The expense item data.
    * @type {ExpenseItem}

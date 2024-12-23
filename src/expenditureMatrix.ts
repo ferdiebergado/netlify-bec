@@ -1,7 +1,9 @@
 import { Workbook } from './workbook.js';
 import {
   EXPENDITURE_MATRIX,
+  FONT,
   MANNER_VALIDATION,
+  MAX_MONTH,
   MONTHS_IN_A_YEAR,
   YES,
   YES_NO_VALIDATION,
@@ -12,14 +14,15 @@ import type {
   ExcelFile,
   ExpenseItem,
   ExpenseItemRowContext,
-  RowCopyMap,
+  ExpenditureFile,
 } from './types/globals.js';
 import { BudgetEstimate } from './budgetEstimate.js';
 import type { Cell, Row } from 'exceljs';
-import { isCellFormulaValue } from './utils.js';
-
-// 0-based index of the last month in a year (December)
-const MAX_MONTH = 11;
+import {
+  deepFreeze,
+  extractProgramTitle,
+  isCellFormulaValue,
+} from './utils.js';
 
 /**
  * Represents a specialized workbook for managing expenditure matrices.
@@ -34,15 +37,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @protected
    * @type {Activity[]}
    */
-  protected activities: Activity[] = [];
-
-  /**
-   * The index of the activity being processed.
-   *
-   * @protected
-   * @type {number}
-   */
-  protected activityIndex: number = 0;
+  private activities: Activity[] = [];
 
   /**
    * The current output rank.
@@ -50,26 +45,42 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @protected
    * @type {number}
    */
-  protected rank: number = 1;
+  private rank: number = 1;
 
   /**
    * The current row index being processed.
    */
-  protected currentRowIndex = 0;
+  private currentRowIndex = 0;
 
+  /**
+   * The current program
+   */
   private currentProgram = '';
 
   private currentOutput = '';
 
+  /**
+   * Status flag that indicates if the current activity
+   * is the first activity being processed
+   */
   private isFirstActivity = true;
 
-  protected PSF: Activity = {
+  /**
+   * The font settings
+   */
+  private readonly font = deepFreeze(FONT);
+
+  /**
+   * The PSF Activity
+   */
+  private PSF: Activity = {
     info: {
       program: 'Programs Support Funds (PSF)',
       output: 'Benefitted implementers',
       outputIndicator: 'No. of implementers benefitted',
       outputPhysicalTarget: 16,
-      activityTitle: 'Provision of Program Support Funds',
+      activityTitle:
+        'Provision of Program Support Funds for the Travel Expenses of Field Participants',
       activityIndicator: 'No. of downloading activities conducted',
       activityPhysicalTarget: 1,
       month: 1,
@@ -106,48 +117,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }
 
   /**
-   * Duplicates a specified row.
+   * Duplicates a cell to another cell
    *
-   * @private
-   * @param range {RowCopyMap} Contains the indices of the target and source rows that will be duplicated
-   *
-   * @returns {void}
+   * @param sourceCell The source cell to be copied
+   * @param targetCell The target cell
    */
-  private _duplicateRow({ srcRowIndex, numRows }: RowCopyMap): void {
-    const sheet = this.getActiveSheet();
-    const srcRow = sheet.getRow(srcRowIndex);
-    srcRow.font = {
-      bold: false,
-      italic: false,
-      strike: false,
-      underline: 'none',
-      size: 11,
-      color: {
-        argb: 'FF000000',
-      },
-      name: 'Calibri',
-    };
-
-    Array.from({ length: numRows }).forEach((_, j) => {
-      const newRow = sheet.insertRow(this.currentRowIndex + j, []);
-
-      srcRow.eachCell({ includeEmpty: true }, (sourceCell, colNumber) => {
-        const targetCell = newRow.getCell(colNumber);
-        ExpenditureMatrix._duplicateCell(sourceCell, targetCell);
-      });
-
-      console.log(
-        'duplicated row at index:',
-        this.currentRowIndex,
-        'source row index:',
-        srcRowIndex,
-      );
-    });
-    // move to the next row
-    this.currentRowIndex += numRows;
-  }
-
-  private static _duplicateCell(sourceCell: Cell, targetCell: Cell) {
+  private static _duplicateCell(sourceCell: Cell, targetCell: Cell): void {
     Object.assign(targetCell, {
       value: isCellFormulaValue(sourceCell.value)
         ? { sharedFormula: sourceCell.address }
@@ -194,22 +169,312 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     });
   }
 
-  private _fixFonts(startRowIndex: number, count: number) {
-    Array.from({ length: count }, (_, i) => {
-      const row = this.getActiveSheet().getRow(startRowIndex + i);
+  /**
+   * Gets the letter part of the cell address
+   *
+   * @param cell The target cell
+   * @returns The letter part of the cell address
+   */
+  private static _getCellCol(cell: Cell): string {
+    return cell.address.replace(/\d+/, '');
+  }
 
-      row.font = {
-        size: row.getCell(1).font.size,
-        bold: true,
+  /**
+   * Increments the specified month by 1.
+   *
+   * @private
+   * @static
+   * @param month The target month
+   *
+   * @returns {number} The incremented month
+   */
+  private static _incrementMonth(month: number): number {
+    if (month < MAX_MONTH) return month + 1;
+    return month;
+  }
+
+  /**
+   * Orders activities based on program and output.
+   *
+   * @static
+   * @param a {Activity} The first activity.
+   * @param b {Activity} The other activity.
+   *
+   * @returns A number indicating the order.
+   */
+  private static _orderByProgramAndOutput(
+    this: void,
+    a: Activity,
+    b: Activity,
+  ): number {
+    const { program: programA, output: outputA } = a.info;
+    const { program: programB, output: outputB } = b.info;
+
+    const programComparison = programA.localeCompare(programB);
+
+    if (programComparison === 0) {
+      return outputA.localeCompare(outputB);
+    }
+
+    return programComparison;
+  }
+
+  /**
+   * Converts an array of budget estimates to an expenditure matrix.
+   *
+   * @param budgetEstimates {ExcelFile[]} The array of files to be converted.
+   *
+   * @returns {Promise<ArrayBuffer>} A promise that resolves to the array buffer of the Expenditure Matrix
+   */
+  async fromBudgetEstimates(
+    budgetEstimates: ExcelFile[],
+  ): Promise<ExpenditureFile> {
+    await this._loadActivities(budgetEstimates);
+    this._prepareEM();
+
+    const {
+      PROGRAM_ROW_INDEX,
+      OUTPUT_ROW_INDEX,
+      ACTIVITY_ROW_INDEX,
+      GAA_OBJECT_FORMULA_COL,
+      GAA_OBJECT_FORMULA_CELL,
+      TOTAL_COST_COL,
+      TOTAL_OBLIGATION_COL,
+      TOTAL_DISBURSEMENT_COL,
+      MONTHLY_PROGRAM_NUM_ROWS,
+      TOTAL_OBLIGATION_COL_INDEX,
+      OVERHEAD_NUM_ROWS,
+      PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL,
+      PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX,
+      CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL,
+      CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX,
+      OVERHEAD_TOTAL_ROW_MAPPINGS,
+      EXPENSE_ITEM_ROW_INDEX,
+      OBLIGATION_MONTH_COL_INDEX,
+    } = EXPENDITURE_MATRIX;
+
+    /**
+     * Records the indices of rows of each activity that contains the total unit cost
+     * to be used later to compute the grand total
+     */
+    const activityRows: number[] = [];
+
+    const sheet = this.getActiveSheet();
+
+    this.activities.sort(ExpenditureMatrix._orderByProgramAndOutput);
+
+    // first activity needs special treatment because it will not duplicate rows
+    // but instead overwrite the sample rows in the template
+    const firstActivity = this.activities[0];
+
+    if (!firstActivity) throw new Error('No activities found.');
+
+    const { info, tevPSF } = firstActivity;
+    const { program, output } = info;
+
+    this._createProgram(program, PROGRAM_ROW_INDEX);
+    this._createOutput(output, info, OUTPUT_ROW_INDEX);
+    activityRows.push(ACTIVITY_ROW_INDEX);
+    this._createActivity(firstActivity, ACTIVITY_ROW_INDEX);
+    this._createExpenseItems(firstActivity, EXPENSE_ITEM_ROW_INDEX);
+    this._aggregatePSF(tevPSF);
+
+    // process the rest of the activities
+    this.activities.slice(1).forEach(activity => {
+      console.log('sliced');
+
+      const { info, tevPSF } = activity;
+      const { program, output } = info;
+
+      // program
+      this._createProgram(program);
+
+      // output
+      this._createOutput(output, info);
+
+      // activity
+      activityRows.push(this.currentRowIndex);
+      this._createActivity(activity);
+
+      // Expense Items
+      this._createExpenseItems(activity);
+
+      // Aggregate TEVs of participants for PSF
+      this._aggregatePSF(tevPSF);
+
+      console.log('activity created');
+      console.log('currentrowindex:', this.currentRowIndex);
+
+      this.isFirstActivity = false;
+    });
+
+    // PSF
+    if (this.PSF.expenseItems.length > 0) {
+      console.log('Creating PSF Activity...');
+
+      // program
+      const { info } = this.PSF;
+      const { program, output } = info;
+      this._createProgram(program);
+
+      // output
+      this._createOutput(output, info);
+
+      // activity
+      activityRows.push(this.currentRowIndex);
+      this._createActivity(this.PSF);
+
+      // expense items
+      this._createExpenseItems(this.PSF);
+    }
+
+    sheet.spliceRows(this.currentRowIndex, 1);
+
+    console.log('last row index:', this.currentRowIndex);
+
+    const lastRowIndex = this.currentRowIndex + OVERHEAD_NUM_ROWS + 1;
+
+    // Costing Grand Total
+    const grandTotalRow = sheet.getRow(lastRowIndex);
+    const setGrandTotalCell = (cell: string) => {
+      const cellsWithTotals = activityRows.map(row => cell + row);
+
+      const grandTotalCell = grandTotalRow.getCell(cell);
+      grandTotalCell.value = {
+        formula: `SUM(${cellsWithTotals.toString()})`,
+      };
+
+      const font = Object.assign(grandTotalCell.font, {
         italic: false,
         strike: false,
-        underline: 'none',
-        color: {
-          argb: 'FF000000',
-        },
-        name: 'Calibri',
+      });
+      grandTotalCell.font = font;
+    };
+
+    [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
+      total => setGrandTotalCell(total),
+    );
+
+    // Monthly Program Grand Totals
+    Array.from({ length: MONTHLY_PROGRAM_NUM_ROWS }, (_, i) => {
+      const colIndex = TOTAL_OBLIGATION_COL_INDEX + i;
+      const cell = grandTotalRow.getCell(colIndex);
+      const cellsWithTotals = activityRows.map(
+        row => cell.address.replace(/\d+/, '') + row,
+      );
+
+      cell.value = {
+        formula: `SUM(${cellsWithTotals.toString()})`,
       };
     });
+
+    // Overhead output rank
+    this._setOutputRank(sheet.getRow(this.currentRowIndex + 1));
+
+    // Overhead hidden columns formulas
+    Array.from({ length: OVERHEAD_NUM_ROWS }, (_, i) => {
+      const currentRow = this.currentRowIndex + i;
+
+      // Expense Object
+      // console.log(
+      //   'setting overhead expense object formula at row:',
+      //   currentRow,
+      // );
+
+      this._setExpenseObjectFormula(currentRow);
+
+      // GAA Object
+      // console.log('setting overhead gaa object formula at row:', currentRow);
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(GAA_OBJECT_FORMULA_CELL),
+        sheet.getRow(currentRow).getCell(GAA_OBJECT_FORMULA_COL),
+      );
+
+      // ISBLANK formulas
+      // console.log('setting overhead isblank formula at row:', currentRow);
+      this._setIsBlankFormulas(currentRow);
+    });
+
+    // Overhead Totals
+    OVERHEAD_TOTAL_ROW_MAPPINGS.forEach(rowMap => {
+      const { rowsToAdd, expenseItemsCount } = rowMap;
+      const rowIndex = this.currentRowIndex + rowsToAdd;
+      const currentRow = sheet.getRow(rowIndex);
+
+      if (expenseItemsCount) {
+        [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
+          col => {
+            // console.log('setting overhead total formula at row:', rowIndex);
+
+            currentRow.getCell(col).value = {
+              formula: `SUM(${col}${rowIndex + 1}:${col}${
+                rowIndex + expenseItemsCount
+              })`,
+            };
+          },
+        );
+
+        // console.log(
+        //   'setting overhead monthly program totals at row:',
+        //   rowIndex,
+        // );
+        Array.from({ length: MONTHLY_PROGRAM_NUM_ROWS }, (_, i) => {
+          const targetCell = currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + i);
+          const col = ExpenditureMatrix._getCellCol(targetCell);
+
+          targetCell.value = {
+            formula: `SUM(${col}${rowIndex + 1}:${col}${
+              rowIndex + expenseItemsCount
+            })`,
+          };
+        });
+      }
+
+      // Expense items
+      if (expenseItemsCount) {
+        [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
+          col => {
+            Array.from({ length: expenseItemsCount }, (_, count) => {
+              const targetRowIndex = rowIndex + 1 + count;
+
+              // console.log(
+              //   'setting overhead expense items total at row:',
+              //   targetRowIndex,
+              // );
+              ExpenditureMatrix._duplicateCell(
+                sheet.getCell(col + EXPENSE_ITEM_ROW_INDEX),
+                sheet.getRow(targetRowIndex).getCell(col),
+              );
+            });
+          },
+        );
+      }
+
+      // Previous Year Physical Target
+      // console.log(
+      //   'setting overhead previous year physical target object at row:',
+      //   currentRow,
+      // );
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
+        currentRow.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
+      );
+
+      // Current Year Physical Target
+      // console.log(
+      //   'setting overhead current year physical target object at row:',
+      //   currentRow,
+      // );
+      ExpenditureMatrix._duplicateCell(
+        sheet.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
+        currentRow.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
+      );
+    });
+
+    const buffer = await this.wb.xlsx.writeBuffer();
+    const programTitle = this._getProgram();
+
+    return { programTitle, buffer };
   }
 
   /**
@@ -221,12 +486,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateProgram(): void {
-    const range: RowCopyMap = {
-      srcRowIndex: EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX,
-      numRows: 1,
-    };
-
-    this._duplicateRow(range);
+    this._duplicateRow(EXPENDITURE_MATRIX.PROGRAM_ROW_INDEX);
   }
 
   /**
@@ -237,12 +497,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateOutput(): void {
-    const range: RowCopyMap = {
-      srcRowIndex: EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX,
-      numRows: 1,
-    };
-
-    this._duplicateRow(range);
+    this._duplicateRow(EXPENDITURE_MATRIX.OUTPUT_ROW_INDEX);
   }
 
   /**
@@ -253,12 +508,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateActivity(): void {
-    const range: RowCopyMap = {
-      srcRowIndex: EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX,
-      numRows: 1,
-    };
-
-    this._duplicateRow(range);
+    this._duplicateRow(EXPENDITURE_MATRIX.ACTIVITY_ROW_INDEX);
   }
 
   /**
@@ -271,14 +521,46 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
    * @returns {void}
    */
   private _duplicateExpenseItem(): void {
-    const range: RowCopyMap = {
-      srcRowIndex: EXPENDITURE_MATRIX.EXPENSE_ITEM_ROW_INDEX,
-      numRows: 1,
-    };
-
-    this._duplicateRow(range);
+    this._duplicateRow(EXPENDITURE_MATRIX.EXPENSE_ITEM_ROW_INDEX);
   }
 
+  /**
+   * Duplicates a specified row.
+   *
+   * @private
+   * @param range {RowCopyMap} Contains the indices of the target and source rows that will be duplicated
+   *
+   * @returns {void}
+   */
+  private _duplicateRow(srcRowIndex: number): void {
+    const sheet = this.getActiveSheet();
+    const srcRow = sheet.getRow(srcRowIndex);
+    const newRow = sheet.insertRow(this.currentRowIndex, []);
+
+    srcRow.font = Object.assign({}, this.font);
+
+    srcRow.eachCell({ includeEmpty: true }, (sourceCell, colNumber) => {
+      const targetCell = newRow.getCell(colNumber);
+      ExpenditureMatrix._duplicateCell(sourceCell, targetCell);
+    });
+
+    console.log(
+      'duplicated row at index:',
+      this.currentRowIndex,
+      'source row index:',
+      srcRowIndex,
+    );
+
+    // move to the next row
+    this.currentRowIndex += 1;
+    console.log('moved to the next row:', this.currentRowIndex);
+  }
+
+  /**
+   * Sets the ISBLANK formula for the given row
+   *
+   * @param rowIndex The index of the target row
+   */
   private _setIsBlankFormulas(rowIndex: number) {
     const {
       IS_BLANK_FORMULA_CELL1,
@@ -313,6 +595,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     });
   }
 
+  /**
+   * Sets the Expense Object Formula for the given row.
+   *
+   * @param rowIndex The index of the target row
+   */
   private _setExpenseObjectFormula(rowIndex: number) {
     const sheet = this.getActiveSheet();
 
@@ -372,8 +659,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     // activity physical target
     const targetMonth = ExpenditureMatrix._incrementMonth(month);
-    activityRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + targetMonth).value =
-      activityPhysicalTarget;
+    const physTargetCell = activityRow.getCell(
+      PHYSICAL_TARGET_MONTH_COL_INDEX + targetMonth,
+    );
+    physTargetCell.value = activityPhysicalTarget;
+    Object.assign(physTargetCell.font, { bold: false });
 
     // costing grand total
     const totalCostCell = activityRow.getCell(TOTAL_COST_COL);
@@ -407,11 +697,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     activityRow.getCell(TOTAL_DISBURSEMENT_COL).value = sumFormula(
       TOTAL_DISBURSEMENT_COL,
     );
-
-    // VERIFY:
-    // this.currentRowIndex += 1;
   }
 
+  /**
+   * Sets the current output rank for a given row.
+   *
+   * @param row The target row
+   */
   private _setOutputRank(row: Row) {
     row.getCell(EXPENDITURE_MATRIX.RANK_COL).value = this.rank;
   }
@@ -459,15 +751,16 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     // output indicator
     outputRow.getCell(PERFORMANCE_INDICATOR_COL).value = outputIndicator;
 
-    if (!this.isFirstActivity) {
-      ExpenditureMatrix._clearPreviousPhysicalTargets(outputRow);
-    }
+    ExpenditureMatrix._clearPreviousPhysicalTargets(outputRow);
 
     // output physical target
     const targetMonth = ExpenditureMatrix._incrementMonth(month);
+    const physTargetCell = outputRow.getCell(
+      PHYSICAL_TARGET_MONTH_COL_INDEX + targetMonth,
+    );
 
-    outputRow.getCell(PHYSICAL_TARGET_MONTH_COL_INDEX + targetMonth).value =
-      outputPhysicalTarget;
+    physTargetCell.value = outputPhysicalTarget;
+    physTargetCell.font.bold = false;
 
     // physical target grand total
     const physicalTargetMonthStartCell = `${PHYSICAL_TARGET_MONTH_START_COL_INDEX}${targetRowIndex}`;
@@ -479,19 +772,10 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }
 
   /**
-   * Increments the specified month by 1.
+   * Sets the GAA Object formula of a row.
    *
-   * @private
-   * @static
-   * @param month The target month
-   *
-   * @returns {number} The incremented month
+   * @param rowIndex The index of the target row
    */
-  private static _incrementMonth(month: number): number {
-    if (month < MAX_MONTH) return month + 1;
-    return month;
-  }
-
   private _setGAAObjFormula(rowIndex: number) {
     const targetCell = this.getActiveSheet()
       .getRow(rowIndex)
@@ -629,9 +913,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
       formula: `${TOTAL_COST_COL}${rowIndex}`,
     };
 
-    if (!this.isFirstActivity) {
-      ExpenditureMatrix._clearPreviousFinancialPrograms(currentRow);
-    }
+    ExpenditureMatrix._clearPreviousFinancialPrograms(currentRow);
 
     // obligation month
     currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + month).value = totalRef;
@@ -648,6 +930,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     currentRow.getCell(DISBURSEMENT_MONTH_COL_INDEX + month).value = totalRef;
   }
 
+  /**
+   * Writes the name of the program to the specified/current row.
+   *
+   * @param program The name of the program
+   * @param rowIndex Index of the target row
+   */
   private _createProgram(program: string, rowIndex?: number): void {
     if (program !== this.currentProgram) {
       let programIndex: number;
@@ -669,6 +957,13 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
   }
 
+  /**
+   * Writes the output to the specified/current row.
+   *
+   * @param output The output text to be written
+   * @param activityInfo The activity info to be added to the output
+   * @param rowIndex Index of the target row
+   */
   private _createOutput(
     output: string,
     activityInfo: ActivityInfo,
@@ -693,6 +988,12 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     }
   }
 
+  /**
+   * Writes the activity to the specified/current row.
+   *
+   * @param activity The activity to be created
+   * @param rowIndex Index of the target row
+   */
   private _createActivity(activity: Activity, rowIndex?: number): void {
     let activityIndex: number;
 
@@ -713,7 +1014,14 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     );
   }
 
-  private async _loadActivities(budgetEstimates: ExcelFile[]) {
+  /**
+   * Parses a list of files to get the activities.
+   *
+   * @param budgetEstimates Budget Estimate Files to load
+   */
+  private async _loadActivities(
+    budgetEstimates: ExcelFile[],
+  ): Promise<void | never> {
     await Promise.all(
       budgetEstimates.map(budgetEstimate =>
         this._addToActivities(budgetEstimate),
@@ -723,6 +1031,9 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     if (this.activities.length === 0) throw new Error('No activities found.');
   }
 
+  /**
+   * Removes excess rows and fixes the header fonts of the Expenditure template
+   */
   private _prepareEM() {
     const { HEADER_FIRST_ROW_INDEX, HEADER_LAST_ROW_INDEX } =
       EXPENDITURE_MATRIX;
@@ -731,6 +1042,11 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     this._fixFonts(HEADER_FIRST_ROW_INDEX, HEADER_LAST_ROW_INDEX);
   }
 
+  /**
+   * Calculates the sum of the TEVS for each region.
+   *
+   * @param TEVs The TEVs per region
+   */
   private _aggregatePSF(TEVs: ExpenseItem[]) {
     TEVs.forEach(tev => {
       const existingPSF = this.PSF.expenseItems.find(
@@ -747,265 +1063,6 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
         });
       }
     });
-  }
-
-  /**
-   * Converts an array of budget estimates to an expenditure matrix.
-   *
-   * @param budgetEstimates {ExcelFile[]} The array of files to be converted.
-   *
-   * @returns {Promise<ArrayBuffer>} A promise that resolves to the array buffer of the Expenditure Matrix
-   */
-  async fromBudgetEstimates(
-    budgetEstimates: ExcelFile[],
-  ): Promise<ArrayBuffer> {
-    await this._loadActivities(budgetEstimates);
-    this._prepareEM();
-
-    const {
-      PROGRAM_ROW_INDEX,
-      OUTPUT_ROW_INDEX,
-      ACTIVITY_ROW_INDEX,
-      GAA_OBJECT_FORMULA_COL,
-      GAA_OBJECT_FORMULA_CELL,
-      TOTAL_COST_COL,
-      TOTAL_OBLIGATION_COL,
-      TOTAL_DISBURSEMENT_COL,
-      MONTHLY_PROGRAM_NUM_ROWS,
-      TOTAL_OBLIGATION_COL_INDEX,
-      OVERHEAD_NUM_ROWS,
-      PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL,
-      PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX,
-      CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL,
-      CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX,
-      OVERHEAD_TOTAL_ROW_MAPPINGS,
-      EXPENSE_ITEM_ROW_INDEX,
-      OBLIGATION_MONTH_COL_INDEX,
-    } = EXPENDITURE_MATRIX;
-
-    /**
-     * Records the indices of rows of each activity that contains the total unit cost
-     * to be used later to compute the grand total
-     */
-    const activityRows: number[] = [];
-
-    const sheet = this.getActiveSheet();
-
-    this.activities.sort(ExpenditureMatrix._orderByProgramAndOutput);
-
-    // first activity needs special treatment because it will not duplicate rows
-    // but instead overwrite the sample rows in the template
-    const firstActivity = this.activities[0];
-
-    if (!firstActivity) throw new Error('No activities found.');
-
-    const { info, tevPSF } = firstActivity;
-    const { program, output } = info;
-
-    this._createProgram(program, PROGRAM_ROW_INDEX);
-    this._createOutput(output, info, OUTPUT_ROW_INDEX);
-    activityRows.push(ACTIVITY_ROW_INDEX);
-    this._createActivity(firstActivity, ACTIVITY_ROW_INDEX);
-    this._createExpenseItems(firstActivity, EXPENSE_ITEM_ROW_INDEX);
-    this._aggregatePSF(tevPSF);
-
-    // process the rest of the activities
-    this.activities.slice(1).forEach(activity => {
-      console.log('sliced');
-
-      const { info, tevPSF } = activity;
-      const { program, output } = info;
-
-      // program
-      this._createProgram(program);
-
-      // output
-      this._createOutput(output, info);
-
-      // activity
-      activityRows.push(this.currentRowIndex);
-      this._createActivity(activity);
-
-      // Expense Items
-      this._createExpenseItems(activity);
-
-      // Aggregate TEVs of participants for PSF
-      this._aggregatePSF(tevPSF);
-
-      console.log('activity created');
-      console.log('currentrowindex:', this.currentRowIndex);
-
-      this.isFirstActivity = false;
-    });
-
-    // PSF
-    if (this.PSF.expenseItems.length > 0) {
-      console.log('Creating PSF Activity...');
-      console.log('psf.expensitems.length', this.PSF.expenseItems.length);
-      console.table(this.PSF.expenseItems);
-
-      // program
-      const { info } = this.PSF;
-      const { program, output } = info;
-      this._createProgram(program);
-
-      // output
-      this._createOutput(output, info);
-
-      // activity
-      activityRows.push(this.currentRowIndex);
-      this._createActivity(this.PSF);
-
-      // expense items
-      this._createExpenseItems(this.PSF);
-    }
-
-    sheet.spliceRows(this.currentRowIndex, 1);
-
-    console.log('last row index:', this.currentRowIndex);
-
-    const lastRowIndex = this.currentRowIndex + OVERHEAD_NUM_ROWS + 1;
-
-    // Costing Grand Total
-    const grandTotalRow = sheet.getRow(lastRowIndex);
-    const setGrandTotalCell = (cell: string) => {
-      const cellsWithTotals = activityRows.map(row => cell + row);
-
-      const grandTotalCell = grandTotalRow.getCell(cell);
-      grandTotalCell.value = {
-        formula: `SUM(${cellsWithTotals.toString()})`,
-      };
-      grandTotalCell.font.italic = false;
-      grandTotalCell.font.strike = false;
-    };
-
-    [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
-      total => setGrandTotalCell(total),
-    );
-
-    // Monthly Program Grand Totals
-    Array.from({ length: MONTHLY_PROGRAM_NUM_ROWS }, (_, i) => {
-      const colIndex = TOTAL_OBLIGATION_COL_INDEX + i;
-      const cell = grandTotalRow.getCell(colIndex);
-      const cellsWithTotals = activityRows.map(
-        row => cell.address.replace(/\d+/, '') + row,
-      );
-
-      cell.value = {
-        formula: `SUM(${cellsWithTotals.toString()})`,
-      };
-    });
-
-    // Overhead output rank
-    this._setOutputRank(sheet.getRow(this.currentRowIndex + 1));
-
-    // Overhead hidden columns formulas
-    Array.from({ length: OVERHEAD_NUM_ROWS }, (_, i) => {
-      const currentRow = this.currentRowIndex + i;
-
-      // Expense Object
-      // console.log(
-      //   'setting overhead expense object formula at row:',
-      //   currentRow,
-      // );
-
-      this._setExpenseObjectFormula(currentRow);
-
-      // GAA Object
-      // console.log('setting overhead gaa object formula at row:', currentRow);
-      ExpenditureMatrix._duplicateCell(
-        sheet.getCell(GAA_OBJECT_FORMULA_CELL),
-        sheet.getRow(currentRow).getCell(GAA_OBJECT_FORMULA_COL),
-      );
-
-      // ISBLANK formulas
-      // console.log('setting overhead isblank formula at row:', currentRow);
-      this._setIsBlankFormulas(currentRow);
-    });
-
-    // Overhead Totals
-    OVERHEAD_TOTAL_ROW_MAPPINGS.forEach(rowMap => {
-      const { rowsToAdd, expenseItemsCount } = rowMap;
-      const rowIndex = this.currentRowIndex + rowsToAdd;
-      const currentRow = sheet.getRow(rowIndex);
-
-      if (expenseItemsCount) {
-        [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
-          col => {
-            // console.log('setting overhead total formula at row:', rowIndex);
-
-            currentRow.getCell(col).value = {
-              formula: `SUM(${col}${rowIndex + 1}:${col}${
-                rowIndex + expenseItemsCount
-              })`,
-            };
-          },
-        );
-
-        // console.log(
-        //   'setting overhead monthly program totals at row:',
-        //   rowIndex,
-        // );
-        Array.from({ length: MONTHLY_PROGRAM_NUM_ROWS }, (_, i) => {
-          const targetCell = currentRow.getCell(OBLIGATION_MONTH_COL_INDEX + i);
-          const col = ExpenditureMatrix._getCellCol(targetCell);
-
-          targetCell.value = {
-            formula: `SUM(${col}${rowIndex + 1}:${col}${
-              rowIndex + expenseItemsCount
-            })`,
-          };
-        });
-      }
-
-      // Expense items
-      if (expenseItemsCount) {
-        [TOTAL_COST_COL, TOTAL_OBLIGATION_COL, TOTAL_DISBURSEMENT_COL].forEach(
-          col => {
-            Array.from({ length: expenseItemsCount }, (_, count) => {
-              const targetRowIndex = rowIndex + 1 + count;
-
-              // console.log(
-              //   'setting overhead expense items total at row:',
-              //   targetRowIndex,
-              // );
-              ExpenditureMatrix._duplicateCell(
-                sheet.getCell(col + EXPENSE_ITEM_ROW_INDEX),
-                sheet.getRow(targetRowIndex).getCell(col),
-              );
-            });
-          },
-        );
-      }
-
-      // Previous Year Physical Target
-      // console.log(
-      //   'setting overhead previous year physical target object at row:',
-      //   currentRow,
-      // );
-      ExpenditureMatrix._duplicateCell(
-        sheet.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
-        currentRow.getCell(PREVIOUS_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
-      );
-
-      // Current Year Physical Target
-      // console.log(
-      //   'setting overhead current year physical target object at row:',
-      //   currentRow,
-      // );
-      ExpenditureMatrix._duplicateCell(
-        sheet.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_FORMULA_CELL),
-        currentRow.getCell(CURRENT_YEAR_PHYSICAL_TARGET_TOTAL_COL_INDEX),
-      );
-    });
-
-    const buffer = await this.wb.xlsx.writeBuffer();
-
-    return buffer;
-  }
-
-  private static _getCellCol(cell: Cell): string {
-    return cell.address.replace(/\d+/, '');
   }
 
   /**
@@ -1062,31 +1119,8 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
   }
 
   /**
-   * Orders activities based on program and output.
-   *
-   * @static
-   * @param a {Activity} The first activity.
-   * @param b {Activity} The other activity.
-   *
-   * @returns A number indicating the order.
+   * Removes the excess rows in the Expenditure template
    */
-  private static _orderByProgramAndOutput(
-    this: void,
-    a: Activity,
-    b: Activity,
-  ): number {
-    const { program: programA, output: outputA } = a.info;
-    const { program: programB, output: outputB } = b.info;
-
-    const programComparison = programA.localeCompare(programB);
-
-    if (programComparison === 0) {
-      return outputA.localeCompare(outputB);
-    }
-
-    return programComparison;
-  }
-
   private _removeExtraRows() {
     const {
       EXTRA_ROWS_START_INDEX,
@@ -1098,5 +1132,35 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
     sheet.spliceRows(EXTRA_ROWS_START_INDEX, EXTRA_ROWS_NUM_ROWS);
     sheet.spliceRows(MILESTONES_START_ROW, MILESTONES_NUM_ROWS);
+  }
+
+  /**
+   * Fixes the font styles of the given row(s).
+   *
+   * @param startRowIndex Index of the start row
+   * @param count Number of rows to fix
+   */
+  private _fixFonts(startRowIndex: number, count: number) {
+    Array.from({ length: count }, (_, i) => {
+      const row = this.getActiveSheet().getRow(startRowIndex + i);
+      const cell = row.getCell(1);
+      cell.font = Object.assign(cell.font, {
+        italic: false,
+        strike: false,
+      });
+    });
+  }
+
+  /**
+   * Parses the program title from the UACS cell of the Expenditure template.
+   *
+   * @returns The program title or an empty string if the UACS cell is empty
+   */
+  private _getProgram(): string | undefined {
+    const program = this.getActiveSheet().getCell(
+      EXPENDITURE_MATRIX.UACS_CELL,
+    ).text;
+
+    return extractProgramTitle(program);
   }
 }

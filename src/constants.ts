@@ -1,4 +1,4 @@
-import { DataValidation } from 'exceljs';
+import { DataValidation, Font } from 'exceljs';
 import { OverheadTotalRowMap } from './types/globals.js';
 
 /**
@@ -10,6 +10,9 @@ const YES = 'Y';
  * Number of months in a year 'Y'.
  */
 const MONTHS_IN_A_YEAR = 12;
+
+// 0-based index of the last month in a year (December)
+const MAX_MONTH = 11;
 
 /**
  * MIME type for Excel files.
@@ -137,6 +140,7 @@ const EXPENDITURE_MATRIX = {
   TOTAL_DISBURSEMENT_COL: 'BE',
   TOTAL_OBLIGATION_COL_INDEX: 44,
   TOTAL_OBLIGATION_COL: 'AR',
+  UACS_CELL: 'A12',
   UNIT_COST_COL: 'P',
 } as const;
 
@@ -207,6 +211,18 @@ enum ReleaseManner {
   CASH_ADVANCE = 'Cash Advance',
 }
 
+const FONT: Partial<Font> = {
+  bold: false,
+  italic: false,
+  strike: false,
+  underline: 'none',
+  color: {
+    argb: 'FF000000',
+  },
+  size: 11,
+  name: 'Calibri',
+};
+
 export {
   BUDGET_ESTIMATE,
   EXPENDITURE_MATRIX,
@@ -223,4 +239,6 @@ export {
   HONORARIUM_EXPENSE_PREFIX,
   TRAVEL_EXPENSE_PREFIX,
   MONTHS_IN_A_YEAR,
+  MAX_MONTH,
+  FONT,
 };

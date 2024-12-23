@@ -1,7 +1,7 @@
 import './sass/app.scss';
 import { config } from './config.js';
 import { ExpenditureMatrix } from './expenditureMatrix.js';
-import type { ExcelFile } from './types/globals.js';
+import type { ExcelFile, ExpenditureFile } from './types/globals.js';
 import { createTimestamp } from './utils.js';
 import { BudgetEstimateParseError } from './parseError.js';
 
@@ -56,10 +56,11 @@ function updateConvertBtn() {
   }
 }
 
-function initiateDownload(buffer: ArrayBuffer) {
+function initiateDownload(em: ExpenditureFile) {
+  const { programTitle, buffer } = em;
   const blob = new Blob([buffer]);
   const blobUrl = URL.createObjectURL(blob);
-  const filename = `em-${createTimestamp()}.xlsx`;
+  const filename = `Expenditure - ${programTitle || createTimestamp()}.xlsx`;
 
   const a = document.createElement('a');
   a.href = blobUrl;
@@ -72,7 +73,7 @@ function initiateDownload(buffer: ArrayBuffer) {
   URL.revokeObjectURL(blobUrl);
 }
 
-async function processFiles(filelist: FileList): Promise<ArrayBuffer> {
+async function processFiles(filelist: FileList): Promise<ExpenditureFile> {
   const emError = 'em is required';
   const { files } = emFileInput;
 
@@ -97,8 +98,8 @@ async function processFiles(filelist: FileList): Promise<ArrayBuffer> {
     })),
   );
 
-  const buffer = await expenditureMatrix.fromBudgetEstimates(budgetEstimates);
-  return buffer;
+  const output = await expenditureMatrix.fromBudgetEstimates(budgetEstimates);
+  return output;
 }
 
 function handleSubmit(event: SubmitEvent) {

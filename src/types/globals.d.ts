@@ -241,3 +241,8 @@ interface OverheadTotalRowMap {
   rowsToAdd: number;
   expenseItemsCount?: number;
 }
+
+interface ExpenditureFile {
+  programTitle: string | undefined;
+  buffer: ArrayBuffer;
+}

@@ -279,7 +279,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     this._duplicateRow(range);
   }
 
-  private _setIsBlankFormula(rowIndex: number) {
+  private _setIsBlankFormulas(rowIndex: number) {
     const {
       IS_BLANK_FORMULA_CELL1,
       IS_BLANK_FORMULA_CELL2,
@@ -549,7 +549,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     this._setGAAObjFormula(rowIndex);
 
     // Is blank formulas
-    this._setIsBlankFormula(rowIndex);
+    this._setIsBlankFormulas(rowIndex);
 
     console.log('currentrowindex:', rowIndex);
 
@@ -699,7 +699,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
     if (rowIndex) {
       activityIndex = rowIndex;
       this._setExpenseObjectFormula(activityIndex);
-      this._setIsBlankFormula(activityIndex);
+      this._setIsBlankFormulas(activityIndex);
       this.currentRowIndex = activityIndex;
     } else {
       activityIndex = this.currentRowIndex;
@@ -920,7 +920,7 @@ export class ExpenditureMatrix extends Workbook<ExpenditureMatrix> {
 
       // ISBLANK formulas
       // console.log('setting overhead isblank formula at row:', currentRow);
-      this._setIsBlankFormula(currentRow);
+      this._setIsBlankFormulas(currentRow);
     });
 
     // Overhead Totals

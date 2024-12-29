@@ -12,12 +12,15 @@ import {
   ExpenseGroup,
   GAAObject,
   HONORARIUM_EXPENSE_PREFIX,
+  MONITORING_EXPENSE_PREFIX,
+  REGIONS_BY_AIR,
   ReleaseManner,
   TRAVEL_EXPENSE_PREFIX,
   VENUES_BY_AIR,
 } from './constants.js';
 import { getCellValueAsNumber } from './utils.js';
 import { BudgetEstimateParseError } from './parseError.js';
+import { Cell } from 'exceljs';
 
 /**
  * Represents a specialized workbook for managing budget estimates.
@@ -62,8 +65,12 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     numRows,
     options,
   }: SheetConfig): ExpenseItem[] {
-    const { QUANTITY_CELL_INDEX, FREQ_CELL_INDEX, UNIT_COST_CELL_INDEX } =
-      BUDGET_ESTIMATE;
+    const {
+      QUANTITY_CELL_INDEX,
+      FREQ_CELL_INDEX,
+      UNIT_COST_CELL_INDEX,
+      NUM_DAYS_CELL,
+    } = BUDGET_ESTIMATE;
     const { prefix, releaseManner, venue, hasPPMP } = options;
     const sheet = this.getActiveSheet();
 
@@ -78,9 +85,17 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const unitCost = Number.parseFloat(
         row.getCell(UNIT_COST_CELL_INDEX).text,
       );
-      const freq = getCellValueAsNumber(row.getCell(FREQ_CELL_INDEX)) || 1;
 
-      // if (quantity > 0 && freq > 0) {
+      let freqCell: Cell;
+
+      if (this.isMonitoring) {
+        freqCell = sheet.getCell(NUM_DAYS_CELL);
+      } else {
+        freqCell = row.getCell(FREQ_CELL_INDEX);
+      }
+
+      const freq = getCellValueAsNumber(freqCell) || 1;
+
       const item = row.getCell(startColIndex).text.trim();
 
       let expenseGroup: ExpenseGroup =
@@ -105,7 +120,27 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       )
         tevLocation = item;
 
-      if (venue && VENUES_BY_AIR.includes(venue)) hasAPPTicket = true;
+      if (this.isMonitoring) {
+        const region = expenseItem
+          .replace(MONITORING_EXPENSE_PREFIX, '')
+          .trim();
+
+        console.log(
+          'region',
+          region,
+          'expenseitem.lowered',
+          expenseItemLowered,
+        );
+
+        if (
+          expenseItemLowered.includes('travel') &&
+          REGIONS_BY_AIR.includes(region)
+        ) {
+          hasAPPTicket = true;
+        }
+      } else if (venue && VENUES_BY_AIR.includes(venue)) {
+        hasAPPTicket = true;
+      }
 
       return {
         expenseGroup,
@@ -120,9 +155,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
         hasAPPSupplies,
         hasAPPTicket,
       } as ExpenseItem;
-      // }
-
-      // return null;
     }).filter(Boolean) as ExpenseItem[];
   }
 
@@ -382,7 +414,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     let releaseManner = ReleaseManner.FOR_DOWNLOAD_PSF;
 
     if (this.isMonitoring) {
-      prefix = `${basePrefix} of Monitors of`;
+      prefix = MONITORING_EXPENSE_PREFIX;
       releaseManner = ReleaseManner.DIRECT_PAYMENT;
     }
 

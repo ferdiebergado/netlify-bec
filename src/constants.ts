@@ -188,6 +188,26 @@ const VENUES_BY_AIR = [
 ];
 
 /**
+ * Regions that requires air travel from NCR
+ */
+const REGIONS_BY_AIR = [
+  'Region VI',
+  'Region VII',
+  'Region VIII',
+  'Region IX',
+  'Region X',
+  'Region XI',
+  'Region XII',
+  'Caraga',
+  'BARMM',
+  'Palawan',
+  'Batanes',
+  'Occidental Mindoro',
+];
+
+const MONITORING_EXPENSE_PREFIX = 'Travel Expenses of Monitors of';
+
+/**
  * Values related to expense groups.
  */
 enum ExpenseGroup {
@@ -243,4 +263,6 @@ export {
   MONTHS_IN_A_YEAR,
   MAX_MONTH,
   FONT,
+  REGIONS_BY_AIR,
+  MONITORING_EXPENSE_PREFIX,
 };

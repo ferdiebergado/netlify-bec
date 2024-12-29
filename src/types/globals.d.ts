@@ -140,7 +140,12 @@ interface Paths {
   /**
    * Path to the Budget Estimate template.
    */
-  beTemplate: string;
+  beTemplate1: string;
+
+  /**
+   * Path to the Budget Estimate template for Monitoring.
+   */
+  beTemplate2: string;
 }
 
 /**

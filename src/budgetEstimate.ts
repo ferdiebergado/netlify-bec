@@ -26,6 +26,8 @@ import { BudgetEstimateParseError } from './parseError.js';
  * @extends {Workbook<BudgetEstimate>}
  */
 export class BudgetEstimate extends Workbook<BudgetEstimate> {
+  public isMonitoring = false;
+
   /**
    * Creates an instance of the BudgetEstimate class.
    *
@@ -69,55 +71,58 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const rowIndex = startRowIndex + i;
       const row = sheet.getRow(rowIndex);
 
+      const quantity = getCellValueAsNumber(row.getCell(QUANTITY_CELL_INDEX));
+
+      if (quantity == 0) return;
+
       const unitCost = Number.parseFloat(
         row.getCell(UNIT_COST_CELL_INDEX).text,
       );
-      const quantity = getCellValueAsNumber(row.getCell(QUANTITY_CELL_INDEX));
       const freq = getCellValueAsNumber(row.getCell(FREQ_CELL_INDEX)) || 1;
 
-      if (quantity > 0 && freq > 0) {
-        const item = row.getCell(startColIndex).text.trim();
+      // if (quantity > 0 && freq > 0) {
+      const item = row.getCell(startColIndex).text.trim();
 
-        let expenseGroup: ExpenseGroup =
-          ExpenseGroup.TRAINING_SCHOLARSHIPS_EXPENSES;
-        let gaaObject: GAAObject = GAAObject.TRAINING_EXPENSES;
-        let tevLocation = '';
-        let hasAPPSupplies = false;
-        let hasAPPTicket = false;
+      let expenseGroup: ExpenseGroup =
+        ExpenseGroup.TRAINING_SCHOLARSHIPS_EXPENSES;
+      let gaaObject: GAAObject = GAAObject.TRAINING_EXPENSES;
+      let tevLocation = '';
+      let hasAPPSupplies = false;
+      let hasAPPTicket = false;
 
-        if (item.toLowerCase().includes('supplies')) {
-          expenseGroup = ExpenseGroup.SUPPLIES_EXPENSES;
-          gaaObject = GAAObject.OTHER_SUPPLIES;
-          hasAPPSupplies = true;
-        }
-
-        const expenseItem = `${prefix} ${item}`;
-        const expenseItemLowered = expenseItem.toLowerCase();
-
-        if (
-          expenseItemLowered.includes('travel') &&
-          expenseItemLowered.includes('participants')
-        )
-          tevLocation = item;
-
-        if (venue && VENUES_BY_AIR.includes(venue)) hasAPPTicket = true;
-
-        return {
-          expenseGroup,
-          gaaObject,
-          expenseItem,
-          quantity,
-          freq,
-          unitCost,
-          releaseManner,
-          tevLocation,
-          hasPPMP,
-          hasAPPSupplies,
-          hasAPPTicket,
-        } as ExpenseItem;
+      if (item.toLowerCase().includes('supplies')) {
+        expenseGroup = ExpenseGroup.SUPPLIES_EXPENSES;
+        gaaObject = GAAObject.OTHER_SUPPLIES;
+        hasAPPSupplies = true;
       }
 
-      return null;
+      const expenseItem = `${prefix} ${item}`;
+      const expenseItemLowered = expenseItem.toLowerCase();
+
+      if (
+        expenseItemLowered.includes('travel') &&
+        expenseItemLowered.includes('participants')
+      )
+        tevLocation = item;
+
+      if (venue && VENUES_BY_AIR.includes(venue)) hasAPPTicket = true;
+
+      return {
+        expenseGroup,
+        gaaObject,
+        expenseItem,
+        quantity,
+        freq,
+        unitCost,
+        releaseManner,
+        tevLocation,
+        hasPPMP,
+        hasAPPSupplies,
+        hasAPPTicket,
+      } as ExpenseItem;
+      // }
+
+      // return null;
     }).filter(Boolean) as ExpenseItem[];
   }
 
@@ -206,34 +211,43 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const info = this.getActivityInfo();
 
     if (info) {
-      /**
-       * Gets information about board and lodging expenses.
-       *
-       * @returns {ExpenseItem[]} An array of expense items related to board and lodging.
-       */
-      const lodging = this.getBoardAndLodging();
+      let lodging: ExpenseItem[] = [];
+      let tevPSF: ExpenseItem[] = [];
+      let tev: ExpenseItem[] = [];
+      let honorarium: ExpenseItem[] = [];
 
-      /**
-       * Gets information about travel expenses based on the activity's venue.
-       *
-       * @param {string} venue - The venue of the activity.
-       * @returns {ExpenseItem[]} An array of expense items related to travel.
-       */
-      const tev = this.getTravelExpenses(info.venue);
+      if (!this.isMonitoring) {
+        /**
+         * Gets information about board and lodging expenses.
+         *
+         * @returns {ExpenseItem[]} An array of expense items related to board and lodging.
+         */
+        lodging = this.getBoardAndLodging();
 
-      /**
-       * Gets information about travel expenses Program Support Fund (tevPSF).
-       *
-       * @returns {ExpenseItem[]} An array of expense items related to tevPSF.
-       */
-      const tevPSF = this.getTevPSF();
+        /**
+         * Gets information about travel expenses based on the activity's venue.
+         *
+         * @param {string} venue - The venue of the activity.
+         * @returns {ExpenseItem[]} An array of expense items related to travel.
+         */
+        tev = this.getTravelExpenses(info.venue);
 
-      /**
-       * Gets information about honorarium expenses.
-       *
-       * @returns {ExpenseItem[]} An array of expense items related to honorarium.
-       */
-      const honorarium = this.getHonorarium();
+        /**
+         * Gets information about honorarium expenses.
+         *
+         * @returns {ExpenseItem[]} An array of expense items related to honorarium.
+         */
+        honorarium = this.getHonorarium();
+
+        /**
+         * Gets information about travel expenses Program Support Fund (tevPSF).
+         *
+         * @returns {ExpenseItem[]} An array of expense items related to tevPSF.
+         */
+        tevPSF = this.getTevPSF();
+      }
+
+      tev = this.getTevPSF();
 
       /**
        * Gets information about other miscellaneous expenses.
@@ -295,6 +309,9 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       .map(sheet => {
         console.log('parsing sheet', sheet.name);
         this.ws = sheet;
+        this.isMonitoring = this.getActiveSheet()
+          .getCell(BUDGET_ESTIMATE.ID_CELL)
+          .text.includes(BUDGET_ESTIMATE.BE_MONITORING_ID);
 
         try {
           return this._parseActivity();
@@ -332,6 +349,9 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const quantity = getCellValueAsNumber(
       sheet.getCell(BOARD_LODGING_TOTAL_PAX_CELL),
     );
+
+    if (quantity == 0) return [];
+
     const unitCost = getCellValueAsNumber(
       sheet.getCell(BOARD_LODGING_UNIT_COST_CELL),
     );
@@ -358,13 +378,19 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    */
   getTevPSF(): ExpenseItem[] {
     const basePrefix = TRAVEL_EXPENSE_PREFIX;
-    const prefixPax = `${basePrefix} Participants from`;
-    const releaseManner = ReleaseManner.FOR_DOWNLOAD_PSF;
+    let prefix = `${basePrefix} Participants from`;
+    let releaseManner = ReleaseManner.FOR_DOWNLOAD_PSF;
+
+    if (this.isMonitoring) {
+      prefix = `${basePrefix} of Monitors of`;
+      releaseManner = ReleaseManner.DIRECT_PAYMENT;
+    }
+
     const { TRAVEL_REGION_ROW_INDEX, EXPENSE_ITEM_SECOND_COL_INDEX } =
       BUDGET_ESTIMATE;
 
     const options: ExpenseOptions = {
-      prefix: prefixPax,
+      prefix: prefix,
       releaseManner,
       hasPPMP: false,
     };

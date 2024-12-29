@@ -155,7 +155,7 @@ function handleError(error: Error) {
     msg = `
     <p>An error occurred during conversion. Please check the following and try again:</p>
   <ul>
-  <li>You are using the official Budget Estimate <a href="${config.paths.beTemplate}">template</a>.</li>
+  <li>You are using the official Budget Estimate <a href="${config.paths.beTemplate1}">template</a>.</li>
   <li>The activity details are filled up.</li>
   <li>The layout of the template was not altered.</li>
   </ul>

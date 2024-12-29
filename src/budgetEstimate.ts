@@ -87,6 +87,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       );
 
       let freqCell: Cell;
+      let freq: number;
 
       if (this.isMonitoring) {
         freqCell = sheet.getCell(NUM_DAYS_CELL);
@@ -94,7 +95,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
         freqCell = row.getCell(FREQ_CELL_INDEX);
       }
 
-      const freq = getCellValueAsNumber(freqCell) || 1;
+      freq = getCellValueAsNumber(freqCell) || 1;
 
       const item = row.getCell(startColIndex).text.trim();
 
@@ -109,6 +110,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
         expenseGroup = ExpenseGroup.SUPPLIES_EXPENSES;
         gaaObject = GAAObject.OTHER_SUPPLIES;
         hasAPPSupplies = true;
+        freq = 1;
       }
 
       const expenseItem = `${prefix} ${item}`;
@@ -277,9 +279,9 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
          * @returns {ExpenseItem[]} An array of expense items related to tevPSF.
          */
         tevPSF = this.getTevPSF();
+      } else {
+        tev = this.getTevPSF();
       }
-
-      tev = this.getTevPSF();
 
       /**
        * Gets information about other miscellaneous expenses.

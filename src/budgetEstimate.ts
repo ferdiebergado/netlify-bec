@@ -230,24 +230,19 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const info = this.getActivityInfo();
 
     if (info) {
-      /**
-       * Gets information about honorarium expenses.
-       *
-       * @returns {ExpenseItem[]} An array of expense items related to honorarium.
-       */
-      const honorarium: ExpenseItem[] = this.getHonorarium();
-
-      let lodging: ExpenseItem[] = [];
-      let tevPSF: ExpenseItem[] = [];
+      let expenseItems: ExpenseItem[] = [];
       let tev: ExpenseItem[] = [];
+      let tevPSF: ExpenseItem[] = [];
 
-      if (!this.isMonitoring) {
+      if (this.isMonitoring) {
+        tev = this.getTevPSF();
+      } else {
         /**
          * Gets information about board and lodging expenses.
          *
          * @returns {ExpenseItem[]} An array of expense items related to board and lodging.
          */
-        lodging = this.getBoardAndLodging();
+        const lodging = this.getBoardAndLodging();
 
         /**
          * Gets information about travel expenses based on the activity's venue.
@@ -263,9 +258,15 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
          * @returns {ExpenseItem[]} An array of expense items related to tevPSF.
          */
         tevPSF = this.getTevPSF();
-      } else {
-        tev = this.getTevPSF();
+        expenseItems = [...lodging];
       }
+
+      /**
+       * Gets information about honorarium expenses.
+       *
+       * @returns {ExpenseItem[]} An array of expense items related to honorarium.
+       */
+      const honorarium: ExpenseItem[] = this.getHonorarium();
 
       /**
        * Gets information about other miscellaneous expenses.
@@ -279,12 +280,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
        *
        * @type {ExpenseItem[]}
        */
-      const expenseItems: ExpenseItem[] = [
-        ...lodging,
-        ...tev,
-        ...honorarium,
-        ...otherExpenses,
-      ];
+      expenseItems = [...expenseItems, ...tev, ...honorarium, ...otherExpenses];
 
       /**
        * Represents the finalized activity object with parsed information.

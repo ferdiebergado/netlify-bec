@@ -47,7 +47,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
    * @protected
    * @returns {BudgetEstimate} The created instance of ExpenditureMatrix.
    */
-  protected createInstance(): BudgetEstimate {
+  protected createInstance(): this {
     return this;
   }
 
@@ -245,10 +245,16 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const info = this.getActivityInfo();
 
     if (info) {
+      /**
+       * Gets information about honorarium expenses.
+       *
+       * @returns {ExpenseItem[]} An array of expense items related to honorarium.
+       */
+      const honorarium: ExpenseItem[] = this.getHonorarium();
+
       let lodging: ExpenseItem[] = [];
       let tevPSF: ExpenseItem[] = [];
       let tev: ExpenseItem[] = [];
-      let honorarium: ExpenseItem[] = [];
 
       if (!this.isMonitoring) {
         /**
@@ -265,13 +271,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
          * @returns {ExpenseItem[]} An array of expense items related to travel.
          */
         tev = this.getTravelExpenses(info.venue);
-
-        /**
-         * Gets information about honorarium expenses.
-         *
-         * @returns {ExpenseItem[]} An array of expense items related to honorarium.
-         */
-        honorarium = this.getHonorarium();
 
         /**
          * Gets information about travel expenses Program Support Fund (tevPSF).

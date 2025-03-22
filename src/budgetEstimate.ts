@@ -20,7 +20,6 @@ import {
 } from './constants.js';
 import { getCellValueAsNumber } from './utils.js';
 import { BudgetEstimateParseError } from './parseError.js';
-import { Cell } from 'exceljs';
 
 /**
  * Represents a specialized workbook for managing budget estimates.
@@ -65,12 +64,8 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     numRows,
     options,
   }: SheetConfig): ExpenseItem[] {
-    const {
-      QUANTITY_CELL_INDEX,
-      FREQ_CELL_INDEX,
-      UNIT_COST_CELL_INDEX,
-      NUM_DAYS_CELL,
-    } = BUDGET_ESTIMATE;
+    const { QUANTITY_CELL_INDEX, FREQ_CELL_INDEX, UNIT_COST_CELL_INDEX } =
+      BUDGET_ESTIMATE;
     const { prefix, releaseManner, venue, hasPPMP } = options;
     const sheet = this.getActiveSheet();
 
@@ -86,17 +81,8 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
         row.getCell(UNIT_COST_CELL_INDEX).text,
       );
 
-      let freqCell: Cell;
-      let freq: number;
-
-      if (this.isMonitoring) {
-        freqCell = sheet.getCell(NUM_DAYS_CELL);
-      } else {
-        freqCell = row.getCell(FREQ_CELL_INDEX);
-      }
-
-      freq = getCellValueAsNumber(freqCell) || 1;
-
+      const freqCell = row.getCell(FREQ_CELL_INDEX);
+      let freq = getCellValueAsNumber(freqCell) || 1;
       const item = row.getCell(startColIndex).text.trim();
 
       let expenseGroup: ExpenseGroup =
@@ -209,7 +195,6 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     }
 
     const month = new Date(startDate).getMonth();
-    // const totalPax = extractResult(sheet.getCell(TOTAL_PAX_CELL).value);
 
     const info: ActivityInfo = {
       program,

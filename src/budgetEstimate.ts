@@ -74,15 +74,15 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
       const row = sheet.getRow(rowIndex);
 
       const quantity = getCellValueAsNumber(row.getCell(QUANTITY_CELL_INDEX));
+      const freqCell = row.getCell(FREQ_CELL_INDEX);
+      let freq = getCellValueAsNumber(freqCell);
 
-      if (quantity == 0) return;
+      if (quantity == 0 || freq == 0) return;
 
       const unitCost = Number.parseFloat(
         row.getCell(UNIT_COST_CELL_INDEX).text,
       );
 
-      const freqCell = row.getCell(FREQ_CELL_INDEX);
-      let freq = getCellValueAsNumber(freqCell) || 1;
       const item = row.getCell(startColIndex).text.trim();
 
       let expenseGroup: ExpenseGroup =

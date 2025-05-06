@@ -412,7 +412,7 @@ export class BudgetEstimate extends Workbook<BudgetEstimate> {
     const tevConfig: SheetConfig = {
       startRowIndex: TRAVEL_REGION_ROW_INDEX,
       startColIndex: EXPENSE_ITEM_SECOND_COL_INDEX,
-      numRows: 18,
+      numRows: 19,
       options,
     };
 
